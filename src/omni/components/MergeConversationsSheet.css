@@ -16,15 +16,15 @@
 }
 .mc-backdrop.is-closing { animation: mc-fade-out 320ms cubic-bezier(0.32, 0, 0.67, 0) both; pointer-events: none; }
 .mc-backdrop.is-closing .mc-sheet { animation: mc-slide-out 320ms cubic-bezier(0.64, 0, 0.78, 0) both; }
-/* Merge swaps the sheet for the confirm modal on the same backdrop, one after the other: the sheet fades out (200ms),
-   then 1ms later the modal fades in (200ms). Cancel runs it the other way round. */
-.mc-sheet { transition: opacity 200ms ease-out; }
+/* Merge swaps the sheet for the confirm modal on the same backdrop, one after the other: the sheet fades out (100ms),
+   then 1ms later the modal fades in (100ms). Cancel runs it the other way round. */
+.mc-sheet { transition: opacity 100ms ease-out; }
 .mc-sheet.is-faded { opacity: 0; pointer-events: none; }
 .mc-confirm {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  animation: mc-confirm-in 200ms ease-out 201ms both;
+  animation: mc-confirm-in 100ms ease-out 101ms both;
 }
-.mc-confirm.is-leaving { animation: mc-confirm-out 200ms ease-in both; pointer-events: none; }
+.mc-confirm.is-leaving { animation: mc-confirm-out 100ms ease-in both; pointer-events: none; }
 @keyframes mc-confirm-in { from { opacity: 0; } }
 @keyframes mc-confirm-out { to { opacity: 0; } }
 .mc-backdrop.is-closing .mc-confirm { animation: mc-confirm-out 200ms ease-in both; }

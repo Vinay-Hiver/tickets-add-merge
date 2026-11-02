@@ -266,7 +266,7 @@ export default function MergeConversationsSheet({ conversations: preselected, so
 
   const exit = (fn) => { setClosing(true); setTimeout(fn, 320); }; // matches the exit animation in the CSS
   const openConfirm = () => setConfirm('in');
-  const cancelConfirm = () => { setConfirm('out'); setTimeout(() => setConfirm('hidden'), 201); }; // the sheet fades back in 1ms after the modal has gone
+  const cancelConfirm = () => { setConfirm('out'); setTimeout(() => setConfirm('hidden'), 101); }; // the sheet fades back in 1ms after the modal has gone
   const dismiss = () => (confirm === 'in' ? cancelConfirm() : exit(onClose));
   React.useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') dismiss(); };

@@ -60,7 +60,7 @@ function Sheet({ title, onClose, children, footer, confirm }) {
   const [phase, setPhase] = React.useState('hidden'); // the confirm modal: 'hidden', 'in' or 'out'
   const exit = (fn) => { setClosing(true); setTimeout(fn, 320); }; // matches the exit animation in the CSS
   const ask = () => setPhase('in');
-  const cancel = () => { setPhase('out'); setTimeout(() => setPhase('hidden'), 201); };
+  const cancel = () => { setPhase('out'); setTimeout(() => setPhase('hidden'), 101); };
   const dismiss = () => (phase === 'in' ? cancel() : exit(onClose));
   React.useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') dismiss(); };
