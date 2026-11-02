@@ -61,10 +61,8 @@
 }
 
 .subject-text-large {
-  font-family: 'Hanken Grotesk', sans-serif;
-  font-size: 18px;
-  font-weight: 500;
-  color: #0f172a;
+  /* Typography: Label/Medium (.text-label-medium, 500 16/24) */
+  color: var(--slateTextTitle);
   margin: 0;
 }
 
@@ -227,3 +225,27 @@
   font-size: 14px;
   color: #334155;
 }
+
+/* Conversation / Slack channel tabs under the subject bar (Figma: Tickets Add/Merge › 4026:14306) */
+.detail-tabs.hot-tabs--outlined {
+  flex: none; gap: 4px; height: 44px; padding-right: 16px;
+  background: var(--slateSurfaceWhite);
+  box-shadow: inset 0 -1px 0 var(--slateBorderMild);
+}
+.detail-tabs.hot-tabs--outlined .hot-tab {
+  height: 44px; padding: 12px; gap: 4px;
+  /* Typography: Body/Small (.text-body-small, 400 14/20), selected tab included */
+  font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextSubtle);
+}
+.detail-tabs.hot-tabs--outlined .hot-tab[aria-selected='true'] { font-weight: var(--fontWeightRegular); color: var(--slateTextTitle); }
+.detail-tabs .hot-tab svg { flex: none; width: 14px; height: 14px; }
+
+/* Slack tab placeholder: centred in the space under the tabs */
+.detail-slack-placeholder {
+  flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px;
+  color: var(--slateTextSubtle); text-align: center;
+}
+
+/* The merged ticket's Overview / email tabs are 50px tall */
+.detail-tabs.detail-email-tabs.hot-tabs--outlined,
+.detail-tabs.detail-email-tabs.hot-tabs--outlined .hot-tab { height: 50px; }

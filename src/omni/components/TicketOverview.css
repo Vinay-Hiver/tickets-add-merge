@@ -1,0 +1,36 @@
+/* Merged ticket Overview (Figma: Tickets Add/Merge › 4028:16172) */
+.ticket-overview { display: flex; flex-direction: column; gap: 10px; padding: 8px; }
+
+.ticket-overview__card {
+  box-sizing: border-box; display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 12px;
+  border: 1px solid var(--slateBorderLight); border-radius: 8px; background: var(--slateSurfaceWhite);
+  font-family: var(--fontFamily); text-align: left; cursor: pointer;
+}
+.ticket-overview__card:hover { background: var(--slateSurfaceSubtle100Hover); }
+.ticket-overview__card:focus-visible { outline: 2px solid var(--primarySurfaceLighter); outline-offset: -1px; }
+
+.ticket-overview__top { display: flex; align-items: center; gap: 8px; }
+.ticket-overview__name {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; white-space: nowrap;
+  font: var(--fontWeightMedium) 14px/20px var(--fontFamily); color: var(--slateTextTitle);
+}
+.ticket-overview__name svg { flex: none; color: var(--slateIconsActive); }
+.ticket-overview__date { flex: none; font: var(--fontWeightMedium) 12px/18px var(--fontFamily); color: var(--slateTextSubtle); }
+
+.ticket-overview__bottom { display: flex; align-items: center; gap: 4px; min-width: 0; white-space: nowrap; }
+.ticket-overview__subject {
+  flex: none; max-width: 60%; overflow: hidden; text-overflow: ellipsis;
+  font: var(--fontWeightMedium) 14px/20px var(--fontFamily); color: var(--slateTextBody);
+}
+.ticket-overview__preview {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+  font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextSubtle);
+}
+
+.ticket-overview__chips { display: flex; gap: 6px; padding-top: 4px; }
+.ticket-overview__chip {
+  box-sizing: border-box; display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px;
+  border: 0.5px solid var(--slateSurfaceSubtle300); border-radius: 4px; background: var(--slateSurfaceSubtle);
+  font: var(--fontWeightRegular) 12px/18px var(--fontFamily); color: var(--slateTextBody); white-space: nowrap;
+}
+.ticket-overview__chip svg { width: 12px; height: 12px; flex: none; }

@@ -176,6 +176,11 @@
   flex-shrink: 0;
 }
 
+/* The Conversations header has no search box under its title, so it only needs the title row */
+.panel-header-top--title-only {
+  height: auto;
+}
+
 .header-row {
   height: 27px;
   padding: 0 8px;

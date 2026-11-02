@@ -5,37 +5,39 @@ import Sidebar from './Sidebar';
 import ConversationList from './components/ConversationList';
 import ConversationDetail from './components/ConversationDetail';
 import LinkedRightPanel from './components/link/LinkedRightPanel';
+import BulkActionsPanel from './components/BulkActionsPanel';
 import ChannelChatView from './components/ChannelChatView';
 import VoiceCallView from './components/voice/VoiceCallView';
 import { VOICE_INBOXES } from './data/voiceCalls';
 import { CHANNEL_BY_INBOX } from './data/channelChats';
-import SettingsPage from './pages/SettingsPage';
 import MySettingsPage from './pages/MySettingsPage';
 import { useState } from 'react';
 import { conversationsData } from './data/emailConversations';
 import { INITIAL_VIEWS_BY_INBOX } from './data/dummyViews';
 import { useCurrentUser } from './CurrentUser';
+import { useConversationFields } from './ConversationFields';
+import { buildMergedTicket, mergeCustomFields, mergeTags } from './data/merge';
 
 
 // Fallback dummy threads for views (e.g. Team, Tickets, Pending, Closed,
 // custom views) that don't have hand-authored conversation data above.
 const DUMMY_SENDERS = [
-  { sender: 'Priya Nair', initial: 'P', avatarColor: 'var(--pastelVioletBorderDefault)', email: 'priya.nair@acme.com' },
-  { sender: 'Marcus Lee', initial: 'M', avatarColor: 'var(--pastelLightBlueBorderDefault)', email: 'marcus.lee@brightbox.io' },
-  { sender: 'Sofia Reyes', initial: 'S', avatarColor: 'var(--pastelOrangeSurfaceDefault)', email: 'sofia.reyes@northwind.com' },
-  { sender: 'Daniel Kim', initial: 'D', avatarColor: 'var(--pastelRedBorderDefault)', email: 'daniel.kim@vertex.co' },
-  { sender: 'Grace Okafor', initial: 'G', avatarColor: 'var(--pastelVioletBorderDefault)', email: 'grace.okafor@lumen.com' },
-  { sender: 'Tom Becker', initial: 'T', avatarColor: 'var(--pastelLightBlueBorderDefault)', email: 'tom.becker@fernco.com' },
-  { sender: 'Hana Sato', initial: 'H', avatarColor: 'var(--pastelOrangeSurfaceDefault)', email: 'hana.sato@orbital.io' },
-  { sender: 'Liam Walsh', initial: 'L', avatarColor: 'var(--pastelRedBorderDefault)', email: 'liam.walsh@acme.com' },
-  { sender: 'Ava Patel', initial: 'A', avatarColor: 'var(--pastelVioletBorderDefault)', email: 'ava.patel@horizon.org' },
-  { sender: 'Noah Khan', initial: 'N', avatarColor: 'var(--pastelLightBlueBorderDefault)', email: 'noah.khan@apex.com' },
-  { sender: 'Arlene McCoy', initial: 'A', avatarColor: 'var(--pastelOrangeSurfaceDefault)', email: 'arlene.mccoy@vanguard.com' },
-  { sender: 'Guy Hawkins', initial: 'G', avatarColor: 'var(--pastelRedBorderDefault)', email: 'guy.hawkins@nexus.io' },
-  { sender: 'Courtney Henry', initial: 'C', avatarColor: 'var(--pastelVioletBorderDefault)', email: 'courtney.henry@starlight.com' },
-  { sender: 'Darlene Robertson', initial: 'D', avatarColor: 'var(--pastelLightBlueBorderDefault)', email: 'darlene.robertson@pulse.com' },
-  { sender: 'Eleanor Pena', initial: 'E', avatarColor: 'var(--pastelOrangeSurfaceDefault)', email: 'eleanor.pena@summit.io' },
-  { sender: 'Floyd Miles', initial: 'F', avatarColor: 'var(--pastelRedBorderDefault)', email: 'floyd.miles@beacon.com' },
+  { sender: 'Priya Nair', initial: 'P', avatarColor: 'var(--pastelVioletBorderDefault)', email: 'priya.nair@fedex.com' },
+  { sender: 'Marcus Lee', initial: 'M', avatarColor: 'var(--pastelLightBlueBorderDefault)', email: 'marcus.lee@dell.com' },
+  { sender: 'Sofia Reyes', initial: 'S', avatarColor: 'var(--pastelOrangeSurfaceDefault)', email: 'sofia.reyes@paypal.com' },
+  { sender: 'Daniel Kim', initial: 'D', avatarColor: 'var(--pastelRedBorderDefault)', email: 'daniel.kim@shopify.com' },
+  { sender: 'Grace Okafor', initial: 'G', avatarColor: 'var(--pastelVioletBorderDefault)', email: 'grace.okafor@airbnb.com' },
+  { sender: 'Tom Becker', initial: 'T', avatarColor: 'var(--pastelLightBlueBorderDefault)', email: 'tom.becker@fedex.com' },
+  { sender: 'Hana Sato', initial: 'H', avatarColor: 'var(--pastelOrangeSurfaceDefault)', email: 'hana.sato@dell.com' },
+  { sender: 'Liam Walsh', initial: 'L', avatarColor: 'var(--pastelRedBorderDefault)', email: 'liam.walsh@paypal.com' },
+  { sender: 'Ava Patel', initial: 'A', avatarColor: 'var(--pastelVioletBorderDefault)', email: 'ava.patel@shopify.com' },
+  { sender: 'Noah Khan', initial: 'N', avatarColor: 'var(--pastelLightBlueBorderDefault)', email: 'noah.khan@airbnb.com' },
+  { sender: 'Arlene McCoy', initial: 'A', avatarColor: 'var(--pastelOrangeSurfaceDefault)', email: 'arlene.mccoy@fedex.com' },
+  { sender: 'Guy Hawkins', initial: 'G', avatarColor: 'var(--pastelRedBorderDefault)', email: 'guy.hawkins@dell.com' },
+  { sender: 'Courtney Henry', initial: 'C', avatarColor: 'var(--pastelVioletBorderDefault)', email: 'courtney.henry@paypal.com' },
+  { sender: 'Darlene Robertson', initial: 'D', avatarColor: 'var(--pastelLightBlueBorderDefault)', email: 'darlene.robertson@shopify.com' },
+  { sender: 'Eleanor Pena', initial: 'E', avatarColor: 'var(--pastelOrangeSurfaceDefault)', email: 'eleanor.pena@airbnb.com' },
+  { sender: 'Floyd Miles', initial: 'F', avatarColor: 'var(--pastelRedBorderDefault)', email: 'floyd.miles@fedex.com' },
 ];
 
 const DUMMY_SUBJECTS = [
@@ -107,6 +109,15 @@ function App() {
   const { user } = useCurrentUser();
   const [activeFilter, setActiveFilter] = useState(() => ({ inbox: firstInboxFor(user), type: 'Unassigned' }));
   const [selectedId, setSelectedId] = useState(null);
+  // Conversations ticked in the list for bulk actions.
+  const [checkedIds, setCheckedIds] = useState([]);
+  const toggleChecked = (id) =>
+    setCheckedIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+
+  // Merging emails makes a ticket: the ticket joins the list and the emails leave it.
+  const [mergedTickets, setMergedTickets] = useState([]);
+  const [mergedAwayIds, setMergedAwayIds] = useState([]);
+  const fields = useConversationFields();
 
   // Prototype role — All Views pins Team Favourites as Admin. No toggle UI.
   const activeRole = 'Admin';
@@ -114,21 +125,36 @@ function App() {
   const dummyCacheRef = React.useRef({});
 
   const filteredConversations = React.useMemo(() => {
-    const real = conversationsData.filter(c =>
-      c.inbox === activeFilter.inbox && c.type === activeFilter.type
-    );
-    if (real.length > 0) return real;
-
-    const key = `${activeFilter.inbox}|${activeFilter.type}`;
-    if (!dummyCacheRef.current[key]) {
-      dummyCacheRef.current[key] = generateDummyConversations(activeFilter.inbox, activeFilter.type);
+    const inView = (c) => c.inbox === activeFilter.inbox && c.type === activeFilter.type;
+    let base = conversationsData.filter(inView);
+    if (base.length === 0) {
+      const key = `${activeFilter.inbox}|${activeFilter.type}`;
+      if (!dummyCacheRef.current[key]) {
+        dummyCacheRef.current[key] = generateDummyConversations(activeFilter.inbox, activeFilter.type);
+      }
+      base = dummyCacheRef.current[key];
     }
-    return dummyCacheRef.current[key];
-  }, [activeFilter.inbox, activeFilter.type]);
+    // Tickets made by merging sit at the top, newest first; merged emails are gone.
+    return [...mergedTickets.filter(inView), ...base.filter((c) => !mergedAwayIds.includes(c.id))];
+  }, [activeFilter.inbox, activeFilter.type, mergedTickets, mergedAwayIds]);
+
+  // "Merge and create ticket": a ticket with the chosen title, its assignee and status, the tags of every email and
+  // the merged custom fields. The ticket opens; the emails leave the list.
+  const mergeIntoTicket = (selected, titleId) => {
+    const ticket = buildMergedTicket(selected, titleId);
+    fields.setAssignee(ticket.id, fields.assigneeOf(titleId));
+    fields.setStatus(ticket.id, fields.statusOf(titleId));
+    fields.setTags(ticket.id, mergeTags(selected, fields.tagsOf));
+    mergeCustomFields(selected, titleId, fields.customFieldsOf).forEach((f) => fields.setCustomField(ticket.id, f.id, f.value));
+    setMergedTickets((tickets) => [ticket, ...tickets]);
+    setMergedAwayIds((ids) => [...ids, ...ticket.mergedFrom]);
+    setCheckedIds([]);
+    setSelectedId(ticket.id);
+  };
 
   const location = useLocation();
   React.useEffect(() => {
-    // Each route/page sets its own title (e.g. SettingsPage). Only own the
+    // Each route/page sets its own title (e.g. MySettingsPage). Only own the
     // mailbox title here so this always-mounted component doesn't clobber it.
     if (location.pathname === '/') {
       document.title = 'Linked Conversations';
@@ -141,12 +167,14 @@ function App() {
     } else {
       setSelectedId(null);
     }
+    setCheckedIds([]);
   }, [activeFilter.inbox, activeFilter.type]);
 
   const [signatures, setSignatures] = useState([]);
-  const [defaultSignatureId, setDefaultSignatureId] = useState(null);
+  const [defaultSignatureId] = useState(null);
 
-  const selectedConversation = conversationsData.find(c => c.id === selectedId)
+  const selectedConversation = mergedTickets.find(c => c.id === selectedId)
+    || conversationsData.find(c => c.id === selectedId)
     || filteredConversations.find(c => c.id === selectedId);
 
   return (
@@ -170,25 +198,29 @@ function App() {
                   selectedId={selectedId}
                   onSelect={setSelectedId}
                   activeFilter={activeFilter}
+                  checkedIds={checkedIds}
+                  onToggleCheck={toggleChecked}
                 />
-                <ConversationDetail
-                  conversation={selectedConversation}
-                  signatures={signatures}
-                  setSignatures={setSignatures}
-                  defaultSignatureId={defaultSignatureId}
-                />
-                <LinkedRightPanel channel="email" ticketId={selectedConversation?.ticketId} inboxName={activeFilter.inbox} unassigned={activeFilter.type === 'Unassigned'} conversationId={String(selectedId)} />
+                {checkedIds.length > 0 ? (
+                  <BulkActionsPanel
+                    selected={filteredConversations.filter((c) => checkedIds.includes(c.id))}
+                    onCancel={() => setCheckedIds([])}
+                    onMerge={mergeIntoTicket}
+                  />
+                ) : (
+                  <>
+                    <ConversationDetail
+                      conversation={selectedConversation}
+                      signatures={signatures}
+                      setSignatures={setSignatures}
+                      defaultSignatureId={defaultSignatureId}
+                    />
+                    <LinkedRightPanel channel="email" ticketId={selectedConversation?.ticketId} inboxName={activeFilter.inbox} unassigned={activeFilter.type === 'Unassigned'} conversationId={String(selectedId)} />
+                  </>
+                )}
               </>
             )}
           </>
-        } />
-        <Route path="/admin-panel" element={
-          <SettingsPage
-            signatures={signatures}
-            setSignatures={setSignatures}
-            defaultSignatureId={defaultSignatureId}
-            setDefaultSignatureId={setDefaultSignatureId}
-          />
         } />
         <Route path="/my-settings" element={<MySettingsPage />} />
       </Routes>

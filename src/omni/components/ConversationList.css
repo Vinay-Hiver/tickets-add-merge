@@ -122,6 +122,35 @@
   width: 100%;
 }
 
+.card-select {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+.card-select__box {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Flex (not inline) so the icon and box sit centred, without a text baseline gap under them */
+.card-select__icon { display: flex; }
+
+.card-select__box .hot-checkbox { display: flex; min-height: 0; }
+
+/* Hovering the inbox icon, or a ticked card, shows the checkbox in its place */
+.card-select:hover .card-select__box,
+.card-select.is-checked .card-select__box { display: flex; }
+.card-select:hover .card-select__icon,
+.card-select.is-checked .card-select__icon { visibility: hidden; }
+
 .card-sender-info {
   display: flex;
   align-items: center;

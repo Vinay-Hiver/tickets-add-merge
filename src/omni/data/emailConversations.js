@@ -17,7 +17,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'John Smith',
-        email: 'john.smith@gmail.com',
+        email: 'john.smith@airbnb.com',
         time: 'Feb 4, 01:20 PM',
         initial: 'J',
         avatarColor: 'var(--pastelRedBorderDefault)',
@@ -35,7 +35,7 @@ export const conversationsData = [
       {
         id: 'm3',
         sender: 'John Smith',
-        email: 'john.smith@gmail.com',
+        email: 'john.smith@airbnb.com',
         time: 'Feb 4, 02:45 PM',
         initial: 'J',
         avatarColor: 'var(--pastelRedBorderDefault)',
@@ -59,7 +59,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'Alice Johnson',
-        email: 'alice.j@outlook.com',
+        email: 'alice.j@fedex.com',
         time: 'Feb 4, 10:00 AM',
         initial: 'A',
         avatarColor: 'var(--pastelVioletBorderDefault)',
@@ -93,7 +93,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'Emily Watson',
-        email: 'emily.w@designcorp.com',
+        email: 'emily.w@shopify.com',
         time: 'Feb 4, 04:00 PM',
         initial: 'E',
         avatarColor: 'var(--pastelOrangeSurfaceDefault)',
@@ -126,7 +126,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'David Chen',
-        email: 'david.chen@tech.io',
+        email: 'david.chen@dell.com',
         time: 'Feb 4, 10:00 AM',
         initial: 'D',
         avatarColor: 'var(--pastelPurpleTextBody)',
@@ -144,7 +144,7 @@ export const conversationsData = [
       {
         id: 'm3',
         sender: 'David Chen',
-        email: 'david.chen@tech.io',
+        email: 'david.chen@dell.com',
         time: 'Feb 4, 01:20 PM',
         initial: 'D',
         avatarColor: 'var(--pastelPurpleTextBody)',
@@ -169,7 +169,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'George Baker',
-        email: 'george@baker.com',
+        email: 'george@shopify.com',
         time: 'Feb 4, 09:00 AM',
         initial: 'G',
         avatarColor: 'var(--pastelVioletTextBody)',
@@ -202,7 +202,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'Emma Stone',
-        email: 'emma@stone.com',
+        email: 'emma@paypal.com',
         time: 'Feb 3, 02:00 PM',
         initial: 'E',
         avatarColor: 'var(--pastelPurpleTextBody)',
@@ -236,7 +236,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'Customer Care',
-        email: 'care@acme.com',
+        email: 'care@paypal.com',
         time: 'Feb 4, 08:30 AM',
         initial: 'C',
         avatarColor: 'var(--pastelGreenBorderDefault)',
@@ -269,7 +269,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'Liam Neeson',
-        email: 'liam@neeson.com',
+        email: 'liam@airbnb.com',
         time: 'Feb 4, 01:00 PM',
         initial: 'L',
         avatarColor: 'var(--pastelLightBlueTextBody)',
@@ -304,7 +304,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: "Nina Patel",
-        email: "nina.patel@brightlane.io",
+        email: "nina.patel@shopify.com",
         time: "Feb 4, 03:05 PM",
         initial: "N",
         avatarColor: "var(--pastelGreenBorderDefault)",
@@ -337,7 +337,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: "Omar Haddad",
-        email: "omar@haddadlabs.com",
+        email: "omar@airbnb.com",
         time: "Feb 3, 05:40 PM",
         initial: "O",
         avatarColor: "var(--pastelOrangeBorderDefault)",
@@ -370,7 +370,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: "Clara Jensen",
-        email: "clara.jensen@northpeak.co",
+        email: "clara.jensen@paypal.com",
         time: "Feb 4, 09:12 AM",
         initial: "C",
         avatarColor: "var(--pastelVioletBorderDefault)",
@@ -394,7 +394,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: "Hugo Martins",
-        email: "hugo@martinsco.com",
+        email: "hugo@fedex.com",
         time: "Feb 4, 02:30 PM",
         initial: "H",
         avatarColor: "var(--pastelPurpleBorderDefault)",
@@ -427,7 +427,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: "Priya Raman",
-        email: "priya.raman@corvid.ai",
+        email: "priya.raman@dell.com",
         time: "Feb 3, 01:15 PM",
         initial: "P",
         avatarColor: "var(--pastelRedBorderDefault)",
@@ -460,11 +460,564 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: "Sam Okoro",
-        email: "sam.okoro@tidewater.org",
+        email: "sam.okoro@dell.com",
         time: "Feb 4, 11:48 AM",
         initial: "S",
         avatarColor: "var(--pastelLightBlueBorderDefault)",
         body: "Hello,\n\nOur finance team needs invoices that include our VAT number. Could you add it to our account and resend January's invoice?"
+      }
+    ]
+  },
+  // --- More emails (no tickets): pairs from the same domain, so they can be merged ---
+  {
+    id: 41,
+    inbox: 'Email Support 01',
+    type: 'Unassigned',
+    sender: 'Sarah Miller',
+    initial: 'S',
+    avatarColor: 'var(--pastelVioletBorderDefault)',
+    time: 'Feb 4, 11:05 AM',
+    subject: 'Reports won\'t export to CSV',
+    preview: 'The export button spins and nothing downloads.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Sarah Miller',
+        email: 'sarah.miller@fedex.com',
+        time: 'Feb 4, 11:05 AM',
+        initial: 'S',
+        avatarColor: 'var(--pastelVioletBorderDefault)',
+        body: 'Hi team,\n\nWhen I try to export the monthly report to CSV, the button spins and nothing downloads. Can you take a look?'
+      }
+    ]
+  },
+  {
+    id: 42,
+    inbox: 'Email Support 01',
+    type: 'Unassigned',
+    sender: 'Kevin Park',
+    initial: 'K',
+    avatarColor: 'var(--pastelLightBlueBorderDefault)',
+    time: 'Feb 4, 10:40 AM',
+    subject: 'CSV export failing for our team',
+    preview: 'Several of us at FedEx can\'t export reports.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Kevin Park',
+        email: 'kevin.park@fedex.com',
+        time: 'Feb 4, 10:40 AM',
+        initial: 'K',
+        avatarColor: 'var(--pastelLightBlueBorderDefault)',
+        body: 'Hello,\n\nA few of us at FedEx are unable to export reports to CSV since this morning. Is this a known issue?'
+      }
+    ]
+  },
+  {
+    id: 43,
+    inbox: 'Email Support 01',
+    type: 'Unassigned',
+    sender: 'Rachel Green',
+    initial: 'R',
+    avatarColor: 'var(--pastelOrangeBorderDefault)',
+    time: 'Feb 4, 09:55 AM',
+    subject: 'Copy of January invoice',
+    preview: 'Could you resend the January invoice?',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Rachel Green',
+        email: 'rachel.green@shopify.com',
+        time: 'Feb 4, 09:55 AM',
+        initial: 'R',
+        avatarColor: 'var(--pastelOrangeBorderDefault)',
+        body: 'Hi,\n\nCould you resend the January invoice? Our accounts team can\'t find the original email.'
+      }
+    ]
+  },
+  {
+    id: 44,
+    inbox: 'Email Support 01',
+    type: 'Mine',
+    sender: 'Tom Hardy',
+    initial: 'T',
+    avatarColor: 'var(--pastelRedBorderDefault)',
+    time: 'Feb 4, 08:30 AM',
+    subject: 'SSO login is broken',
+    preview: 'Our team gets an error when signing in with SSO.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Tom Hardy',
+        email: 'tom.hardy@dell.com',
+        time: 'Feb 4, 08:30 AM',
+        initial: 'T',
+        avatarColor: 'var(--pastelRedBorderDefault)',
+        body: 'Hi,\n\nSince yesterday our team gets an "invalid assertion" error when signing in with SSO.'
+      }
+    ]
+  },
+  {
+    id: 45,
+    inbox: 'Email Support 01',
+    type: 'Mine',
+    sender: 'Lisa Wong',
+    initial: 'L',
+    avatarColor: 'var(--pastelVioletBorderDefault)',
+    time: 'Feb 4, 08:10 AM',
+    subject: 'New hires can\'t sign in',
+    preview: 'SSO fails for the accounts we created this week.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Lisa Wong',
+        email: 'lisa.wong@dell.com',
+        time: 'Feb 4, 08:10 AM',
+        initial: 'L',
+        avatarColor: 'var(--pastelVioletBorderDefault)',
+        body: 'Hello,\n\nThe accounts we created for new hires this week can\'t sign in through SSO. Older accounts work fine.'
+      }
+    ]
+  },
+  {
+    id: 51,
+    inbox: 'Email Support 02',
+    type: 'Unassigned',
+    sender: 'Oliver Brooks',
+    initial: 'O',
+    avatarColor: 'var(--pastelLightBlueBorderDefault)',
+    time: 'Feb 4, 11:20 AM',
+    subject: 'Shipment delayed',
+    preview: 'Our order was due Monday and hasn\'t arrived.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Oliver Brooks',
+        email: 'oliver.brooks@fedex.com',
+        time: 'Feb 4, 11:20 AM',
+        initial: 'O',
+        avatarColor: 'var(--pastelLightBlueBorderDefault)',
+        body: 'Hi,\n\nOur order was due to arrive on Monday and still hasn\'t shown up. Can you check where it is?'
+      }
+    ]
+  },
+  {
+    id: 52,
+    inbox: 'Email Support 02',
+    type: 'Unassigned',
+    sender: 'Mia Chen',
+    initial: 'M',
+    avatarColor: 'var(--pastelOrangeBorderDefault)',
+    time: 'Feb 4, 10:15 AM',
+    subject: 'Where is order #4471?',
+    preview: 'Tracking hasn\'t updated in four days.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Mia Chen',
+        email: 'mia.chen@fedex.com',
+        time: 'Feb 4, 10:15 AM',
+        initial: 'M',
+        avatarColor: 'var(--pastelOrangeBorderDefault)',
+        body: 'Hello,\n\nThe tracking for order #4471 hasn\'t updated in four days. Could you look into it?'
+      }
+    ]
+  },
+  {
+    id: 53,
+    inbox: 'Email Support 02',
+    type: 'Unassigned',
+    sender: 'Ethan Cole',
+    initial: 'E',
+    avatarColor: 'var(--pastelRedBorderDefault)',
+    time: 'Feb 4, 09:30 AM',
+    subject: 'Switch to annual billing',
+    preview: 'We\'d like to move to the annual plan.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Ethan Cole',
+        email: 'ethan.cole@paypal.com',
+        time: 'Feb 4, 09:30 AM',
+        initial: 'E',
+        avatarColor: 'var(--pastelRedBorderDefault)',
+        body: 'Hi,\n\nWe\'d like to move from monthly to annual billing. What do we need to do?'
+      }
+    ]
+  },
+  {
+    id: 54,
+    inbox: 'Email Support 02',
+    type: 'Mine',
+    sender: 'Zoe Adams',
+    initial: 'Z',
+    avatarColor: 'var(--pastelVioletBorderDefault)',
+    time: 'Feb 4, 08:45 AM',
+    subject: 'Hitting the API rate limit',
+    preview: 'Our sync job is getting 429 errors.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Zoe Adams',
+        email: 'zoe.adams@dell.com',
+        time: 'Feb 4, 08:45 AM',
+        initial: 'Z',
+        avatarColor: 'var(--pastelVioletBorderDefault)',
+        body: 'Hi,\n\nOur nightly sync job keeps getting 429 errors from the API. Can the limit be raised for our account?'
+      }
+    ]
+  },
+  {
+    id: 55,
+    inbox: 'Email Support 02',
+    type: 'Mine',
+    sender: 'Ryan Ford',
+    initial: 'R',
+    avatarColor: 'var(--pastelLightBlueBorderDefault)',
+    time: 'Feb 4, 08:05 AM',
+    subject: 'Rate limit during data sync',
+    preview: 'Sync stops halfway with a rate-limit error.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Ryan Ford',
+        email: 'ryan.ford@dell.com',
+        time: 'Feb 4, 08:05 AM',
+        initial: 'R',
+        avatarColor: 'var(--pastelLightBlueBorderDefault)',
+        body: 'Hello,\n\nOur data sync stops halfway through with a rate-limit error. Is there a way around this?'
+      }
+    ]
+  },
+  {
+    id: 61,
+    inbox: 'Email Support 01',
+    type: 'Unassigned',
+    sender: 'Priya Shah',
+    initial: 'P',
+    avatarColor: 'var(--pastelOrangeBorderDefault)',
+    time: 'Feb 3, 06:50 PM',
+    subject: 'Scheduled reports not sending',
+    preview: 'Our weekly report email stopped arriving.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Priya Shah',
+        email: 'priya.shah@fedex.com',
+        time: 'Feb 3, 06:50 PM',
+        initial: 'P',
+        avatarColor: 'var(--pastelOrangeBorderDefault)',
+        body: 'Hi,\n\nOur weekly scheduled report stopped arriving on Monday. Nothing has changed in the settings on our side.'
+      }
+    ]
+  },
+  {
+    id: 62,
+    inbox: 'Email Support 01',
+    type: 'Unassigned',
+    sender: 'Mark Lee',
+    initial: 'M',
+    avatarColor: 'var(--pastelLightBlueBorderDefault)',
+    time: 'Feb 3, 05:15 PM',
+    subject: 'Add two seats to our plan',
+    preview: 'We have two designers joining next week.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Mark Lee',
+        email: 'mark.lee@shopify.com',
+        time: 'Feb 3, 05:15 PM',
+        initial: 'M',
+        avatarColor: 'var(--pastelLightBlueBorderDefault)',
+        body: 'Hello,\n\nWe have two designers joining next week. Could you add two seats to our plan and send the updated quote?'
+      }
+    ]
+  },
+  {
+    id: 63,
+    inbox: 'Email Support 01',
+    type: 'Unassigned',
+    sender: 'Ana Lopez',
+    initial: 'A',
+    avatarColor: 'var(--pastelVioletBorderDefault)',
+    time: 'Feb 3, 04:20 PM',
+    subject: 'Dark mode makes charts unreadable',
+    preview: 'Chart labels disappear in dark mode.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Ana Lopez',
+        email: 'ana.lopez@paypal.com',
+        time: 'Feb 3, 04:20 PM',
+        initial: 'A',
+        avatarColor: 'var(--pastelVioletBorderDefault)',
+        body: 'Hi,\n\nWhen I switch to dark mode, the labels on the dashboard charts are almost invisible. Is there a fix?'
+      }
+    ]
+  },
+  {
+    id: 64,
+    inbox: 'Email Support 01',
+    type: 'Unassigned',
+    sender: 'Ben Carter',
+    initial: 'B',
+    avatarColor: 'var(--pastelRedBorderDefault)',
+    time: 'Feb 3, 02:35 PM',
+    subject: 'Webhook retries',
+    preview: 'How many times do you retry a failed webhook?',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Ben Carter',
+        email: 'ben.carter@airbnb.com',
+        time: 'Feb 3, 02:35 PM',
+        initial: 'B',
+        avatarColor: 'var(--pastelRedBorderDefault)',
+        body: 'Hello,\n\nOur endpoint was down for an hour last night. How many times do you retry a failed webhook, and over what period?'
+      }
+    ]
+  },
+  {
+    id: 65,
+    inbox: 'Email Support 01',
+    type: 'Mine',
+    sender: 'Nora Quinn',
+    initial: 'N',
+    avatarColor: 'var(--pastelLightBlueBorderDefault)',
+    time: 'Feb 3, 01:10 PM',
+    subject: 'SSO users missing from directory',
+    preview: 'Users who signed in with SSO aren\'t listed.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Nora Quinn',
+        email: 'nora.quinn@dell.com',
+        time: 'Feb 3, 01:10 PM',
+        initial: 'N',
+        avatarColor: 'var(--pastelLightBlueBorderDefault)',
+        body: 'Hi,\n\nPeople who signed in through SSO this week don\'t show up in the user directory. Can you check?'
+      }
+    ]
+  },
+  {
+    id: 66,
+    inbox: 'Email Support 01',
+    type: 'Mine',
+    sender: 'Chris Diaz',
+    initial: 'C',
+    avatarColor: 'var(--pastelOrangeBorderDefault)',
+    time: 'Feb 3, 11:45 AM',
+    subject: 'Update our SAML certificate',
+    preview: 'Our identity provider certificate expires Friday.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Chris Diaz',
+        email: 'chris.diaz@dell.com',
+        time: 'Feb 3, 11:45 AM',
+        initial: 'C',
+        avatarColor: 'var(--pastelOrangeBorderDefault)',
+        body: 'Hello,\n\nOur SAML signing certificate expires on Friday. What\'s the safest way to upload the new one without locking people out?'
+      }
+    ]
+  },
+  {
+    id: 67,
+    inbox: 'Email Support 01',
+    type: 'Mine',
+    sender: 'Fatima Ali',
+    initial: 'F',
+    avatarColor: 'var(--pastelVioletBorderDefault)',
+    time: 'Feb 3, 10:05 AM',
+    subject: 'Nonprofit discount',
+    preview: 'Do you offer pricing for registered charities?',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Fatima Ali',
+        email: 'fatima.ali@paypal.com',
+        time: 'Feb 3, 10:05 AM',
+        initial: 'F',
+        avatarColor: 'var(--pastelVioletBorderDefault)',
+        body: 'Hi,\n\nWe\'re a registered charity. Do you offer a nonprofit discount, and what do you need from us to apply?'
+      }
+    ]
+  },
+  {
+    id: 71,
+    inbox: 'Email Support 02',
+    type: 'Unassigned',
+    sender: 'Leo Martin',
+    initial: 'L',
+    avatarColor: 'var(--pastelRedBorderDefault)',
+    time: 'Feb 3, 06:30 PM',
+    subject: 'Damaged items in last delivery',
+    preview: 'Three boxes arrived crushed.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Leo Martin',
+        email: 'leo.martin@fedex.com',
+        time: 'Feb 3, 06:30 PM',
+        initial: 'L',
+        avatarColor: 'var(--pastelRedBorderDefault)',
+        body: 'Hi,\n\nThree boxes in yesterday\'s delivery arrived crushed and the items inside are damaged. Photos attached.'
+      }
+    ]
+  },
+  {
+    id: 72,
+    inbox: 'Email Support 02',
+    type: 'Unassigned',
+    sender: 'Grace Hill',
+    initial: 'G',
+    avatarColor: 'var(--pastelVioletBorderDefault)',
+    time: 'Feb 3, 05:00 PM',
+    subject: 'Change delivery address',
+    preview: 'Please send future orders to our new warehouse.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Grace Hill',
+        email: 'grace.hill@fedex.com',
+        time: 'Feb 3, 05:00 PM',
+        initial: 'G',
+        avatarColor: 'var(--pastelVioletBorderDefault)',
+        body: 'Hello,\n\nWe\'ve moved to a new warehouse. Please send all future orders to the address below from next week.'
+      }
+    ]
+  },
+  {
+    id: 73,
+    inbox: 'Email Support 02',
+    type: 'Unassigned',
+    sender: 'Sophie Turner',
+    initial: 'S',
+    avatarColor: 'var(--pastelOrangeBorderDefault)',
+    time: 'Feb 3, 03:40 PM',
+    subject: 'Tax ID missing on invoice',
+    preview: 'Our invoices don\'t show our tax ID.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Sophie Turner',
+        email: 'sophie.turner@paypal.com',
+        time: 'Feb 3, 03:40 PM',
+        initial: 'S',
+        avatarColor: 'var(--pastelOrangeBorderDefault)',
+        body: 'Hi,\n\nOur tax ID isn\'t printed on the invoices we receive. Our auditors need it there. Can you add it?'
+      }
+    ]
+  },
+  {
+    id: 74,
+    inbox: 'Email Support 02',
+    type: 'Unassigned',
+    sender: 'Jack Reed',
+    initial: 'J',
+    avatarColor: 'var(--pastelLightBlueBorderDefault)',
+    time: 'Feb 3, 02:15 PM',
+    subject: 'Bulk import of contacts',
+    preview: 'Is there a limit on CSV contact imports?',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Jack Reed',
+        email: 'jack.reed@shopify.com',
+        time: 'Feb 3, 02:15 PM',
+        initial: 'J',
+        avatarColor: 'var(--pastelLightBlueBorderDefault)',
+        body: 'Hello,\n\nWe want to import about 40,000 contacts from a CSV file. Is there a size limit we should know about?'
+      }
+    ]
+  },
+  {
+    id: 75,
+    inbox: 'Email Support 02',
+    type: 'Mine',
+    sender: 'Ivy Nguyen',
+    initial: 'I',
+    avatarColor: 'var(--pastelRedBorderDefault)',
+    time: 'Feb 3, 12:50 PM',
+    subject: 'API keys for staging',
+    preview: 'Can we get separate keys for our staging setup?',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Ivy Nguyen',
+        email: 'ivy.nguyen@dell.com',
+        time: 'Feb 3, 12:50 PM',
+        initial: 'I',
+        avatarColor: 'var(--pastelRedBorderDefault)',
+        body: 'Hi,\n\nCould we get a separate set of API keys for our staging environment so test traffic doesn\'t count against production?'
+      }
+    ]
+  },
+  {
+    id: 76,
+    inbox: 'Email Support 02',
+    type: 'Mine',
+    sender: 'Hannah Moore',
+    initial: 'H',
+    avatarColor: 'var(--pastelOrangeBorderDefault)',
+    time: 'Feb 3, 11:20 AM',
+    subject: 'Order history export',
+    preview: 'We need a full export of last year\'s orders.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Hannah Moore',
+        email: 'hannah.moore@shopify.com',
+        time: 'Feb 3, 11:20 AM',
+        initial: 'H',
+        avatarColor: 'var(--pastelOrangeBorderDefault)',
+        body: 'Hello,\n\nFor our year-end review we need a full export of last year\'s orders. Is that something you can send over?'
+      }
+    ]
+  },
+  {
+    id: 77,
+    inbox: 'Email Support 02',
+    type: 'Mine',
+    sender: 'Lucas Gray',
+    initial: 'L',
+    avatarColor: 'var(--pastelVioletBorderDefault)',
+    time: 'Feb 3, 09:40 AM',
+    subject: 'Two-week trial extension',
+    preview: 'We need a bit more time to evaluate.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Lucas Gray',
+        email: 'lucas.gray@airbnb.com',
+        time: 'Feb 3, 09:40 AM',
+        initial: 'L',
+        avatarColor: 'var(--pastelVioletBorderDefault)',
+        body: 'Hi,\n\nOur evaluation is taking longer than planned. Could you extend our trial by two weeks?'
       }
     ]
   }

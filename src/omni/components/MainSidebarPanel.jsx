@@ -327,7 +327,7 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole, onOpenSear
 
   return (
     <div className="side-nav-expanded">
-      <div className="panel-header-top">
+      <div className="panel-header-top panel-header-top--title-only">
         <div className="header-row">
           <h1>Conversations</h1>
           <div className="header-actions">
@@ -342,12 +342,6 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole, onOpenSear
                 <img src={chevronDownSmall} alt="" width="14" height="14" />
               </button>
             </div>
-          </div>
-        </div>
-        <div className="search-container">
-          <div className="search-box">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" placeholder="Search conversations" />
           </div>
         </div>
       </div>

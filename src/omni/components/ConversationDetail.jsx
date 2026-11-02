@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './ConversationDetail.css';
 import ReplySection from './ReplySection';
+import { Tabs } from '../../components/Tabs';
+import { Icon } from '../../icons/Icon';
+import { slackChannelFor } from '../data/slackChannels';
+import TicketOverview, { emailTabLabel } from './TicketOverview';
 
 // Icons
 import titleUnread from '../assets/icons/title-unreaed.svg';
@@ -18,13 +22,28 @@ import chevronDownIcon from '../assets/icons/s-chevron-down.svg';
 const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSignatureId }) => {
   const [expandedIds, setExpandedIds] = useState([]);
   const [activeReplyId, setActiveReplyId] = useState(null);
+  const [tab, setTab] = useState('conversation');
+  // A merged ticket: 'overview' (every email as a card) or the id of the email whose thread is open.
+  const [emailTab, setEmailTab] = useState('overview');
 
   useEffect(() => {
     if (conversation && conversation.messages.length > 0) {
       setExpandedIds([conversation.messages[0].id]);
       setActiveReplyId(null);
     }
+    setTab('conversation');
+    setEmailTab('overview');
   }, [conversation]);
+
+  const emails = conversation?.emails;
+  const openEmail = emails?.find((e) => String(e.id) === emailTab);
+  const threadMessages = openEmail ? openEmail.messages : conversation?.messages ?? [];
+  const selectEmail = (value) => {
+    setEmailTab(value);
+    const email = emails?.find((e) => String(e.id) === value);
+    if (email?.messages.length) setExpandedIds([email.messages[0].id]);
+    setActiveReplyId(null);
+  };
 
   const toggleExpand = (id) => {
     setExpandedIds(prev => 
@@ -63,7 +82,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
       <div className="detail-scroll-area">
         {/* Subject Bar */}
         <div className="subject-bar-detail">
-          <h1 className="subject-text-large">{conversation.subject}</h1>
+          <h1 className="subject-text-large text-label-medium">{conversation.subject}</h1>
           <div className="subject-actions">
              <button className="icon-btn" onClick={(e) => handleReplyAll(e, expandedIds[0] || (conversation.messages.length > 0 ? conversation.messages[0].id : null))}>
                <img src={replyIcon} alt="Reply" width="16" height="16" />
@@ -76,10 +95,39 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
              </button>
           </div>
         </div>
-  
-        {/* Messages Container */}
+
+        {/* Conversation and its Slack channel (Figma 4026:14306). Only the tab itself is built for now. */}
+        <Tabs
+          className="detail-tabs"
+          aria-label="Conversation views"
+          value={tab}
+          onChange={setTab}
+          tabs={[
+            { value: 'conversation', label: 'Conversation' },
+            { value: 'slack', label: slackChannelFor(conversation.id), icon: <Icon name="slack" size={14} /> },
+          ]}
+        />
+
+        {/* The Slack tab is a placeholder for now; the email thread shows on the Conversation tab */}
+        {tab === 'slack' ? (
+          <div className="detail-slack-placeholder text-body-small">Slack internal collaboration page</div>
+        ) : (
+        <>
+        {/* A merged ticket: Overview, then a tab per merged email (Figma 4028:16172) */}
+        {emails && (
+          <Tabs
+            className="detail-tabs detail-email-tabs"
+            aria-label="Merged emails"
+            value={emailTab}
+            onChange={selectEmail}
+            tabs={[{ value: 'overview', label: 'Overview' }, ...emails.map((e) => ({ value: String(e.id), label: emailTabLabel(e) }))]}
+          />
+        )}
+        {emails && emailTab === 'overview' ? (
+          <TicketOverview emails={emails} onOpen={selectEmail} />
+        ) : (
         <div className="messages-container">
-          {conversation.messages.map((msg) => {
+          {threadMessages.map((msg) => {
             const isExpanded = expandedIds.includes(msg.id);
             const isReplying = activeReplyId === msg.id;
    
@@ -154,6 +202,9 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
             );
           })}
         </div>
+        )}
+        </>
+        )}
       </div>
     </div>
   );

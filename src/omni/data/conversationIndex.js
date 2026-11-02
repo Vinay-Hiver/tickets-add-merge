@@ -56,7 +56,8 @@ export const iconFor = (c, channelIcons) => (c.ticketId ? 'ticket' : channelIcon
 // formatting: "5550110" matches "+1 (555) 0110".
 const withPhoneDigits = (c) => ({ ...c, phoneDigits: (c.searchText.match(/\+?[\d][\d\s().-]{5,}\d/g) || []).map((p) => p.replace(/\D/g, '')).join(' ') });
 
-export const CONVERSATION_INDEX = [...email, ...chats, ...calls].map(withPhoneDigits);
+// Only conversations from inboxes that exist in the sidebar.
+export const CONVERSATION_INDEX = [...email, ...chats, ...calls].filter((c) => INITIAL_VIEWS_BY_INBOX[c.inbox]).map(withPhoneDigits);
 
 export const conversationById = (id) => CONVERSATION_INDEX.find((c) => c.id === String(id));
 

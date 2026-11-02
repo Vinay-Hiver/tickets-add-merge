@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import type { KeyboardEvent } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 import { Badge } from '../Badge'
 import { startRipple } from '../ripple'
 import './Tabs.css'
@@ -7,6 +7,8 @@ import './Tabs.css'
 export type TabItem = {
   value: string
   label: string
+  /** A 14px icon before the label, for example a channel logo. */
+  icon?: ReactNode
   /** Outlined tabs only: a count shown in a Badge after the label. */
   count?: string
   disabled?: boolean
@@ -62,6 +64,7 @@ export function Tabs({ tabs, value, onChange, variant = 'outlined', className, .
             onMouseDown={(e) => { if (!t.disabled) startRipple(e) }}
             onClick={() => onChange(t.value)}
           >
+            {t.icon}
             {t.label}
             {variant === 'outlined' && t.count && <Badge type="default">{t.count}</Badge>}
           </button>
