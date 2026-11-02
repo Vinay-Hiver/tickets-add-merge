@@ -59,7 +59,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'Alice Johnson',
-        email: 'alice.j@fedex.com',
+        email: 'alice.j@shopify.com',
         time: 'Feb 4, 10:00 AM',
         initial: 'A',
         avatarColor: 'var(--pastelVioletBorderDefault)',
@@ -126,7 +126,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'David Chen',
-        email: 'david.chen@dell.com',
+        email: 'david.chen@airbnb.com',
         time: 'Feb 4, 10:00 AM',
         initial: 'D',
         avatarColor: 'var(--pastelPurpleTextBody)',
@@ -144,7 +144,7 @@ export const conversationsData = [
       {
         id: 'm3',
         sender: 'David Chen',
-        email: 'david.chen@dell.com',
+        email: 'david.chen@airbnb.com',
         time: 'Feb 4, 01:20 PM',
         initial: 'D',
         avatarColor: 'var(--pastelPurpleTextBody)',
@@ -484,7 +484,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'Sarah Miller',
-        email: 'sarah.miller@fedex.com',
+        email: 'sarah.miller@paypal.com',
         time: 'Feb 4, 11:05 AM',
         initial: 'S',
         avatarColor: 'var(--pastelVioletBorderDefault)',
@@ -507,7 +507,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'Kevin Park',
-        email: 'kevin.park@fedex.com',
+        email: 'kevin.park@paypal.com',
         time: 'Feb 4, 10:40 AM',
         initial: 'K',
         avatarColor: 'var(--pastelLightBlueBorderDefault)',
@@ -553,7 +553,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'Tom Hardy',
-        email: 'tom.hardy@dell.com',
+        email: 'tom.hardy@airbnb.com',
         time: 'Feb 4, 08:30 AM',
         initial: 'T',
         avatarColor: 'var(--pastelRedBorderDefault)',
@@ -576,7 +576,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'Lisa Wong',
-        email: 'lisa.wong@dell.com',
+        email: 'lisa.wong@airbnb.com',
         time: 'Feb 4, 08:10 AM',
         initial: 'L',
         avatarColor: 'var(--pastelVioletBorderDefault)',
@@ -714,7 +714,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'Priya Shah',
-        email: 'priya.shah@fedex.com',
+        email: 'priya.shah@paypal.com',
         time: 'Feb 3, 06:50 PM',
         initial: 'P',
         avatarColor: 'var(--pastelOrangeBorderDefault)',
@@ -806,7 +806,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'Nora Quinn',
-        email: 'nora.quinn@dell.com',
+        email: 'nora.quinn@shopify.com',
         time: 'Feb 3, 01:10 PM',
         initial: 'N',
         avatarColor: 'var(--pastelLightBlueBorderDefault)',
@@ -829,7 +829,7 @@ export const conversationsData = [
       {
         id: 'm1',
         sender: 'Chris Diaz',
-        email: 'chris.diaz@dell.com',
+        email: 'chris.diaz@shopify.com',
         time: 'Feb 3, 11:45 AM',
         initial: 'C',
         avatarColor: 'var(--pastelOrangeBorderDefault)',

@@ -101,7 +101,7 @@ export function AddConversationsSheet({ ticket, candidates, others = [], onClose
 
   return (
     <Sheet
-      title={`Add conversation to ${ticket.ticketId}`}
+      title={`Add conversation to Ticket - ${ticket.ticketId}`}
       onClose={onClose}
       footer={(exit) => (
         <footer className="mc-footer mc-footer--pick">
