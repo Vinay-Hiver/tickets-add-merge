@@ -5,7 +5,12 @@ import Sidebar from './Sidebar';
 import ConversationList from './components/ConversationList';
 import ConversationDetail from './components/ConversationDetail';
 import LinkedRightPanel from './components/link/LinkedRightPanel';
+import TicketPanel from './components/TicketPanel';
 import BulkActionsPanel from './components/BulkActionsPanel';
+import MergeConversationsSheet from './components/MergeConversationsSheet';
+import AddToTicketSheet, { AddConversationsSheet } from './components/AddToTicketSheet';
+import { CUSTOM_FIELDS } from './data/customFields';
+import { domainOf } from './data/companies';
 import ChannelChatView from './components/ChannelChatView';
 import VoiceCallView from './components/voice/VoiceCallView';
 import { VOICE_INBOXES } from './data/voiceCalls';
@@ -16,7 +21,7 @@ import { conversationsData } from './data/emailConversations';
 import { INITIAL_VIEWS_BY_INBOX } from './data/dummyViews';
 import { useCurrentUser } from './CurrentUser';
 import { useConversationFields } from './ConversationFields';
-import { buildMergedTicket, mergeCustomFields, mergeTags } from './data/merge';
+import { addToTicket, buildMergedTicket, mergeCustomFields, mergeTags, timestampOf } from './data/merge';
 
 
 // Fallback dummy threads for views (e.g. Team, Tickets, Pending, Closed,
@@ -118,6 +123,15 @@ function App() {
   const [mergedTickets, setMergedTickets] = useState([]);
   const [mergedAwayIds, setMergedAwayIds] = useState([]);
   const fields = useConversationFields();
+  // "Merge conversations" from an open conversation's header: the sheet starts by picking what to merge it with.
+  const [mergeSourceId, setMergeSourceId] = useState(null);
+  // "Add to an existing ticket" from an open conversation's header.
+  const [addSourceId, setAddSourceId] = useState(null);
+  // "Add conversation" from a ticket's header: the ticket conversations are added to.
+  const [addTargetId, setAddTargetId] = useState(null);
+
+  // In a merged ticket: 'overview' or the id of the email whose tab is open. The right panel follows it.
+  const [emailTab, setEmailTab] = useState('overview');
 
   // Prototype role — All Views pins Team Favourites as Admin. No toggle UI.
   const activeRole = 'Admin';
@@ -135,7 +149,8 @@ function App() {
       base = dummyCacheRef.current[key];
     }
     // Tickets made by merging sit at the top, newest first; merged emails are gone.
-    return [...mergedTickets.filter(inView), ...base.filter((c) => !mergedAwayIds.includes(c.id))];
+    // A ticket that had a conversation added is in mergedTickets now, so its original card is left out.
+    return [...mergedTickets.filter(inView), ...base.filter((c) => !mergedAwayIds.includes(c.id) && !mergedTickets.some((t) => t.id === c.id))];
   }, [activeFilter.inbox, activeFilter.type, mergedTickets, mergedAwayIds]);
 
   // "Merge and create ticket": a ticket with the chosen title, its assignee and status, the tags of every email and
@@ -177,6 +192,57 @@ function App() {
     || conversationsData.find(c => c.id === selectedId)
     || filteredConversations.find(c => c.id === selectedId);
 
+  // "Add to ticket": the conversation joins the ticket. The ticket keeps its title, assignee and status; tags are combined
+  // and custom fields the ticket leaves empty are filled from the conversation (ticket values win).
+  // Several conversations can be added at once (from the ticket's header); a gap takes the first value found.
+  const addConversationsToTicket = (conversations, ticketId) => {
+    const existing = mergedTickets.find((t) => t.id === ticketId) ?? conversationsData.find((c) => c.id === ticketId);
+    const ticket = conversations.reduce(addToTicket, existing);
+    fields.setTags(ticket.id, [...new Set([...fields.tagsOf(ticket.id), ...conversations.flatMap((c) => fields.tagsOf(c.id))])]);
+    const ticketValues = fields.customFieldsOf(ticket.id);
+    CUSTOM_FIELDS.forEach((f) => {
+      if (ticketValues[f.id]) return;
+      const value = conversations.map((c) => fields.customFieldsOf(c.id)[f.id]).find(Boolean);
+      if (value) fields.setCustomField(ticket.id, f.id, value);
+    });
+    setMergedTickets((tickets) => [ticket, ...tickets.filter((t) => t.id !== ticket.id)]);
+    setMergedAwayIds((ids) => [...ids, ...conversations.map((c) => c.id)]);
+    setSelectedId(ticket.id);
+    setEmailTab('overview');
+  };
+
+  // Tickets the open conversation can be added to: in the same inbox, newest first. Only the same domain can be picked.
+  const addSource = addSourceId != null
+    ? conversationsData.find((c) => c.id === addSourceId) ?? filteredConversations.find((c) => c.id === addSourceId)
+    : null;
+  const inboxTickets = addSource
+    ? [...mergedTickets, ...conversationsData.filter((c) => c.ticketId && !mergedTickets.some((t) => t.id === c.id))]
+      .filter((t) => t.inbox === addSource.inbox)
+      .sort((a, b) => timestampOf(b.time) - timestampOf(a.time))
+    : [];
+
+  // Conversations a ticket can take: emails in its inbox that are not tickets and not merged yet, newest first.
+  // Only the ticket's domain can be picked.
+  const addTarget = addTargetId != null
+    ? mergedTickets.find((t) => t.id === addTargetId) ?? conversationsData.find((c) => c.id === addTargetId) ?? filteredConversations.find((c) => c.id === addTargetId)
+    : null;
+  const addable = addTarget
+    ? conversationsData
+      .filter((c) => c.inbox === addTarget.inbox && !c.ticketId && !mergedAwayIds.includes(c.id))
+      .sort((a, b) => timestampOf(b.time) - timestampOf(a.time))
+    : [];
+
+  // The open conversation being merged, and what it can merge into: emails in the same inbox (any view) that are not
+  // tickets and not merged yet. Same domain can be picked; other domains only explain why a search finds nothing.
+  const mergeSource = mergeSourceId != null
+    ? conversationsData.find((c) => c.id === mergeSourceId) ?? filteredConversations.find((c) => c.id === mergeSourceId)
+    : null;
+  const mergeable = mergeSource
+    ? conversationsData
+      .filter((c) => c.inbox === mergeSource.inbox && !c.ticketId && c.id !== mergeSource.id && !mergedAwayIds.includes(c.id))
+      .sort((a, b) => timestampOf(b.time) - timestampOf(a.time))
+    : [];
+
   return (
     <div className="app-container">
       <Routes>
@@ -211,11 +277,20 @@ function App() {
                   <>
                     <ConversationDetail
                       conversation={selectedConversation}
+                      emailTab={emailTab}
+                      onEmailTabChange={setEmailTab}
+                      onMergeClick={() => setMergeSourceId(selectedConversation.id)}
+                      onAddToTicketClick={() => setAddSourceId(selectedConversation.id)}
+                      onAddConversationClick={() => setAddTargetId(selectedConversation.id)}
                       signatures={signatures}
                       setSignatures={setSignatures}
                       defaultSignatureId={defaultSignatureId}
                     />
-                    <LinkedRightPanel channel="email" ticketId={selectedConversation?.ticketId} inboxName={activeFilter.inbox} unassigned={activeFilter.type === 'Unassigned'} conversationId={String(selectedId)} />
+                    {selectedConversation?.emails ? (
+                      <TicketPanel ticket={selectedConversation} emailTab={emailTab} inboxName={activeFilter.inbox} />
+                    ) : (
+                      <LinkedRightPanel channel="email" ticketId={selectedConversation?.ticketId} inboxName={activeFilter.inbox} unassigned={activeFilter.type === 'Unassigned'} conversationId={String(selectedId)} />
+                    )}
                   </>
                 )}
               </>
@@ -224,6 +299,36 @@ function App() {
         } />
         <Route path="/my-settings" element={<MySettingsPage />} />
       </Routes>
+      {addSource && (
+        <AddToTicketSheet
+          key={addSource.id}
+          conversation={addSource}
+          tickets={inboxTickets.filter((t) => domainOf(t) === domainOf(addSource))}
+          others={inboxTickets.filter((t) => domainOf(t) !== domainOf(addSource))}
+          onClose={() => setAddSourceId(null)}
+          onAdd={(ticketId) => { addConversationsToTicket([addSource], ticketId); setAddSourceId(null); }}
+        />
+      )}
+      {addTarget && (
+        <AddConversationsSheet
+          key={addTarget.id}
+          ticket={addTarget}
+          candidates={addable.filter((c) => domainOf(c) === domainOf(addTarget))}
+          others={addable.filter((c) => domainOf(c) !== domainOf(addTarget))}
+          onClose={() => setAddTargetId(null)}
+          onAdd={(conversations) => { addConversationsToTicket(conversations, addTarget.id); setAddTargetId(null); }}
+        />
+      )}
+      {mergeSource && (
+        <MergeConversationsSheet
+          key={mergeSource.id}
+          source={mergeSource}
+          candidates={mergeable.filter((c) => domainOf(c) === domainOf(mergeSource))}
+          others={mergeable.filter((c) => domainOf(c) !== domainOf(mergeSource))}
+          onClose={() => setMergeSourceId(null)}
+          onMerge={(titleId, conversations) => { mergeIntoTicket(conversations, titleId); setMergeSourceId(null); }}
+        />
+      )}
     </div>
   );
 }

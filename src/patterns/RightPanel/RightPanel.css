@@ -261,3 +261,9 @@
 .hot-rp-cf-value__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hot-rp-cf-value__empty { color: var(--slateTextDisabled); }
 .hot-rp-cf-edit { display: flex; align-items: center; flex: 1; min-width: 0; min-height: 36px; }
+
+/* Merged ticket, in a conversation's tab: the conversation's block after the ticket's sections. Its title is the subject
+   on one line, and its old assignee and status are history, so they show at half strength. */
+.hot-rp-top--conversation { border-top: 1px solid var(--slateBorderMild); }
+.hot-rp-top__title--truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hot-rp-history { display: inline-flex; align-items: center; gap: 8px; opacity: 0.5; }

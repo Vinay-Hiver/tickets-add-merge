@@ -171,3 +171,65 @@
 .mc-email:hover .hot-tooltip-wrap { display: inline-flex; }
 
 .mc-footer { display: flex; justify-content: flex-end; gap: 12px; padding: 20px; border-top: 1px solid var(--slateBorderMild); }
+
+/* Step 1 when merging from an open conversation (Figma 4029:19413) */
+.mc-body--pick { gap: 34px; }
+.mc-pick-section { display: flex; flex-direction: column; gap: 8px; }
+.mc-pick-section--into { gap: 12px; }
+.mc-pick-label { margin: 0; font: var(--fontWeightMedium) 14px/20px var(--fontFamily); color: var(--slateTextSubtle); }
+.mc-pick { display: flex; flex-direction: column; gap: 16px; padding: 16px 16px 20px; border-color: var(--slateBorderLight); }
+
+.mc-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.mc-filter {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px 2px 8px;
+  border: 1px solid var(--slateBorderLight); border-radius: 4px; background: var(--slateSurfaceSubtle);
+  font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextBody); cursor: pointer;
+}
+.mc-filter:hover { background: var(--slateSurfaceSubtle100Hover); }
+.mc-filter svg { flex: none; color: var(--slateIconsActive); }
+
+.mc-pick__results { display: flex; flex-direction: column; gap: 8px; }
+.mc-pick__caption { margin: 0; font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextSubtle); }
+.mc-pick__list { display: flex; flex-direction: column; gap: 12px; }
+.mc-pick__empty { display: flex; align-items: flex-start; gap: 6px; margin: 0; padding: 12px 0; font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextSubtle); }
+.mc-pick__empty--error { color: var(--errorTextBody); }
+.mc-pick__empty--error svg { flex: none; margin-top: 3px; }
+
+.mc-pick-card {
+  box-sizing: border-box; display: flex; flex-direction: column; gap: 4px; padding: 12px;
+  border: 1px solid var(--slateBorderLight); border-radius: 8px; background: var(--slateSurfaceWhite);
+  font-family: var(--fontFamily); cursor: pointer; outline: none;
+}
+.mc-pick-card:not(.mc-pick-card--fixed):hover, .mc-pick-card:focus-visible { background: var(--slateSurfaceSubtle100Hover); }
+.mc-pick-card.is-selected { border-color: var(--primaryBorderDefault); }
+.mc-pick-card--fixed { background: var(--slateSurfaceSubtle); cursor: default; }
+.mc-pick-card__top { display: flex; align-items: center; gap: 8px; min-height: 20px; }
+.mc-pick-card__name {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; white-space: nowrap;
+  font: var(--fontWeightMedium) 14px/20px var(--fontFamily); color: var(--slateTextTitle);
+}
+.mc-pick-card__date { flex: none; font: var(--fontWeightMedium) 12px/18px var(--fontFamily); color: var(--slateTextSubtle); }
+.mc-pick-card__chips { display: flex; gap: 6px; padding-top: 4px; }
+
+/* The mail icon becomes a checkbox on hover (and stays one once ticked); the date becomes the open-in-new-tab button */
+.mc-pick-card__lead { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; }
+.mc-pick-card__icon { display: flex; color: var(--slateIconsActive); }
+.mc-pick-card__check { display: none; }
+.mc-pick-card__check .hot-checkbox { display: flex; min-height: 0; }
+.mc-pick-card:not(.mc-pick-card--fixed):is(:hover, .is-selected) .mc-pick-card__icon { display: none; }
+.mc-pick-card:not(.mc-pick-card--fixed):is(:hover, .is-selected) .mc-pick-card__check { display: flex; }
+.mc-pick-card .hot-tooltip-wrap { display: none; flex: none; }
+.mc-pick-card:hover .mc-pick-card__date { display: none; }
+.mc-pick-card:hover .hot-tooltip-wrap { display: inline-flex; }
+
+/* Footer: the count on the left, Cancel and Next on the right */
+.mc-footer--pick { justify-content: space-between; align-items: center; }
+.mc-footer__count { font: var(--fontWeightMedium) 14px/20px var(--fontFamily); color: var(--slateTextBody); }
+.mc-footer__actions { display: flex; gap: 12px; }
+
+/* Add to an existing ticket (Figma 4030:19966): ticket cards, a radio button instead of a checkbox */
+.mc-ticket-card__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.mc-ticket-card__date { flex: none; font: var(--fontWeightMedium) 12px/18px var(--fontFamily); color: var(--slateTextSubtle); }
+.mc-ticket-card .mc-pick-card__chips { align-items: center; }
+.mc-ticket-card__count { font: var(--fontWeightRegular) 12px/18px var(--fontFamily); color: var(--slateTextBody); white-space: nowrap; }
+.mc-pick-card__check .hot-radio { display: flex; min-height: 0; }

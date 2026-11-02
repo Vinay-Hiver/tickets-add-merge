@@ -249,3 +249,14 @@
 /* The merged ticket's Overview / email tabs are 50px tall */
 .detail-tabs.detail-email-tabs.hot-tabs--outlined,
 .detail-tabs.detail-email-tabs.hot-tabs--outlined .hot-tab { height: 50px; }
+
+/* Header actions: 28px buttons (only here; .icon-btn is 24px elsewhere) */
+.detail-header .icon-btn { width: 28px; height: 28px; padding: 6px; color: var(--slateIconsActive); }
+.detail-header .icon-btn svg { flex: none; }
+.detail-header .hot-tooltip-wrap { display: inline-flex; }
+/* The Popover lines the menu up with the button's left edge; this moves its centre under the 28px button's centre */
+.hot-dropdown.detail-ticket-menu { width: max-content; transform: translateX(calc(-50% + 14px)); }
+/* Wider than the longest option: the left keeps the Dropdown's own padding, the extra room is on the right */
+.hot-dropdown.detail-ticket-menu .hot-list-item.hot-list-item--compact.hot-list-item--no-leading { padding-right: 16px; }
+/* The Ticket button keeps its hover fill while its flyout is open, so it's clear which icon the flyout belongs to */
+.detail-header .icon-btn.is-active { background-color: var(--slateSurfaceSubtle100Hover); }

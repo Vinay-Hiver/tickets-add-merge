@@ -37,6 +37,8 @@ export type RightPanelProps = {
   /** Accessible name for the panel. */
   'aria-label'?: string
   className?: string
+  /** Content after the sections and before "Customize widgets", for example a second top block with its own sections. It is not part of the drag order. */
+  afterSections?: ReactNode
 }
 
 /** What a sortable wrapper hands to the section inside it: the props that make the drag handle start a drag. */
@@ -64,7 +66,7 @@ function SortableSection({ id, children }: { id: string; children: ReactNode }) 
  * The panel on the right of a page. Always 320px wide. Every channel uses the same anatomy: a top section, then sub-sections
  * that open and close and that can be dragged by their handle to a new order (up and down only).
  */
-export function RightPanel({ tabs, activeTab, onTabChange, children, onReorder, customizeWidgets, visibleIds, onVisibleChange, className, ...rest }: RightPanelProps) {
+export function RightPanel({ tabs, activeTab, onTabChange, children, onReorder, customizeWidgets, visibleIds, onVisibleChange, className, afterSections, ...rest }: RightPanelProps) {
   const [innerTab, setInnerTab] = useState(tabs?.[0]?.id)
   const selectedTab = activeTab ?? innerTab
   const nodes = Children.toArray(children)
@@ -133,6 +135,7 @@ export function RightPanel({ tabs, activeTab, onTabChange, children, onReorder, 
           </div>
         </SortableContext>
       </DndContext>
+      {afterSections}
       {customizeWidgets && (
         <CustomizeWidgets
           options={current.map((id) => ({ value: id, label: String(byId.get(id)?.props.title ?? id) }))}

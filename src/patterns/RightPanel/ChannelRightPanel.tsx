@@ -10,9 +10,10 @@ import { MessagePlusSquare } from '../../icons/MessagePlusSquare'
 import type { IconName } from '../../icons/iconData'
 import { RightPanel, RightPanelSection, RightPanelTop } from './RightPanel'
 import { ActivityNotes } from './ActivityNotes'
+import type { ActivityDay } from './ActivityNotes'
 import { AssigneeField, StatusField, TagsField } from './FieldSelects'
 import type { TagOption } from './FieldSelects'
-import { customFieldKinds, getChannel, samples } from './data'
+import { customFieldKinds, getChannel, sampleAssignees, samples, statusOptions } from './data'
 import type { ChannelId, ChannelSample, FieldDef, FieldKind, ResolvedSection } from './data'
 
 /** A row: [icon] [label] ...space... [value]. Same markup as the storybook right panel (see sampleData.tsx). */
@@ -326,6 +327,94 @@ export function ChannelRightPanel({ channel, inboxName, unassigned, conversation
           <SectionRows section={s} sample={sample} />
         </RightPanelSection>
       ))}
+    </RightPanel>
+  )
+}
+
+/** A merged ticket's customer account, from the conversations' email domain. */
+export type TicketAccount = { name: string; domain: string; contacts: number; conversations: number }
+
+/** One conversation inside a merged ticket, shown under the ticket in that conversation's tab. */
+export type TicketConversation = {
+  subject: string
+  /** The conversation's own assignee and status from before it joined the ticket: history only, shown faded. */
+  assignee: string
+  status: 'open' | 'pending' | 'closed'
+  contact: { name: string; email: string; account: string; conversations: number }
+  activity: ActivityDay[]
+}
+
+/**
+ * The right panel inside a merged ticket (Figma: Tickets Add/Merge › 4028:18692 and 4028:18693). The ticket's own
+ * values come first and stay editable: Ticket ID, Assignee, Status, Tags, Custom fields and Account details.
+ * In a conversation's tab, that conversation follows: its subject with its old assignee and status (read-only), then
+ * its Contact and Activity & Notes.
+ */
+export function TicketRightPanel({ inboxName, ticketId, ticketKey, assignee, onAssigneeChange, status, onStatusChange, tagOptions, tags, onTagsChange, customFields, onCustomFieldChange, account, conversation }: {
+  inboxName: string
+  ticketId: string
+  /** The ticket's id, so the fields reset when another ticket opens. */
+  ticketKey: string
+  assignee: string
+  onAssigneeChange: (value: string) => void
+  status: 'open' | 'pending' | 'closed'
+  onStatusChange: (value: 'open' | 'pending' | 'closed') => void
+  tagOptions: TagOption[]
+  tags: string[]
+  onTagsChange: (value: string[]) => void
+  customFields: CustomFieldValue[]
+  onCustomFieldChange: (fieldId: string, value: string | undefined) => void
+  account: TicketAccount
+  /** Set in a conversation's tab; left out in the Overview. */
+  conversation?: TicketConversation
+}) {
+  const def = getChannel('email')
+  const cfSection = def.sections.find((s) => s.id === 'customFields')
+  const person = conversation && sampleAssignees.find((p) => p.value === conversation.assignee)
+  const oldStatus = conversation && (statusOptions.find((o) => o.value === conversation.status) ?? statusOptions[0])
+
+  const conversationBlock = conversation && (
+    <>
+      <section className="hot-rp-top hot-rp-top--conversation">
+        <h2 className="hot-rp-top__title hot-rp-top__title--truncate" title={conversation.subject}>{conversation.subject}</h2>
+        <div className="hot-rp-fields">
+          <Row icon="assigned" label="Assignee">
+            <span className="hot-rp-history">
+              {person ? <><Avatar initial={person.label.charAt(0)} size="small" color={person.color} showStatus />{person.label.replace(/ \(Me\)$/, '')}</> : 'None'}
+            </span>
+          </Row>
+          <Row icon="flag" label="Status">
+            <span className="hot-rp-history">{oldStatus && <Icon name={oldStatus.icon} size={16} />}{oldStatus?.label}</span>
+          </Row>
+        </div>
+      </section>
+      <RightPanelSection id="ticketContact" title="Contact" icon="contact" defaultExpanded>
+        <Row icon="user" label="Name">{conversation.contact.name}</Row>
+        <Row icon="mailbox" label="Email">{conversation.contact.email}</Row>
+        <Row icon="building" label="Account">{conversation.contact.account}</Row>
+        <Row icon="previousconversations" label="Conversations" link>{conversation.contact.conversations}</Row>
+      </RightPanelSection>
+      <RightPanelSection id="ticketActivity" title="Activity & Notes" icon="clock" defaultExpanded>
+        <ActivityNotes days={conversation.activity} />
+      </RightPanelSection>
+    </>
+  )
+
+  return (
+    <RightPanel key={`ticket-${ticketKey}`} aria-label="Ticket details" tabs={def.tabs} customizeWidgets afterSections={conversationBlock}>
+      <RightPanelTop title={inboxName}>
+        <Row icon="ticket" label="Ticket ID"><span className="hot-rp-ticket-id">{ticketId}</span></Row>
+        <AssigneeField key={`assignee-${ticketKey}`} value={assignee} onChange={onAssigneeChange} />
+        <StatusField key={`status-${ticketKey}`} value={status} onChange={onStatusChange} />
+        <TagsField key={`tags-${ticketKey}`} options={tagOptions} value={tags} onChange={onTagsChange} />
+      </RightPanelTop>
+      {cfSection && customFieldsSection(cfSection, customFields, ticketKey, onCustomFieldChange)}
+      <RightPanelSection key="ticketAccount" id="ticketAccount" title="Account details" icon="building" defaultExpanded>
+        <Row icon="building" label="Account">{account.name}</Row>
+        <Row icon="domain" label="Domain">{account.domain}</Row>
+        <Row icon="contact" label="Contacts">{account.contacts}</Row>
+        <Row icon="previousconversations" label="Conversations" link>{account.conversations}</Row>
+      </RightPanelSection>
     </RightPanel>
   )
 }

@@ -17,32 +17,57 @@ export const mergeCustomFields = (conversations, primaryId, customFieldsOf) => {
 };
 
 // 'Feb 4, 02:45 PM' -> a timestamp, so messages can be ordered (the dummy data has no year).
-const timestampOf = (time) => {
+export const timestampOf = (time) => {
   const [day, clock] = time.split(', ');
   return new Date(`${day}, 2026 ${clock}`).getTime() || 0;
 };
 
+const nowClock = () => new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
 /**
- * The ticket made from merged emails. It takes the title (subject), sender and inbox view of the conversation picked
- * as the ticket title, and every message from every email, newest first.
+ * A ticket holding `emails`: every message from every email, newest first, plus the emails themselves (newest first)
+ * for the ticket's Overview and email tabs. The card's time and preview come from the newest message.
  */
-export const buildMergedTicket = (conversations, primaryId) => {
-  const primary = conversations.find((c) => c.id === primaryId) ?? conversations[0];
-  const messages = conversations
+export const assembleTicket = (ticket, emails) => {
+  const messages = emails
     .flatMap((c) => c.messages.map((m) => ({ ...m, id: `${c.id}-${m.id}` })))
     .sort((a, b) => timestampOf(b.time) - timestampOf(a.time));
   const newest = messages[0];
   return {
+    ...ticket,
+    mergedFrom: emails.map((c) => c.id),
+    time: newest?.time ?? ticket.time,
+    preview: newest ? newest.body.replace(/\s+/g, ' ').trim() : ticket.preview,
+    threadCount: messages.length,
+    messages,
+    emails: [...emails].sort((a, b) => timestampOf(b.time) - timestampOf(a.time)),
+  };
+};
+
+/**
+ * The ticket made from merged emails. It takes the title (subject), sender and inbox view of the conversation picked
+ * as the ticket title.
+ */
+export const buildMergedTicket = (conversations, primaryId) => {
+  const primary = conversations.find((c) => c.id === primaryId) ?? conversations[0];
+  return assembleTicket({
     ...primary,
     id: `ticket-${Date.now()}`,
     ticketId: `#TKT${Math.floor(100 + Math.random() * 900)}`,
-    mergedFrom: conversations.map((c) => c.id),
     customerEmail: primary.messages[0]?.email,
-    time: newest?.time ?? primary.time,
-    preview: newest ? newest.body.replace(/\s+/g, ' ').trim() : primary.preview,
-    threadCount: messages.length,
-    messages,
-    // The merged emails, each with its own thread, newest first: the ticket's Overview and email tabs show these.
-    emails: [...conversations].sort((a, b) => timestampOf(b.time) - timestampOf(a.time)),
-  };
+    mergedAt: nowClock(),
+  }, conversations);
+};
+
+/**
+ * `ticket` with `conversation` added. A ticket that was never merged holds just its own conversation, so that becomes
+ * its first email. The ticket keeps its id, ID, title, assignee and status.
+ */
+export const addToTicket = (ticket, conversation) => {
+  const emails = ticket.emails ?? [{ ...ticket, ticketId: undefined }];
+  return assembleTicket({
+    ...ticket,
+    customerEmail: ticket.customerEmail ?? ticket.messages[0]?.email,
+    mergedAt: nowClock(),
+  }, [...emails, conversation]);
 };

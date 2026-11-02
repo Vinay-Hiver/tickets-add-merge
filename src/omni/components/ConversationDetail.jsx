@@ -3,6 +3,11 @@ import './ConversationDetail.css';
 import ReplySection from './ReplySection';
 import { Tabs } from '../../components/Tabs';
 import { Icon } from '../../icons/Icon';
+import { ArrowMerge } from '../../icons/ArrowMerge';
+import { MessagePlusSquare } from '../../icons/MessagePlusSquare';
+import { Tooltip } from '../../components/Tooltip';
+import { Popover } from '../../components/Popover';
+import { Dropdown } from '../../components/Dropdown';
 import { slackChannelFor } from '../data/slackChannels';
 import TicketOverview, { emailTabLabel } from './TicketOverview';
 
@@ -19,12 +24,15 @@ import smallReplyIcon from '../assets/icons/small-reply.svg';
 import smallForwardIcon from '../assets/icons/small-forward.svg';
 import chevronDownIcon from '../assets/icons/s-chevron-down.svg';
 
-const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSignatureId }) => {
+const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSignatureId, emailTab: emailTabProp, onEmailTabChange, onMergeClick, onAddToTicketClick, onAddConversationClick }) => {
   const [expandedIds, setExpandedIds] = useState([]);
   const [activeReplyId, setActiveReplyId] = useState(null);
   const [tab, setTab] = useState('conversation');
   // A merged ticket: 'overview' (every email as a card) or the id of the email whose thread is open.
-  const [emailTab, setEmailTab] = useState('overview');
+  // App can hold it (the right panel follows it); otherwise it is kept here.
+  const [innerEmailTab, setInnerEmailTab] = useState('overview');
+  const emailTab = emailTabProp ?? innerEmailTab;
+  const setEmailTab = (value) => { setInnerEmailTab(value); onEmailTabChange?.(value); };
 
   useEffect(() => {
     if (conversation && conversation.messages.length > 0) {
@@ -44,6 +52,21 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
     if (email?.messages.length) setExpandedIds([email.messages[0].id]);
     setActiveReplyId(null);
   };
+
+  // The ticket button's flyout: Add to an existing ticket (opens its sheet) / Convert to ticket (no action yet).
+  const [ticketMenuOpen, setTicketMenuOpen] = useState(false);
+  const ticketBtnRef = React.useRef(null);
+  // Any press outside the button and the flyout closes it. Listened for in the capture phase, so a click handler
+  // that stops the event on its way up can't keep the flyout open.
+  useEffect(() => {
+    if (!ticketMenuOpen) return undefined;
+    const onDown = (e) => {
+      if (ticketBtnRef.current?.contains(e.target) || e.target.closest?.('.detail-ticket-menu')) return;
+      setTicketMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onDown, true);
+    return () => document.removeEventListener('mousedown', onDown, true);
+  }, [ticketMenuOpen]);
 
   const toggleExpand = (id) => {
     setExpandedIds(prev => 
@@ -75,6 +98,34 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
           <button className="icon-btn">
              <img src={titleAi} alt="AI" width="16" height="16" />
           </button>
+          {/* Ticket and conversation actions. None of them do anything yet. */}
+          {conversation.ticketId ? (
+            <Tooltip content="Add conversation" placement="bottom">
+              <button type="button" className="icon-btn" aria-label="Add conversation" onClick={onAddConversationClick}><MessagePlusSquare size={16} /></button>
+            </Tooltip>
+          ) : (
+            <>
+              <button ref={ticketBtnRef} type="button" className={`icon-btn${ticketMenuOpen ? ' is-active' : ''}`} aria-label="Ticket" aria-haspopup="menu" aria-expanded={ticketMenuOpen} onClick={() => setTicketMenuOpen((o) => !o)}>
+                <Icon name="ticket" size={16} />
+              </button>
+              <Popover open={ticketMenuOpen} onClose={() => setTicketMenuOpen(false)} anchorRef={ticketBtnRef}>
+                <Dropdown
+                  className="detail-ticket-menu"
+                  options={[
+                    { value: 'add', label: 'Add to an existing ticket' },
+                    { value: 'convert', label: 'Convert to ticket' },
+                  ]}
+                  onChange={(value) => { setTicketMenuOpen(false); if (value === 'add') onAddToTicketClick?.(); }}
+                />
+              </Popover>
+              <Tooltip content="Merge conversations" placement="bottom">
+                <button type="button" className="icon-btn" aria-label="Merge conversations" onClick={onMergeClick}><ArrowMerge /></button>
+              </Tooltip>
+            </>
+          )}
+          <Tooltip content="Delete" placement="bottom">
+            <button type="button" className="icon-btn" aria-label="Delete"><Icon name="delete" size={16} /></button>
+          </Tooltip>
         </div>
       </div>
 
