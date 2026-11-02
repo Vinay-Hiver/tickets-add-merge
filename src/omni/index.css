@@ -139,6 +139,6 @@ body {
 /* Modal body text in every modal: slate/text/body instead of HOT's subtle grey */
 .hot-modal .hot-modal__text { color: var(--slateTextBody); }
 /* The note in warning modals (merge, add to ticket): error/surface/subtle */
-.hot-modal .hot-modal__note { background-color: var(--errorSurfaceSubtle); }
+.hot-modal .hot-modal__note { background-color: var(--errorSurfaceSubtle); font-size: 14px; line-height: 20px; }
 /* 12px between the text and the note (the modal body's gap is 20px; the space above the buttons stays 20px) */
 .hot-modal .hot-modal__text + .hot-modal__note { margin-top: -8px; }
