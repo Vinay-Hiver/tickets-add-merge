@@ -26,6 +26,6 @@ createRoot(document.getElementById('root')!).render(
         </ConversationFieldsProvider>
       </LinkedConversationsProvider>
     </BrowserRouter>
-    {import.meta.env.DEV && <Agentation appName="Linked Conversations" />}
+    {import.meta.env.DEV && <Agentation appName="Omni Tickets - Add/Merge" />}
   </StrictMode>,
 )

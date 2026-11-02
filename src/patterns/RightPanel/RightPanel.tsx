@@ -37,8 +37,13 @@ export type RightPanelProps = {
   /** Accessible name for the panel. */
   'aria-label'?: string
   className?: string
-  /** Content after the sections and before "Customize widgets", for example a second top block with its own sections. It is not part of the drag order. */
-  afterSections?: ReactNode
+  /**
+   * A second group after the sections, for example the conversation inside a ticket: its own top block (`heading`) and
+   * sections. "Customize widgets" then lists both groups, the first under `title`, this one under `secondary.title`.
+   */
+  secondary?: { title: string; heading?: ReactNode; sections: ReactNode }
+  /** With `secondary`: the name of the first group in "Customize widgets". */
+  title?: string
 }
 
 /** What a sortable wrapper hands to the section inside it: the props that make the drag handle start a drag. */
@@ -66,7 +71,7 @@ function SortableSection({ id, children }: { id: string; children: ReactNode }) 
  * The panel on the right of a page. Always 320px wide. Every channel uses the same anatomy: a top section, then sub-sections
  * that open and close and that can be dragged by their handle to a new order (up and down only).
  */
-export function RightPanel({ tabs, activeTab, onTabChange, children, onReorder, customizeWidgets, visibleIds, onVisibleChange, className, afterSections, ...rest }: RightPanelProps) {
+export function RightPanel({ tabs, activeTab, onTabChange, children, onReorder, customizeWidgets, visibleIds, onVisibleChange, className, secondary, title, ...rest }: RightPanelProps) {
   const [innerTab, setInnerTab] = useState(tabs?.[0]?.id)
   const selectedTab = activeTab ?? innerTab
   const nodes = Children.toArray(children)
@@ -91,6 +96,15 @@ export function RightPanel({ tabs, activeTab, onTabChange, children, onReorder, 
     setShown(ordered)
     onVisibleChange?.(ordered)
   }
+
+  // The second group keeps its own order and visibility, changed from "Customize widgets".
+  const secondarySections = Children.toArray(secondary?.sections).filter(isSection)
+  const secondaryIds = secondarySections.map((n) => String(n.props.id))
+  const secondaryById = new Map(secondarySections.map((n) => [String(n.props.id), n]))
+  const [secondaryOrder, setSecondaryOrder] = useState(secondaryIds)
+  const secondaryCurrent = [...secondaryOrder.filter((id) => secondaryIds.includes(id)), ...secondaryIds.filter((id) => !secondaryOrder.includes(id))]
+  const [secondaryShown, setSecondaryShown] = useState<string[] | undefined>(undefined)
+  const secondaryShownIds = secondaryShown ?? secondaryIds
 
   // Dragging starts after 5px of movement on the handle.
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
@@ -135,13 +149,32 @@ export function RightPanel({ tabs, activeTab, onTabChange, children, onReorder, 
           </div>
         </SortableContext>
       </DndContext>
-      {afterSections}
+      {secondary && (
+        <>
+          {secondary.heading}
+          <div className="hot-rp-sections">
+            {secondaryCurrent.filter((id) => secondaryShownIds.includes(id)).map((id) => <div key={id}>{secondaryById.get(id)}</div>)}
+          </div>
+        </>
+      )}
       {customizeWidgets && (
         <CustomizeWidgets
-          options={current.map((id) => ({ value: id, label: String(byId.get(id)?.props.title ?? id) }))}
-          selected={shownIds}
-          onChange={setVisible}
-          onReorder={(next) => { setOrder(next); onReorder?.(next) }}
+          groups={[
+            {
+              title: secondary ? title : undefined,
+              options: current.map((id) => ({ value: id, label: String(byId.get(id)?.props.title ?? id) })),
+              selected: shownIds,
+              onChange: setVisible,
+              onReorder: (next) => { setOrder(next); onReorder?.(next) },
+            },
+            ...(secondary ? [{
+              title: secondary.title,
+              options: secondaryCurrent.map((id) => ({ value: id, label: String(secondaryById.get(id)?.props.title ?? id) })),
+              selected: secondaryShownIds,
+              onChange: (ids: string[]) => setSecondaryShown(secondaryCurrent.filter((id) => ids.includes(id))),
+              onReorder: setSecondaryOrder,
+            }] : []),
+          ]}
         />
       )}
       </div>
@@ -156,7 +189,9 @@ export function RightPanel({ tabs, activeTab, onTabChange, children, onReorder, 
  * The names can be dragged into a new order, and the panel follows.
  * The flyout is placed here by hand, because there is no popover component yet.
  */
-function CustomizeWidgets({ options, selected, onChange, onReorder }: { options: { value: string; label: string }[]; selected: string[]; onChange: (ids: string[]) => void; onReorder: (ids: string[]) => void }) {
+type WidgetGroup = { title?: string; options: { value: string; label: string }[]; selected: string[]; onChange: (ids: string[]) => void; onReorder: (ids: string[]) => void }
+
+function CustomizeWidgets({ groups }: { groups: WidgetGroup[] }) {
   const [open, setOpen] = useState(false)
   // Where the top of the button was when the flyout opened, in the panel's own coordinates. The flyout stays at this spot
   // while it is open, even if the button moves because sections were hidden or shown. It only changes when it is opened again.
@@ -199,7 +234,20 @@ function CustomizeWidgets({ options, selected, onChange, onReorder }: { options:
     <>
       {open && (
         <div ref={flyoutRef} className="hot-rp-flyout" style={{ top: top ?? 0, visibility: top === undefined ? 'hidden' : 'visible' }}>
-          <Dropdown className="hot-rp-flyout__list" variant="checkbox" title="Customize widgets" options={options} value={selected} onChange={(v) => onChange(v as string[])} reorderable onReorder={onReorder} />
+          {groups.length === 1 ? (
+            <Dropdown className="hot-rp-flyout__list" variant="checkbox" title="Customize widgets" options={groups[0].options} value={groups[0].selected} onChange={(v) => groups[0].onChange(v as string[])} reorderable onReorder={groups[0].onReorder} />
+          ) : (
+            // More than one group: one panel with the title, then each group under its name, split by a line.
+            <div className="hot-dropdown hot-dropdown--no-search hot-dropdown--no-actions hot-rp-flyout__list hot-rp-flyout__grouped">
+              <div className="hot-dropdown__title">Customize widgets</div>
+              {groups.map((g) => (
+                <div key={g.title} className="hot-rp-flyout__group">
+                  <div className="hot-rp-flyout__group-title">{g.title}</div>
+                  <Dropdown className="hot-rp-flyout__group-list" variant="checkbox" options={g.options} value={g.selected} onChange={(v) => g.onChange(v as string[])} reorderable onReorder={g.onReorder} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
       <div className="hot-rp-footer" ref={footerRef}>

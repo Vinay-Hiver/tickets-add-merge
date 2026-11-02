@@ -267,3 +267,12 @@
 .hot-rp-top--conversation { border-top: 1px solid var(--slateBorderMild); }
 .hot-rp-top__title--truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hot-rp-history { display: inline-flex; align-items: center; gap: 8px; opacity: 0.5; }
+
+/* Customize widgets with two groups (a conversation inside a ticket): the group names, a line between the groups, and the
+   inner lists without their own panel look */
+.hot-rp-flyout__grouped { padding-bottom: 4px; }
+.hot-rp-flyout__group + .hot-rp-flyout__group { border-top: 1px solid var(--slateBorderLight); }
+.hot-rp-flyout__group-title { padding: 12px 16px 4px; font: var(--fontWeightMedium) 12px/18px var(--fontFamily); color: var(--slateTextSubtle); }
+.hot-rp-flyout__group-list.hot-dropdown { width: 100%; box-shadow: none; background: transparent; border-radius: 0; }
+.hot-rp-flyout__group-list .hot-list-item--compact { min-height: 40px; }
+.hot-rp-history { outline: none; }

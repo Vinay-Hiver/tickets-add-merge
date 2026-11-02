@@ -24,6 +24,14 @@ import smallReplyIcon from '../assets/icons/small-reply.svg';
 import smallForwardIcon from '../assets/icons/small-forward.svg';
 import chevronDownIcon from '../assets/icons/s-chevron-down.svg';
 
+const SUPPORT_EMAIL = 'support@hiver.com';
+
+const hashOf = (id) => {
+  let h = 0;
+  for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return h;
+};
+
 const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSignatureId, emailTab: emailTabProp, onEmailTabChange, onMergeClick, onAddToTicketClick, onAddConversationClick }) => {
   const [expandedIds, setExpandedIds] = useState([]);
   const [activeReplyId, setActiveReplyId] = useState(null);
@@ -46,6 +54,16 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
   const emails = conversation?.emails;
   const openEmail = emails?.find((e) => String(e.id) === emailTab);
   const threadMessages = openEmail ? openEmail.messages : conversation?.messages ?? [];
+  // Who a message went to: the customer's emails go to the support inbox, and support's replies go to the customer.
+  const thread = openEmail ?? conversation;
+  const customerEmail = thread?.customerEmail ?? thread?.messages?.find((m) => m.email !== SUPPORT_EMAIL)?.email;
+  // Half the conversations show people by name ("David Chen", "Hiver Support"), the other half by email address,
+  // picked from the conversation's id so it stays the same.
+  const showNames = !!thread && hashOf(thread.id) % 2 === 1;
+  const customerName = thread?.messages?.find((m) => m.email === customerEmail)?.sender;
+  const labelOf = (email, name) => (!showNames ? email : email === SUPPORT_EMAIL ? 'Hiver Support' : name ?? email);
+  const senderOf = (msg) => labelOf(msg.email, msg.sender);
+  const recipientOf = (msg) => (msg.email === SUPPORT_EMAIL ? labelOf(customerEmail, customerName) : labelOf(SUPPORT_EMAIL));
   const selectEmail = (value) => {
     setEmailTab(value);
     const email = emails?.find((e) => String(e.id) === value);
@@ -205,9 +223,9 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
                         <span>{msg.initial}</span>
                       </div>
                       <div className="convo-info" onClick={() => toggleExpand(msg.id)} style={{ cursor: 'pointer' }}>
-                        <h3 className="convo-email">{msg.email}</h3>
+                        <h3 className="convo-email">{senderOf(msg)}</h3>
                         <div className="convo-to">
-                          To: support@acme.com <img src={chevronDownIcon} alt="Expand" width="14" height="14" style={{ marginLeft: 4 }} />
+                          To: {recipientOf(msg)} <img src={chevronDownIcon} alt="Expand" width="14" height="14" style={{ marginLeft: 4 }} />
                         </div>
                       </div>
                       <div className="header-actions-right">
@@ -243,7 +261,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
                       <span>{msg.initial}</span>
                     </div>
                     <div className="convo-info">
-                      <h3 className="convo-email">{msg.email}</h3>
+                      <h3 className="convo-email">{senderOf(msg)}</h3>
                       <p className="collapsed-text">{msg.body.substring(0, 80)}...</p>
                     </div>
                     <span className="convo-time">{msg.time}</span>

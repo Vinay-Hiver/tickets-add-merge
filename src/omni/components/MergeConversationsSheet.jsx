@@ -4,7 +4,7 @@ import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { Checkbox } from '../../components/Checkbox';
 import { Input } from '../../components/Input';
-import { Modal, ModalText } from '../../components/Modal';
+import { Modal, ModalNote, ModalText } from '../../components/Modal';
 import { Popover } from '../../components/Popover';
 import { Tag } from '../../components/Tag';
 import { Tooltip } from '../../components/Tooltip';
@@ -131,7 +131,7 @@ function MergedCustomFields({ fields }) {
 
 // Step 1, when merging from an open conversation (Figma 4029:19413): the conversation being merged, then the
 // conversations it can merge into. Hovering a card turns its mail icon into a checkbox and its date into an
-// open-in-new-tab button.
+// open-in-new-tab button. A fixed card (the conversation being merged or added) only gets the open button.
 export function PickCard({ conversation: c, fixed, selected, onToggle }) {
   const { statusOf, assigneeNameOf } = useConversationFields();
   const status = statusOptions.find((o) => o.value === statusOf(c.id)) ?? statusOptions[0];
@@ -158,14 +158,12 @@ export function PickCard({ conversation: c, fixed, selected, onToggle }) {
           {customerOf(c)}
         </span>
         <span className="mc-pick-card__date">{dateOf(c.time)}</span>
-        {!fixed && (
-          // No action yet: opening in a new tab is left to development
-          <Tooltip content="Open conversation in a new tab" placement="left">
-            <button type="button" className="mc-email__open" aria-label="Open conversation in a new tab" onClick={(e) => e.stopPropagation()}>
-              <Icon name="newtab" size={14} />
-            </button>
-          </Tooltip>
-        )}
+        {/* No action yet: opening in a new tab is left to development */}
+        <Tooltip content="Open conversation in a new tab" placement="left">
+          <button type="button" className="mc-email__open" aria-label="Open conversation in a new tab" onClick={(e) => e.stopPropagation()}>
+            <Icon name="newtab" size={14} />
+          </button>
+        </Tooltip>
       </div>
       <div className="mc-email__bottom">
         <span className="mc-email__subject">{c.subject}</span>
@@ -362,18 +360,20 @@ export default function MergeConversationsSheet({ conversations: preselected, so
         )}
       </aside>
 
-      {/* Storybook › Modal › Destructive, on the same backdrop as the sheet */}
+      {/* Storybook › Modal › With note, on the same backdrop as the sheet */}
       {confirm !== 'hidden' && (
         <div className={`mc-confirm${confirm === 'out' ? ' is-leaving' : ''}`}>
           <Modal
+            width={500}
             title="Merge conversations"
             onClose={cancelConfirm}
             actions={<>
               <Button variant="secondary" size="sm" onClick={cancelConfirm}>Cancel</Button>
-              <Button variant="error" size="sm" onClick={() => exit(() => onMerge(titleId, conversations))}>Merge and create ticket</Button>
+              <Button variant="primary" size="sm" onClick={() => exit(() => onMerge(titleId, conversations))}>Merge and create ticket</Button>
             </>}
           >
-            <ModalText>You’re about to merge {conversations.length} conversations into a ticket. Once merged, they can’t be removed or split back out.</ModalText>
+            <ModalText>You’re about to merge {conversations.length} conversations into a ticket.</ModalText>
+            <ModalNote>Note: Once merged, they can’t be removed or split back out.</ModalNote>
           </Modal>
         </div>
       )}

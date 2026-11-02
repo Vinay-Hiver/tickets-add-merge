@@ -234,3 +234,10 @@
 .mc-ticket-card .mc-pick-card__chips { align-items: center; }
 .mc-ticket-card__count { font: var(--fontWeightRegular) 12px/18px var(--fontFamily); color: var(--slateTextBody); white-space: nowrap; }
 .mc-pick-card__check .hot-radio { display: flex; min-height: 0; }
+
+/* A section label with an info icon whose tooltip explains the list */
+.mc-pick-label--info { display: flex; align-items: center; gap: 6px; }
+.mc-pick-info { display: inline-flex; color: var(--slateIconsSubtle); outline: none; }
+.mc-pick-info:hover, .mc-pick-info:focus-visible { color: var(--slateIconsActive); }
+/* The HOT tooltip is one 24px line; a tooltip with a line break grows to fit both lines */
+.hot-tooltip:has(br) { height: auto; padding: 3px 8px; text-align: left; }

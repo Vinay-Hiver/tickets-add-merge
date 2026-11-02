@@ -26,7 +26,7 @@ export const conversationsData = [
       {
         id: 'm2',
         sender: 'Ruben Geidt',
-        email: 'ruben@acme.com',
+        email: 'support@hiver.com',
         time: 'Feb 4, 02:00 PM',
         initial: 'R',
         avatarColor: 'var(--pastelLightBlueBorderDefault)',
@@ -68,7 +68,7 @@ export const conversationsData = [
       {
         id: 'm2',
         sender: 'Ruben Geidt',
-        email: 'ruben@acme.com',
+        email: 'support@hiver.com',
         time: 'Feb 4, 11:30 AM',
         initial: 'R',
         avatarColor: 'var(--pastelLightBlueBorderDefault)',
@@ -102,7 +102,7 @@ export const conversationsData = [
       {
         id: 'm2',
         sender: 'System Bot',
-        email: 'no-reply@acme.com',
+        email: 'support@hiver.com',
         time: 'Feb 4, 04:05 PM',
         initial: 'S',
         avatarColor: '#94a3b8',
@@ -135,7 +135,7 @@ export const conversationsData = [
       {
         id: 'm2',
         sender: 'Support Bot',
-        email: 'support-bot@acme.com',
+        email: 'support@hiver.com',
         time: 'Feb 4, 10:05 AM',
         initial: 'S',
         avatarColor: '#94a3b8',
@@ -178,7 +178,7 @@ export const conversationsData = [
       {
         id: 'm2',
         sender: 'Ruben Geidt',
-        email: 'ruben@acme.com',
+        email: 'support@hiver.com',
         time: 'Feb 4, 10:20 AM',
         initial: 'R',
         avatarColor: 'var(--pastelLightBlueBorderDefault)',
@@ -211,7 +211,7 @@ export const conversationsData = [
       {
         id: 'm2',
         sender: 'Ruben Geidt',
-        email: 'ruben@acme.com',
+        email: 'support@hiver.com',
         time: 'Feb 3, 04:15 PM',
         initial: 'R',
         avatarColor: 'var(--pastelLightBlueBorderDefault)',
@@ -245,7 +245,7 @@ export const conversationsData = [
       {
         id: 'm2',
         sender: 'Refund Bot',
-        email: 'refunds@acme.com',
+        email: 'support@hiver.com',
         time: 'Feb 4, 08:35 AM',
         initial: 'R',
         avatarColor: '#94a3b8',
@@ -278,7 +278,7 @@ export const conversationsData = [
       {
         id: 'm2',
         sender: 'System Bot',
-        email: 'support@acme.com',
+        email: 'support@hiver.com',
         time: 'Feb 4, 01:05 PM',
         initial: 'S',
         avatarColor: '#94a3b8',
@@ -313,7 +313,7 @@ export const conversationsData = [
       {
         id: 'm2',
         sender: "Ruben Geidt",
-        email: "ruben@acme.com",
+        email: "support@hiver.com",
         time: "Feb 4, 03:05 PM",
         initial: "R",
         avatarColor: "var(--pastelLightBlueBorderDefault)",
@@ -346,7 +346,7 @@ export const conversationsData = [
       {
         id: 'm2',
         sender: "Ruben Geidt",
-        email: "ruben@acme.com",
+        email: "support@hiver.com",
         time: "Feb 3, 05:40 PM",
         initial: "R",
         avatarColor: "var(--pastelLightBlueBorderDefault)",
@@ -403,7 +403,7 @@ export const conversationsData = [
       {
         id: 'm2',
         sender: "Ruben Geidt",
-        email: "ruben@acme.com",
+        email: "support@hiver.com",
         time: "Feb 4, 02:30 PM",
         initial: "R",
         avatarColor: "var(--pastelLightBlueBorderDefault)",
@@ -436,7 +436,7 @@ export const conversationsData = [
       {
         id: 'm2',
         sender: "Ruben Geidt",
-        email: "ruben@acme.com",
+        email: "support@hiver.com",
         time: "Feb 3, 01:15 PM",
         initial: "R",
         avatarColor: "var(--pastelLightBlueBorderDefault)",

@@ -94,7 +94,7 @@ const generateDummyConversations = (inbox, type) => {
         {
           id: 'm2',
           sender: 'Ruben Geidt',
-          email: 'ruben@acme.com',
+          email: 'support@hiver.com',
           time: 'Feb 4, 0' + (1 + ((i + 1) % 9)) + ':30 PM',
           initial: 'R',
           avatarColor: 'var(--pastelLightBlueBorderDefault)',
@@ -126,7 +126,8 @@ function App() {
   // "Merge conversations" from an open conversation's header: the sheet starts by picking what to merge it with.
   const [mergeSourceId, setMergeSourceId] = useState(null);
   // "Add to an existing ticket" from an open conversation's header.
-  const [addSourceId, setAddSourceId] = useState(null);
+  // The conversations being added: the open one, or the ones ticked in the list (bulk actions).
+  const [addSourceIds, setAddSourceIds] = useState(null);
   // "Add conversation" from a ticket's header: the ticket conversations are added to.
   const [addTargetId, setAddTargetId] = useState(null);
 
@@ -172,7 +173,7 @@ function App() {
     // Each route/page sets its own title (e.g. MySettingsPage). Only own the
     // mailbox title here so this always-mounted component doesn't clobber it.
     if (location.pathname === '/') {
-      document.title = 'Linked Conversations';
+      document.title = 'Omni Tickets - Add/Merge';
     }
   }, [location.pathname]);
 
@@ -212,9 +213,10 @@ function App() {
   };
 
   // Tickets the open conversation can be added to: in the same inbox, newest first. Only the same domain can be picked.
-  const addSource = addSourceId != null
-    ? conversationsData.find((c) => c.id === addSourceId) ?? filteredConversations.find((c) => c.id === addSourceId)
-    : null;
+  const addSources = addSourceIds
+    ?.map((id) => conversationsData.find((c) => c.id === id) ?? filteredConversations.find((c) => c.id === id))
+    .filter(Boolean);
+  const addSource = addSources?.[0] ?? null;
   const inboxTickets = addSource
     ? [...mergedTickets, ...conversationsData.filter((c) => c.ticketId && !mergedTickets.some((t) => t.id === c.id))]
       .filter((t) => t.inbox === addSource.inbox)
@@ -272,6 +274,7 @@ function App() {
                     selected={filteredConversations.filter((c) => checkedIds.includes(c.id))}
                     onCancel={() => setCheckedIds([])}
                     onMerge={mergeIntoTicket}
+                    onAddToTicket={(selected) => setAddSourceIds(selected.map((c) => c.id))}
                   />
                 ) : (
                   <>
@@ -280,7 +283,7 @@ function App() {
                       emailTab={emailTab}
                       onEmailTabChange={setEmailTab}
                       onMergeClick={() => setMergeSourceId(selectedConversation.id)}
-                      onAddToTicketClick={() => setAddSourceId(selectedConversation.id)}
+                      onAddToTicketClick={() => setAddSourceIds([selectedConversation.id])}
                       onAddConversationClick={() => setAddTargetId(selectedConversation.id)}
                       signatures={signatures}
                       setSignatures={setSignatures}
@@ -301,12 +304,12 @@ function App() {
       </Routes>
       {addSource && (
         <AddToTicketSheet
-          key={addSource.id}
-          conversation={addSource}
+          key={addSourceIds.join('-')}
+          conversations={addSources}
           tickets={inboxTickets.filter((t) => domainOf(t) === domainOf(addSource))}
           others={inboxTickets.filter((t) => domainOf(t) !== domainOf(addSource))}
-          onClose={() => setAddSourceId(null)}
-          onAdd={(ticketId) => { addConversationsToTicket([addSource], ticketId); setAddSourceId(null); }}
+          onClose={() => setAddSourceIds(null)}
+          onAdd={(ticketId) => { addConversationsToTicket(addSources, ticketId); setAddSourceIds(null); setCheckedIds([]); }}
         />
       )}
       {addTarget && (

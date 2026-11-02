@@ -14,6 +14,10 @@ const mergeBlockedReason = (selected) => {
   return null;
 };
 
+// Why the selection can't go into one ticket, or null when it can. A ticket only holds one customer's domain.
+const addBlockedReason = (selected) =>
+  new Set(selected.map(domainOf)).size > 1 ? 'Cannot add conversations from different domains to one ticket' : null;
+
 function Action({ icon, label, disabled, onClick }) {
   return (
     <button type="button" className="bulk-action" disabled={disabled} onClick={onClick}>
@@ -25,10 +29,11 @@ function Action({ icon, label, disabled, onClick }) {
 
 // Replaces the conversation and right panel while cards are ticked in the list.
 // "Merge conversations" and "Add to an existing ticket" show only when every ticked card is an email (no tickets).
-export default function BulkActionsPanel({ selected, onCancel, onMerge }) {
+export default function BulkActionsPanel({ selected, onCancel, onMerge, onAddToTicket }) {
   const [merging, setMerging] = React.useState(false);
   const allEmails = selected.every((c) => !c.ticketId);
   const mergeBlocked = allEmails ? mergeBlockedReason(selected) : null;
+  const addBlocked = allEmails ? addBlockedReason(selected) : null;
 
   return (
     <div className="bulk-actions-panel">
@@ -48,7 +53,13 @@ export default function BulkActionsPanel({ selected, onCancel, onMerge }) {
         ) : (
           <Action icon={<ArrowMerge />} label="Merge conversations" onClick={() => setMerging(true)} />
         ))}
-        {allEmails && <Action icon="ticket" label="Add to an existing ticket" />}
+        {allEmails && (addBlocked ? (
+          <Tooltip content={addBlocked} placement="right">
+            <Action icon="ticket" label="Add to an existing ticket" disabled />
+          </Tooltip>
+        ) : (
+          <Action icon="ticket" label="Add to an existing ticket" onClick={() => onAddToTicket(selected)} />
+        ))}
         <div className="bulk-actions-divider" />
         <Action icon="close" label="Cancel" onClick={onCancel} />
       </div>

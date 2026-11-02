@@ -373,35 +373,45 @@ export function TicketRightPanel({ inboxName, ticketId, ticketKey, assignee, onA
   const person = conversation && sampleAssignees.find((p) => p.value === conversation.assignee)
   const oldStatus = conversation && (statusOptions.find((o) => o.value === conversation.status) ?? statusOptions[0])
 
-  const conversationBlock = conversation && (
-    <>
+  // In a conversation's tab, the conversation is the panel's second group: Customize widgets lists its sections under
+  // "Conversation", after the ticket's under "Ticket".
+  const conversationGroup = conversation && {
+    title: 'Conversation',
+    heading: (
       <section className="hot-rp-top hot-rp-top--conversation">
         <h2 className="hot-rp-top__title hot-rp-top__title--truncate" title={conversation.subject}>{conversation.subject}</h2>
         <div className="hot-rp-fields">
+          {/* The values are history: hovering one explains why, in a tooltip to the value's left */}
           <Row icon="assigned" label="Assignee">
-            <span className="hot-rp-history">
-              {person ? <><Avatar initial={person.label.charAt(0)} size="small" color={person.color} showStatus />{person.label.replace(/ \(Me\)$/, '')}</> : 'None'}
-            </span>
+            <Tooltip content="Assignee is managed on the ticket now. Change it above." placement="left" portal>
+              <span className="hot-rp-history" tabIndex={0}>
+                {person ? <><Avatar initial={person.label.charAt(0)} size="small" color={person.color} showStatus />{person.label.replace(/ \(Me\)$/, '')}</> : 'None'}
+              </span>
+            </Tooltip>
           </Row>
           <Row icon="flag" label="Status">
-            <span className="hot-rp-history">{oldStatus && <Icon name={oldStatus.icon} size={16} />}{oldStatus?.label}</span>
+            <Tooltip content="Status is managed on the ticket now. Change it above." placement="left" portal>
+              <span className="hot-rp-history" tabIndex={0}>{oldStatus && <Icon name={oldStatus.icon} size={16} />}{oldStatus?.label}</span>
+            </Tooltip>
           </Row>
         </div>
       </section>
-      <RightPanelSection id="ticketContact" title="Contact" icon="contact" defaultExpanded>
+    ),
+    sections: [
+      <RightPanelSection key="ticketContact" id="ticketContact" title="Contact" icon="contact" defaultExpanded>
         <Row icon="user" label="Name">{conversation.contact.name}</Row>
         <Row icon="mailbox" label="Email">{conversation.contact.email}</Row>
         <Row icon="building" label="Account">{conversation.contact.account}</Row>
         <Row icon="previousconversations" label="Conversations" link>{conversation.contact.conversations}</Row>
-      </RightPanelSection>
-      <RightPanelSection id="ticketActivity" title="Activity & Notes" icon="clock" defaultExpanded>
+      </RightPanelSection>,
+      <RightPanelSection key="ticketActivity" id="ticketActivity" title="Activity & Notes" icon="clock" defaultExpanded>
         <ActivityNotes days={conversation.activity} />
-      </RightPanelSection>
-    </>
-  )
+      </RightPanelSection>,
+    ],
+  }
 
   return (
-    <RightPanel key={`ticket-${ticketKey}`} aria-label="Ticket details" tabs={def.tabs} customizeWidgets afterSections={conversationBlock}>
+    <RightPanel key={`ticket-${ticketKey}`} aria-label="Ticket details" tabs={def.tabs} customizeWidgets title="Ticket" secondary={conversationGroup || undefined}>
       <RightPanelTop title={inboxName}>
         <Row icon="ticket" label="Ticket ID"><span className="hot-rp-ticket-id">{ticketId}</span></Row>
         <AssigneeField key={`assignee-${ticketKey}`} value={assignee} onChange={onAssigneeChange} />

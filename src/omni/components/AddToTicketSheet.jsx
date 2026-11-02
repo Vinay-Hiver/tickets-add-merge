@@ -2,7 +2,9 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
+import { Modal, ModalNote, ModalText } from '../../components/Modal';
 import { Radio } from '../../components/Radio';
+import { Tooltip } from '../../components/Tooltip';
 import { Icon } from '../../icons/Icon';
 import { statusOptions } from '../../patterns/RightPanel/data/options';
 import { useConversationFields } from '../ConversationFields';
@@ -50,19 +52,24 @@ function TicketCard({ ticket, selected, onSelect }) {
   );
 }
 
-// The side sheet both add flows use: header, a scrolling body and a footer. `footer` gets `exit`, which plays the
-// closing animation and then runs what it is given.
-function Sheet({ title, onClose, children, footer }) {
+// The side sheet both add flows use: header, a scrolling body and a footer. `footer` gets `exit` (plays the closing
+// animation, then runs what it is given) and `ask` (shows the confirm modal described by `confirm`). As with merge, the
+// sheet fades out before the modal fades in, and back again on Cancel (timings in MergeConversationsSheet.css).
+function Sheet({ title, onClose, children, footer, confirm }) {
   const [closing, setClosing] = React.useState(false);
+  const [phase, setPhase] = React.useState('hidden'); // the confirm modal: 'hidden', 'in' or 'out'
   const exit = (fn) => { setClosing(true); setTimeout(fn, 320); }; // matches the exit animation in the CSS
+  const ask = () => setPhase('in');
+  const cancel = () => { setPhase('out'); setTimeout(() => setPhase('hidden'), 201); };
+  const dismiss = () => (phase === 'in' ? cancel() : exit(onClose));
   React.useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') exit(onClose); };
+    const onKey = (e) => { if (e.key === 'Escape') dismiss(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  });
   return createPortal(
-    <div className={`mc-backdrop${closing ? ' is-closing' : ''}`} onMouseDown={(e) => { if (e.target === e.currentTarget) exit(onClose); }}>
-      <aside className="mc-sheet" role="dialog" aria-modal="true" aria-labelledby="att-title">
+    <div className={`mc-backdrop${closing ? ' is-closing' : ''}`} onMouseDown={(e) => { if (e.target === e.currentTarget) dismiss(); }}>
+      <aside className={`mc-sheet${phase !== 'hidden' ? ' is-faded' : ''}`} aria-hidden={phase !== 'hidden'} role="dialog" aria-modal="true" aria-labelledby="att-title">
         <header className="mc-header">
           <div>
             <h2 id="att-title" className="mc-header__title">{title}</h2>
@@ -73,8 +80,25 @@ function Sheet({ title, onClose, children, footer }) {
           </Button>
         </header>
         <div className="mc-body mc-body--pick">{children}</div>
-        {footer(exit)}
+        {footer(exit, ask)}
       </aside>
+      {/* Storybook › Modal › With note, on the same backdrop as the sheet */}
+      {phase !== 'hidden' && confirm && (
+        <div className={`mc-confirm${phase === 'out' ? ' is-leaving' : ''}`}>
+          <Modal
+            width={500}
+            title={confirm.title}
+            onClose={cancel}
+            actions={<>
+              <Button variant="secondary" size="sm" onClick={cancel}>Cancel</Button>
+              <Button variant="primary" size="sm" onClick={() => exit(confirm.onConfirm)}>{confirm.action}</Button>
+            </>}
+          >
+            <ModalText>{confirm.body}</ModalText>
+            <ModalNote>{confirm.note}</ModalNote>
+          </Modal>
+        </div>
+      )}
     </div>,
     document.body,
   );
@@ -103,12 +127,19 @@ export function AddConversationsSheet({ ticket, candidates, others = [], onClose
     <Sheet
       title={`Add conversation to Ticket - ${ticket.ticketId}`}
       onClose={onClose}
-      footer={(exit) => (
+      confirm={{
+        title: 'Add to ticket',
+        body: `You’re about to add ${picked.length} ${picked.length === 1 ? 'conversation' : 'conversations'} to ${ticket.ticketId}.`,
+        note: `Note: Once merged, ${picked.length === 1 ? 'it' : 'they'} can’t be removed or split back out.`,
+        action: 'Add to ticket',
+        onConfirm: () => onAdd(candidates.filter((c) => picked.includes(c.id))),
+      }}
+      footer={(exit, ask) => (
         <footer className="mc-footer mc-footer--pick">
           <span className="mc-footer__count">{picked.length} {picked.length === 1 ? 'conversation' : 'conversations'} selected</span>
           <div className="mc-footer__actions">
             <Button variant="secondary" size="md" onClick={() => exit(onClose)}>Cancel</Button>
-            <Button variant="primary" size="md" disabled={picked.length === 0} onClick={() => exit(() => onAdd(candidates.filter((c) => picked.includes(c.id))))}>Add to ticket</Button>
+            <Button variant="primary" size="md" disabled={picked.length === 0} onClick={ask}>Add to ticket</Button>
           </div>
         </footer>
       )}
@@ -141,7 +172,10 @@ export function AddConversationsSheet({ ticket, candidates, others = [], onClose
   );
 }
 
-export default function AddToTicketSheet({ conversation, tickets, others = [], onClose, onAdd }) {
+// `conversations`: one from a conversation's header, or several ticked in the list (all from one domain).
+export default function AddToTicketSheet({ conversations, tickets, others = [], onClose, onAdd }) {
+  const [conversation] = conversations;
+  const many = conversations.length > 1;
   const [query, setQuery] = React.useState('');
   const [ticketId, setTicketId] = React.useState(null);
 
@@ -158,23 +192,35 @@ export default function AddToTicketSheet({ conversation, tickets, others = [], o
 
   return (
     <Sheet
-      title="Add conversation to a ticket"
+      title={many ? 'Add conversations to a ticket' : 'Add conversation to a ticket'}
       onClose={onClose}
-      footer={(exit) => (
+      confirm={{
+        title: 'Add to ticket',
+        body: `You’re about to add ${conversations.length} ${many ? 'conversations' : 'conversation'} to ${tickets.find((t) => t.id === ticketId)?.ticketId ?? 'this ticket'}.`,
+        note: `Note: Once merged, ${many ? 'they' : 'it'} can’t be removed or split back out.`,
+        action: 'Add to ticket',
+        onConfirm: () => onAdd(ticketId),
+      }}
+      footer={(exit, ask) => (
         <footer className="mc-footer">
           <Button variant="secondary" size="md" onClick={() => exit(onClose)}>Cancel</Button>
-          <Button variant="primary" size="md" disabled={ticketId == null} onClick={() => exit(() => onAdd(ticketId))}>Add to ticket</Button>
+          <Button variant="primary" size="md" disabled={ticketId == null} onClick={ask}>Add to ticket</Button>
         </footer>
       )}
     >
       <section className="mc-pick-section">
-        <h3 className="mc-pick-label">Add conversation</h3>
-        <PickCard conversation={conversation} fixed />
+        <h3 className="mc-pick-label">Adding {conversations.length} {many ? 'conversations' : 'conversation'}</h3>
+        {conversations.map((c) => <PickCard key={c.id} conversation={c} fixed />)}
       </section>
       <section className="mc-pick-section mc-pick-section--into">
-        <h3 className="mc-pick-label">Add it to this ticket</h3>
+        <h3 className="mc-pick-label mc-pick-label--info">
+          Choose a ticket
+          <Tooltip content={<>Only tickets from {companyOf(conversation)} ({domain}) are shown.<br />Once added, conversations can’t be removed.</>} placement="right" portal>
+            <span className="mc-pick-info" tabIndex={0} aria-label="About these tickets"><Icon name="info" size={14} /></span>
+          </Tooltip>
+        </h3>
         <div className="mc-card mc-pick">
-          <Input search size="md" fullWidth placeholder="Search tickets" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search tickets" />
+          <Input search size="md" fullWidth placeholder="Search by ticket ID or title" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search by ticket ID or title" />
           <div className="mc-filters">
             <FilterChip>From</FilterChip>
             <FilterChip>To</FilterChip>
@@ -182,7 +228,7 @@ export default function AddToTicketSheet({ conversation, tickets, others = [], o
             <FilterChip icon="tag">Tag</FilterChip>
           </div>
           <div className="mc-pick__results">
-            <p className="mc-pick__caption">{q ? 'Results' : 'Recent tickets'}</p>
+            <p className="mc-pick__caption">{q ? 'Results' : 'Recent tickets from this customer'}</p>
             {shown.length > 0 ? (
               <div className="mc-pick__list" role="radiogroup" aria-label="Tickets">
                 {shown.map((t) => <TicketCard key={t.id} ticket={t} selected={ticketId === t.id} onSelect={() => setTicketId(t.id)} />)}
