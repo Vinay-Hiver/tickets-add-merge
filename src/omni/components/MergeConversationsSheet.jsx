@@ -6,14 +6,11 @@ import { Checkbox } from '../../components/Checkbox';
 import { Input } from '../../components/Input';
 import { Modal, ModalNote, ModalText } from '../../components/Modal';
 import { Popover } from '../../components/Popover';
-import { Tag } from '../../components/Tag';
 import { Tooltip } from '../../components/Tooltip';
 import { Icon } from '../../icons/Icon';
 import { sampleAssignees, statusOptions } from '../../patterns/RightPanel/data/options';
 import { useConversationFields } from '../ConversationFields';
-import { mergeCustomFields, mergeTags } from '../data/merge';
 import { companyOf, domainOf } from '../data/companies';
-import { TAGS } from '../data/tags';
 import './MergeConversationsSheet.css';
 
 // Figma: Tickets Add/Merge › Merge conversations side sheet (4015:129) and its ticket title list (4020:9048).
@@ -79,52 +76,6 @@ function TicketRow({ icon, label, children, top }) {
     <div className={`mc-ticket-row${top ? ' mc-ticket-row--top' : ''}`}>
       <span className="mc-ticket-row__label"><Icon name={icon} size={14} />{label}</span>
       <div className="mc-ticket-row__value">{children}</div>
-    </div>
-  );
-}
-
-/** How many merged tags show before the "+X" button. */
-const TAGS_SHOWN = 2;
-
-function MergedTags({ values }) {
-  const [expanded, setExpanded] = React.useState(false);
-  const shown = expanded ? values : values.slice(0, TAGS_SHOWN);
-  const hidden = values.length - shown.length;
-  if (values.length === 0) return <span className="mc-empty">No tags</span>;
-  return (
-    <div className="mc-tags">
-      {shown.map((value) => {
-        const tag = TAGS.find((t) => t.value === value);
-        return <Tag key={value} color={tag?.color}>{tag?.label ?? value}</Tag>;
-      })}
-      {hidden > 0 && (
-        <button type="button" className="mc-tags__more" aria-label={`Show ${hidden} more tags`} onClick={() => setExpanded(true)}>+{hidden}</button>
-      )}
-    </div>
-  );
-}
-
-function MergedCustomFields({ fields }) {
-  const [open, setOpen] = React.useState(false);
-  return (
-    <div className="mc-cf">
-      <p className="mc-cf__summary">
-        {fields.length} {fields.length === 1 ? 'field' : 'fields'}
-        <button type="button" className="mc-link" aria-expanded={open} onClick={() => setOpen((o) => !o)}>{open ? 'Hide' : 'View'}</button>
-      </p>
-      {/* Always rendered so it can slide open and closed */}
-      <div className={`mc-cf__wrap${open ? ' is-open' : ''}`} aria-hidden={!open}>
-        <div className="mc-cf__clip">
-          <div className="mc-cf__list">
-            {fields.map((f) => (
-              <div key={f.id} className="mc-cf__row">
-                <span className="mc-cf__label"><Icon name={f.kind === 'number' ? 'hashnumber' : 'text'} size={14} /><span>{f.label}</span></span>
-                <span className={`mc-cf__value${f.value ? '' : ' mc-cf__value--empty'}`}>{f.value || 'Empty'}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
@@ -250,10 +201,10 @@ function PickStep({ source, candidates, others, onCancel, onNext }) {
 /**
  * Side sheet for "Merge conversations" in the bulk actions panel (Figma 4023:10700). `conversations` are the ticked
  * emails (all from one domain, so one inbox). Assignee and status come from the ticket title's conversation;
- * tags and custom fields are merged from all of them. Merge and Cancel both close it.
+ * tags and custom fields are still merged from all of them on Merge (not shown here). Merge and Cancel both close it.
  */
 export default function MergeConversationsSheet({ conversations: preselected, source, candidates = [], others = [], onClose, onMerge }) {
-  const { assigneeOf, statusOf, tagsOf, customFieldsOf } = useConversationFields();
+  const { assigneeOf, statusOf } = useConversationFields();
   // Merging from an open conversation (`source`) starts with step 1, picking what to merge it with. Merging ticked cards
   // from the list starts straight at the ticket preview.
   const [picked, setPicked] = React.useState(source ? null : preselected);
@@ -277,8 +228,6 @@ export default function MergeConversationsSheet({ conversations: preselected, so
   const person = sampleAssignees.find((p) => p.value === assigneeOf(titleId));
   const personName = person?.label.replace(/ \(Me\)$/, '');
   const status = statusOptions.find((o) => o.value === statusOf(titleId)) ?? statusOptions[0];
-  const tags = mergeTags(conversations, tagsOf);
-  const customFields = mergeCustomFields(conversations, titleId, customFieldsOf);
 
   return createPortal(
     <div className={`mc-backdrop${closing ? ' is-closing' : ''}`} onMouseDown={(e) => { if (e.target === e.currentTarget) dismiss(); }}>
@@ -309,18 +258,6 @@ export default function MergeConversationsSheet({ conversations: preselected, so
                 <TicketRow icon="flag" label="Status">
                   <Icon name={status.icon} size={16} />{status.label}
                 </TicketRow>
-              </div>
-              <div className="mc-ticket__divider" />
-              <div className="mc-ticket__merged">
-                <p className="mc-ticket__merged-title">Values combined from all conversations</p>
-                <div className="mc-ticket__fields">
-                  <TicketRow icon="tag" label="Tags">
-                    <MergedTags values={tags} />
-                  </TicketRow>
-                  <TicketRow icon="text" label="Custom fields" top>
-                    <MergedCustomFields fields={customFields} />
-                  </TicketRow>
-                </div>
               </div>
             </div>
           </section>
