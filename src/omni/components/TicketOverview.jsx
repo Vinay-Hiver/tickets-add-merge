@@ -2,6 +2,8 @@ import React from 'react';
 import { Icon } from '../../icons/Icon';
 import { statusOptions } from '../../patterns/RightPanel/data/options';
 import { useConversationFields } from '../ConversationFields';
+import { groupActivity } from './notes/threadTimeline';
+import { ActivityGroup } from './notes/EmailNotes';
 import './TicketOverview.css';
 
 // A merged ticket's Overview tab: one card per merged email, newest first (Figma: Tickets Add/Merge › 4028:16172).
@@ -16,8 +18,11 @@ export const emailTabLabel = (c) => {
   return `${customerOf(c)} • ${subject}`;
 };
 
-export default function TicketOverview({ emails, onOpen }) {
-  const { statusOf, assigneeNameOf } = useConversationFields();
+// Under the cards, the ticket's own activity: changes to its assignee, status, tags and custom fields, grouped as in
+// the threads (rows that follow each other fold into one line).
+export default function TicketOverview({ ticketId, emails, onOpen }) {
+  const { statusOf, assigneeNameOf, activityOf } = useConversationFields();
+  const activity = groupActivity(activityOf(ticketId).map((row) => ({ kind: 'activity', row })));
   return (
     <div className="ticket-overview">
       {emails.map((c) => {
@@ -39,6 +44,7 @@ export default function TicketOverview({ emails, onOpen }) {
           </button>
         );
       })}
+      {activity.map((item) => <ActivityGroup key={item.key} rows={item.rows} />)}
     </div>
   );
 }

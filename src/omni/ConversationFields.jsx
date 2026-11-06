@@ -25,6 +25,8 @@ const ConversationFieldsContext = React.createContext({
   setTags: () => {},
   customFieldsOf: () => ({}),
   setCustomField: () => {},
+  activityOf: () => [],
+  addActivity: () => {},
 });
 
 export const useConversationFields = () => React.useContext(ConversationFieldsContext);
@@ -41,11 +43,18 @@ const defaultStatus = (id) => {
   return (h >>> 3) % 2 ? 'pending' : 'open';
 };
 
+/** A person's name as the Assignee list shows it, without "(Me)"; undefined for None. */
+export const assigneeName = (value) => sampleAssignees.find((p) => p.value === value)?.label.replace(/ \(Me\)$/, '');
+
+/** The values a conversation starts with, before anyone changes them (its history in the thread). */
+export const initialFieldsOf = (id) => ({ assignee: defaultAssignee(id), status: defaultStatus(id), tags: defaultTagsFor(id) });
+
 export function ConversationFieldsProvider({ children }) {
   const [assignees, setAssignees] = React.useState({}); // id -> assignee value, once changed
   const [statuses, setStatuses] = React.useState({}); // id -> 'open' | 'pending' | 'closed', once changed
   const [tags, setTagsState] = React.useState({}); // id -> list of tag values, once changed
   const [customFields, setCustomFields] = React.useState({}); // id -> { fieldId: value }, once changed
+  const [activity, setActivity] = React.useState({}); // id -> [{ id, kind, icon, ..., time, at }], oldest first
 
   const value = React.useMemo(() => {
     const assigneeOf = (id) => assignees[String(id)] ?? defaultAssignee(id);
@@ -53,10 +62,7 @@ export function ConversationFieldsProvider({ children }) {
       /** The assignee's value (`none` when unassigned). */
       assigneeOf,
       /** The assignee's name without "(Me)", or undefined when unassigned. */
-      assigneeNameOf: (id) => {
-        const person = sampleAssignees.find((p) => p.value === assigneeOf(id));
-        return person ? person.label.replace(/ \(Me\)$/, '') : undefined;
-      },
+      assigneeNameOf: (id) => assigneeName(assigneeOf(id)),
       setAssignee: (id, next) => setAssignees((prev) => ({ ...prev, [String(id)]: next })),
       /** The status: open, pending or closed. */
       statusOf: (id) => statuses[String(id)] ?? defaultStatus(id),
@@ -70,8 +76,11 @@ export function ConversationFieldsProvider({ children }) {
         const current = prev[String(id)] ?? defaultCustomFieldsFor(id);
         return { ...prev, [String(id)]: { ...current, [fieldId]: next } };
       }),
+      /** The activity rows left by changes (right panel, merging), oldest first. Email shows them in the thread. */
+      activityOf: (id) => activity[String(id)] ?? [],
+      addActivity: (id, row) => setActivity((prev) => ({ ...prev, [String(id)]: [...(prev[String(id)] ?? []), row] })),
     };
-  }, [assignees, statuses, tags, customFields]);
+  }, [assignees, statuses, tags, customFields, activity]);
 
   return <ConversationFieldsContext.Provider value={value}>{children}</ConversationFieldsContext.Provider>;
 }

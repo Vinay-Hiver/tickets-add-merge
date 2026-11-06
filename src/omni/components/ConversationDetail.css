@@ -77,7 +77,7 @@
   padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px; /* as in the Omni Notes & Activity feed, so notes and activity get the same room */
 }
 
 .convo-card {
@@ -260,3 +260,11 @@
 .hot-dropdown.detail-ticket-menu .hot-list-item.hot-list-item--compact.hot-list-item--no-leading { padding-right: 16px; }
 /* The Ticket button keeps its hover fill while its flyout is open, so it's clear which icon the flyout belongs to */
 .detail-header .icon-btn.is-active { background-color: var(--slateSurfaceSubtle100Hover); }
+
+/* Merged ticket tabs: a mail icon on each conversation tab, and a short line between two tabs that are both
+   inactive (never next to the selected one). The line sits at the left edge of the second tab. */
+.detail-email-tabs .hot-tab svg { color: currentColor; }
+.detail-email-tabs .hot-tab:not([aria-selected='true']) + .hot-tab:not([aria-selected='true'])::before {
+  content: ''; position: absolute; left: 0; top: 50%; width: 1px; height: 16px; transform: translateY(-50%);
+  background: var(--slateBorderLight);
+}

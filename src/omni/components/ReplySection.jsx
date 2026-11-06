@@ -78,10 +78,13 @@ const FontSize = Extension.create({
 const ReplySection = ({ 
   recipientEmail, 
   onDiscard, 
+  onSend,
   currentInbox 
 }) => {
   const [activeTab, setActiveTab] = useState('templates');
   const [showFormatting, setShowFormatting] = useState(true);
+  // Send turns blue once something is typed.
+  const [isEmpty, setIsEmpty] = useState(true);
 
   const editor = useEditor({
     extensions: [
@@ -100,7 +103,14 @@ const ReplySection = ({
       FontSize,
     ],
     content: '',
+    autofocus: 'end',
+    onUpdate: ({ editor: e }) => setIsEmpty(!e.getText().trim()),
   });
+
+  const send = () => {
+    const body = editor.getText({ blockSeparator: '\n' }).trim();
+    if (body) onSend?.(body);
+  };
 
   if (!editor) return null;
 
@@ -250,7 +260,7 @@ const ReplySection = ({
                 <img src={discardIcon} alt="Discard" width="18" />
               </button>
             </div>
-            <button className="reply-send-btn">Send</button>
+            <button type="button" className={`reply-send-btn${isEmpty ? '' : ' ready'}`} disabled={isEmpty} onClick={send}>Send</button>
           </div>
         </div>
       </div>

@@ -10,7 +10,6 @@ import { MessagePlusSquare } from '../../icons/MessagePlusSquare'
 import type { IconName } from '../../icons/iconData'
 import { RightPanel, RightPanelSection, RightPanelTop } from './RightPanel'
 import { ActivityNotes } from './ActivityNotes'
-import type { ActivityDay } from './ActivityNotes'
 import { AssigneeField, StatusField, TagsField } from './FieldSelects'
 import type { TagOption } from './FieldSelects'
 import { customFieldKinds, getChannel, sampleAssignees, samples, statusOptions } from './data'
@@ -246,12 +245,15 @@ function linkedConversationsSection(linked: LinkedConversation[], onLinkClick?: 
 /** Sections this prototype leaves out of every channel's panel. */
 const HIDDEN_SECTIONS = ['conversation', 'customFields']
 
+/** Email shows notes and activity in the thread itself, so its panel has no Activity & Notes section. */
+const EMAIL_HIDDEN_SECTIONS = ['activity']
+
 /**
  * A ticket (an email conversation turned into a ticket) uses the Email panel with changes
  * (Figma: Delete › 6018:50493): the top section adds Ticket ID, and the only sub-sections are
- * Linked conversations, Activity & Notes and Custom fields. Plain emails do not show Ticket ID.
+ * Linked conversations and Custom fields (Activity & Notes is in the thread). Plain emails do not show Ticket ID.
  */
-const TICKET_SECTIONS = ['activity', 'customFields']
+const TICKET_SECTIONS = ['customFields']
 
 /** The storybook right panel for one channel: its tab, top section, sub-sections in order and "Customize widgets". */
 export function ChannelRightPanel({ channel, inboxName, unassigned, conversationId, ticketId, assignee, onAssigneeChange, status, onStatusChange, tagOptions, tags, onTagsChange, customFields, onCustomFieldChange, onLinkClick, linkedConversations = [], onViewAll, onUnlink, onOpenConversation }: {
@@ -292,10 +294,13 @@ export function ChannelRightPanel({ channel, inboxName, unassigned, conversation
   const isTicket = channel === 'email' && !!ticketId
   const editableCustomFields = !!customFields && !!onCustomFieldChange
   // Linked conversations sits after the field sections, before lists, notes and activity (the omni-boilerplate order).
-  // A ticket shows Linked conversations first, then Activity & Notes, then Custom fields.
+  // A ticket shows Linked conversations first, then Custom fields.
   const shown = isTicket
     ? TICKET_SECTIONS.map((id) => def.sections.find((s) => s.id === id)).filter((s): s is ResolvedSection => !!s)
-    : def.sections.filter((s) => !HIDDEN_SECTIONS.includes(s.id) || (s.id === 'customFields' && editableCustomFields))
+    : def.sections.filter((s) => {
+      if (channel === 'email' && EMAIL_HIDDEN_SECTIONS.includes(s.id)) return false
+      return !HIDDEN_SECTIONS.includes(s.id) || (s.id === 'customFields' && editableCustomFields)
+    })
   const at = isTicket ? 0 : shown.findIndex((s) => s.type === 'list' || s.type === 'notes' || s.type === 'activity')
   const sections: (ResolvedSection | 'linked')[] = [...shown]
   sections.splice(at === -1 ? shown.length : at, 0, 'linked')
@@ -341,14 +346,13 @@ export type TicketConversation = {
   assignee: string
   status: 'open' | 'pending' | 'closed'
   contact: { name: string; email: string; account: string; conversations: number }
-  activity: ActivityDay[]
 }
 
 /**
  * The right panel inside a merged ticket (Figma: Tickets Add/Merge › 4028:18692 and 4028:18693). The ticket's own
  * values come first and stay editable: Ticket ID, Assignee, Status, Tags, Custom fields and Account details.
  * In a conversation's tab, that conversation follows: its subject with its old assignee and status (read-only), then
- * its Contact and Activity & Notes.
+ * its Contact (its notes and activity are in the thread).
  */
 export function TicketRightPanel({ inboxName, ticketId, ticketKey, assignee, onAssigneeChange, status, onStatusChange, tagOptions, tags, onTagsChange, customFields, onCustomFieldChange, account, conversation }: {
   inboxName: string
@@ -403,9 +407,6 @@ export function TicketRightPanel({ inboxName, ticketId, ticketKey, assignee, onA
         <Row icon="mailbox" label="Email">{conversation.contact.email}</Row>
         <Row icon="building" label="Account">{conversation.contact.account}</Row>
         <Row icon="previousconversations" label="Conversations" link>{conversation.contact.conversations}</Row>
-      </RightPanelSection>,
-      <RightPanelSection key="ticketActivity" id="ticketActivity" title="Activity & Notes" icon="clock" defaultExpanded>
-        <ActivityNotes days={conversation.activity} />
       </RightPanelSection>,
     ],
   }

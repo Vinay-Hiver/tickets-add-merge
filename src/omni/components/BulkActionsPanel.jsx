@@ -9,7 +9,7 @@ import './BulkActionsPanel.css';
 
 // Why the selection can't be merged, or null when it can.
 const mergeBlockedReason = (selected) => {
-  if (selected.length < 2) return 'Select at least two emails to merge';
+  if (selected.length < 2) return 'Select at least two conversations to merge';
   if (new Set(selected.map(domainOf)).size > 1) return 'Cannot merge conversations from different domains';
   return null;
 };

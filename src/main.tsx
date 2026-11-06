@@ -10,6 +10,7 @@ import App from './omni/App.jsx'
 import { CurrentUserProvider } from './omni/CurrentUser.jsx'
 import { LinkedConversationsProvider } from './omni/LinkedConversations.jsx'
 import { ConversationFieldsProvider } from './omni/ConversationFields.jsx'
+import { EmailNotesProvider } from './omni/EmailNotesStore.jsx'
 import { ConversationViewerProvider } from './omni/components/viewer/ConversationViewer.jsx'
 
 createRoot(document.getElementById('root')!).render(
@@ -18,11 +19,13 @@ createRoot(document.getElementById('root')!).render(
       {/* Links are shared by everyone, so they sit outside the per-user view (which resets on switch). */}
       <LinkedConversationsProvider>
         <ConversationFieldsProvider>
+          <EmailNotesProvider>
           <CurrentUserProvider>
             <ConversationViewerProvider>
               <App />
             </ConversationViewerProvider>
           </CurrentUserProvider>
+          </EmailNotesProvider>
         </ConversationFieldsProvider>
       </LinkedConversationsProvider>
     </BrowserRouter>

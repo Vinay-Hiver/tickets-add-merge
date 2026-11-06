@@ -9,6 +9,7 @@ import { useConversationViewer } from '../viewer/viewerContext';
 import { useConversationFields } from '../../ConversationFields';
 import { TAGS } from '../../data/tags';
 import { CUSTOM_FIELDS } from '../../data/customFields';
+import { fieldChangeHandlers } from '../../fieldActivity';
 
 /**
  * The storybook right panel plus the link flow: "Link" opens the Link
@@ -21,7 +22,8 @@ export default function LinkedRightPanel({ conversationId, canLink = true, ...pa
   const { linksOf, link, unlink } = useLinkedConversations();
   const { user } = useCurrentUser();
   const viewer = useConversationViewer();
-  const { assigneeOf, assigneeNameOf, setAssignee, statusOf, setStatus, tagsOf, setTags, customFieldsOf, setCustomField } = useConversationFields();
+  const conversationFields = useConversationFields();
+  const { assigneeOf, assigneeNameOf, statusOf, tagsOf, customFieldsOf } = conversationFields;
   const [open, setOpen] = React.useState(false);
   const [viewAll, setViewAll] = React.useState(false);
   const [unlinking, setUnlinking] = React.useState(null); // id of the conversation to unlink
@@ -52,6 +54,9 @@ export default function LinkedRightPanel({ conversationId, canLink = true, ...pa
 
   const openModal = id && canLink ? () => setOpen(true) : undefined;
 
+  // Every change is also logged as an activity row in the conversation's thread.
+  const { changeAssignee, changeStatus, changeTags, changeCustomField } = fieldChangeHandlers({ fields: conversationFields, user, id });
+
   return (
     <>
       {viewAll ? (
@@ -61,14 +66,14 @@ export default function LinkedRightPanel({ conversationId, canLink = true, ...pa
           {...panelProps}
           conversationId={id}
           assignee={id ? assigneeOf(id) : undefined}
-          onAssigneeChange={id ? (value) => setAssignee(id, value) : undefined}
+          onAssigneeChange={id ? changeAssignee : undefined}
           status={id ? statusOf(id) : undefined}
-          onStatusChange={id ? (value) => setStatus(id, value) : undefined}
+          onStatusChange={id ? changeStatus : undefined}
           tagOptions={TAGS}
           tags={id ? tagsOf(id) : undefined}
-          onTagsChange={id ? (value) => setTags(id, value) : undefined}
+          onTagsChange={id ? changeTags : undefined}
           customFields={id && panelProps.channel === 'email' ? CUSTOM_FIELDS.map((f) => ({ ...f, value: customFieldsOf(id)[f.id] })) : undefined}
-          onCustomFieldChange={id ? (fieldId, value) => setCustomField(id, fieldId, value) : undefined}
+          onCustomFieldChange={id ? changeCustomField : undefined}
           onLinkClick={openModal}
           linkedConversations={linkedConversations}
           onViewAll={() => setViewAll(true)}

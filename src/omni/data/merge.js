@@ -53,7 +53,7 @@ export const buildMergedTicket = (conversations, primaryId) => {
   return assembleTicket({
     ...primary,
     id: `ticket-${Date.now()}`,
-    ticketId: `#TKT${Math.floor(100 + Math.random() * 900)}`,
+    ticketId: `TKT#${Math.floor(100 + Math.random() * 900)}`,
     customerEmail: primary.messages[0]?.email,
     mergedAt: nowClock(),
   }, conversations);

@@ -10,6 +10,8 @@ import BulkActionsPanel from './components/BulkActionsPanel';
 import MergeConversationsSheet from './components/MergeConversationsSheet';
 import AddToTicketSheet, { AddConversationsSheet } from './components/AddToTicketSheet';
 import { CUSTOM_FIELDS } from './data/customFields';
+import { formatNoteTime } from './components/notes/EmailNotes';
+import { ArrowMerge } from '../icons/ArrowMerge';
 import { domainOf } from './data/companies';
 import ChannelChatView from './components/ChannelChatView';
 import VoiceCallView from './components/voice/VoiceCallView';
@@ -154,6 +156,15 @@ function App() {
     return [...mergedTickets.filter(inView), ...base.filter((c) => !mergedAwayIds.includes(c.id) && !mergedTickets.some((t) => t.id === c.id))];
   }, [activeFilter.inbox, activeFilter.type, mergedTickets, mergedAwayIds]);
 
+  // Each conversation's thread records when it joined a ticket, as an activity row by whoever did it.
+  const logJoined = (conversations, ticket, verb) => {
+    const now = Date.now();
+    conversations.forEach((c) => fields.addActivity(c.id, {
+      id: `act-${now}-${c.id}`, kind: 'ticket', icon: <ArrowMerge size={14} />, actor: { id: user.id, name: user.name },
+      verb: `${verb} ${ticket.ticketId}`, time: formatNoteTime(), at: now,
+    }));
+  };
+
   // "Merge and create ticket": a ticket with the chosen title, its assignee and status, the tags of every email and
   // the merged custom fields. The ticket opens; the emails leave the list.
   const mergeIntoTicket = (selected, titleId) => {
@@ -162,6 +173,7 @@ function App() {
     fields.setStatus(ticket.id, fields.statusOf(titleId));
     fields.setTags(ticket.id, mergeTags(selected, fields.tagsOf));
     mergeCustomFields(selected, titleId, fields.customFieldsOf).forEach((f) => fields.setCustomField(ticket.id, f.id, f.value));
+    logJoined(selected, ticket, 'merged this conversation into');
     setMergedTickets((tickets) => [ticket, ...tickets]);
     setMergedAwayIds((ids) => [...ids, ...ticket.mergedFrom]);
     setCheckedIds([]);
@@ -208,6 +220,7 @@ function App() {
     });
     setMergedTickets((tickets) => [ticket, ...tickets.filter((t) => t.id !== ticket.id)]);
     setMergedAwayIds((ids) => [...ids, ...conversations.map((c) => c.id)]);
+    logJoined(conversations, ticket, 'added this conversation to');
     setSelectedId(ticket.id);
     setEmailTab('overview');
   };
