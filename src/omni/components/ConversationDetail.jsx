@@ -3,13 +3,12 @@ import './ConversationDetail.css';
 import ReplySection from './ReplySection';
 import { Tabs } from '../../components/Tabs';
 import { Icon } from '../../icons/Icon';
-import { ArrowMerge } from '../../icons/ArrowMerge';
 import { MessagePlusSquare } from '../../icons/MessagePlusSquare';
 import { Tooltip } from '../../components/Tooltip';
 import { Popover } from '../../components/Popover';
 import { Dropdown } from '../../components/Dropdown';
 import { slackChannelFor } from '../data/slackChannels';
-import TicketOverview, { emailTabLabel } from './TicketOverview';
+import { timestampOf } from '../data/merge';
 import ConversationMenu, { VIEW_ONLY_NOTES } from './ConversationMenu';
 // The Note icon from Figma (Activity - Notes › 12:24260), used as it is.
 import noteIcon from '../assets/icons/note.svg';
@@ -20,14 +19,10 @@ import { groupActivity, seedActivity } from './notes/threadTimeline';
 import { ActivityGroup, NoteCard, NoteComposer, NoteConfirm, PinnedNote, formatNoteTime } from './notes/EmailNotes';
 
 // Icons
-import titleUnread from '../assets/icons/title-unreaed.svg';
-import titleMailbox from '../assets/icons/title-mailbox.svg';
 import titlePrint from '../assets/icons/title-print.svg';
-import titleAi from '../assets/icons/title-ai.svg';
 import replyIcon from '../assets/icons/reply.svg';
 import replyAllIcon from '../assets/icons/reply-all.svg';
 import forwardIcon from '../assets/icons/forward.svg';
-import kebabIcon from '../assets/icons/kebab-menu.svg';
 import smallReplyIcon from '../assets/icons/small-reply.svg';
 import smallForwardIcon from '../assets/icons/small-forward.svg';
 import chevronDownIcon from '../assets/icons/s-chevron-down.svg';
@@ -36,7 +31,7 @@ const SUPPORT_EMAIL = 'support@hiver.com';
 
 // Notes and activity live in the thread itself (ported from the "Activity and Notes - All Channels" prototype).
 // Every email thread starts with one note from Michael after the first message.
-const seedNotes = (conversation) => [{
+const seedNotes = (conversation) => (conversation.emails ? [] : [{
   id: `seed-${conversation.id}`,
   authorId: 'michael',
   author: 'Michael Scott',
@@ -44,7 +39,7 @@ const seedNotes = (conversation) => [{
   color: 'red',
   time: conversation.messages[0]?.time,
   body: "Checked their account: this looks related to last week's billing change. @Jim Halpert can you confirm before we reply?",
-}];
+}]); // a merged ticket starts with no notes of its own
 
 // The ⋮ menu at the top right of an email (only "Reply", "Reply all" and "View only notes" do something here).
 const EMAIL_MENU = [
@@ -58,6 +53,14 @@ const EMAIL_MENU = [
   { value: 'delete', label: 'Delete conversation', icon: 'delete' },
 ];
 
+// The ⋮ menu on an open email card.
+const EMAIL_CARD_MENU = [
+  { value: 'reply', label: 'Reply', icon: 'reply' },
+  { value: 'forward', label: 'Forward', icon: 'forward' },
+  { value: 'print', label: 'Print', icon: 'print' },
+  { value: 'download', label: 'Download Message', icon: 'download' },
+];
+
 const releaseFiles = (files) => files?.forEach((f) => URL.revokeObjectURL(f.url));
 
 const hashOf = (id) => {
@@ -66,7 +69,28 @@ const hashOf = (id) => {
   return h;
 };
 
-const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSignatureId, emailTab: emailTabProp, onEmailTabChange, onMergeClick, onAddToTicketClick, onAddConversationClick }) => {
+const customerEmailOf = (thread) => thread?.customerEmail ?? thread?.messages?.find((m) => m.email !== SUPPORT_EMAIL)?.email;
+// The customer's name, from their own emails (their address when none has a name).
+const contactNameOf = (thread) => {
+  const email = customerEmailOf(thread);
+  return thread?.messages?.find((m) => m.email === email)?.sender ?? email;
+};
+
+// How a thread names people: half the conversations show them by name ("David Chen", "Hiver Support"), the other half
+// by email address, picked from the conversation's id so it stays the same. The customer's emails go to the support
+// inbox, and support's replies go to the customer.
+const peopleOf = (thread) => {
+  const customerEmail = customerEmailOf(thread);
+  const showNames = !!thread && hashOf(thread.id) % 2 === 1;
+  const customerName = thread?.messages?.find((m) => m.email === customerEmail)?.sender;
+  const labelOf = (email, name) => (!showNames ? email : email === SUPPORT_EMAIL ? 'Hiver Support' : name ?? email);
+  return {
+    senderOf: (msg) => labelOf(msg.email, msg.sender),
+    recipientOf: (msg) => (msg.email === SUPPORT_EMAIL ? labelOf(customerEmail, customerName) : labelOf(SUPPORT_EMAIL)),
+  };
+};
+
+const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSignatureId, emailTab: emailTabProp, onEmailTabChange, onAddToTicketClick, onAddConversationClick }) => {
   const [expandedIds, setExpandedIds] = useState([]);
   const [activeReplyId, setActiveReplyId] = useState(null);
   const [tab, setTab] = useState('conversation');
@@ -86,6 +110,8 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
   const [highlightId, setHighlightId] = useState(null);
   // "View only notes" in the ⋮ menu: the thread shows its notes alone, without messages or activity.
   const [onlyNotes, setOnlyNotes] = useState(false);
+  // Emails whose "..." is open, showing the earlier email they replied to.
+  const [quotedIds, setQuotedIds] = useState([]);
   const scrollRef = React.useRef(null);
   const highlightTimer = React.useRef(0);
 
@@ -96,6 +122,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
     }
     setTab('conversation');
     setEmailTab('overview');
+    if (conversation?.emails) scrollToBottom(); // a ticket opens on its Overview, at the latest
     setOnlyNotes(false);
     setComposer(null);
     setConfirm(null);
@@ -106,16 +133,11 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
   const threadMessages = openEmail ? openEmail.messages : conversation?.messages ?? [];
   // Who a message went to: the customer's emails go to the support inbox, and support's replies go to the customer.
   const thread = openEmail ?? conversation;
-  const customerEmail = thread?.customerEmail ?? thread?.messages?.find((m) => m.email !== SUPPORT_EMAIL)?.email;
-  // Half the conversations show people by name ("David Chen", "Hiver Support"), the other half by email address,
-  // picked from the conversation's id so it stays the same.
-  const showNames = !!thread && hashOf(thread.id) % 2 === 1;
-  const customerName = thread?.messages?.find((m) => m.email === customerEmail)?.sender;
-  const labelOf = (email, name) => (!showNames ? email : email === SUPPORT_EMAIL ? 'Hiver Support' : name ?? email);
-  const senderOf = (msg) => labelOf(msg.email, msg.sender);
-  const recipientOf = (msg) => (msg.email === SUPPORT_EMAIL ? labelOf(customerEmail, customerName) : labelOf(SUPPORT_EMAIL));
+  const customerEmail = customerEmailOf(thread);
+  const { senderOf, recipientOf } = peopleOf(thread);
   const selectEmail = (value) => {
     setEmailTab(value);
+    if (value === 'overview') { setExpandedIds([]); scrollToBottom(); }
     const email = emails?.find((e) => String(e.id) === value);
     if (email?.messages.length) setExpandedIds([email.messages[0].id]);
     setActiveReplyId(null);
@@ -123,12 +145,13 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
     setComposer(null);
   };
 
-  // The conversation whose notes and activity show: the email itself, or the open email tab of a merged ticket.
-  // A merged ticket's Overview has none of its own yet.
-  const source = openEmail ?? (emails ? null : conversation);
+  // The conversation whose notes and activity show: the email itself, or a merged ticket (its own notes; its
+  // conversations' emails, notes and activity join its timeline).
+  const source = openEmail ?? conversation;
   const convoId = source ? String(source.id) : null;
   const notesThread = (convoId && threads[convoId]) || (source ? { notes: seedNotes(source), pin: null } : null);
-  const updateThread = (fn) => setThreads((all) => ({ ...all, [convoId]: fn(all[convoId] || { notes: seedNotes(source), pin: null }) }));
+  const updateThreadOf = (id, seedFrom, fn) => setThreads((all) => ({ ...all, [id]: fn(all[id] || { notes: seedNotes(seedFrom), pin: null }) }));
+  const updateThread = (fn) => updateThreadOf(convoId, source, fn);
   const findNote = (id) => notesThread?.notes.find((n) => n.id === id);
 
   const scrollToBottom = () => requestAnimationFrame(() => {
@@ -183,7 +206,8 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
   };
 
   // A sent reply joins the thread as another email card, from the support inbox to the customer, opened.
-  const sendReply = (body) => {
+  // On a merged ticket it goes to the conversation of the email being replied to (`email`).
+  const sendReply = (body, email) => {
     const now = new Date();
     const reply = {
       id: `reply-${now.getTime()}`,
@@ -195,8 +219,11 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
       avatarColor: `var(--pastel${user.color.charAt(0).toUpperCase()}${user.color.slice(1)}BorderDefault)`,
       body,
     };
-    updateThread((t) => ({ ...t, replies: [...(t.replies ?? []), reply] }));
-    setExpandedIds((ids) => [...ids, reply.id]);
+    if (email) updateThreadOf(String(email.id), email, (t) => ({ ...t, replies: [...(t.replies ?? []), reply] }));
+    else {
+      updateThread((t) => ({ ...t, replies: [...(t.replies ?? []), reply] }));
+      setExpandedIds((ids) => [...ids, reply.id]);
+    }
     setActiveReplyId(null);
     scrollToBottom();
   };
@@ -275,33 +302,64 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
     e.stopPropagation();
     setComposer(null);
     setActiveReplyId(prev => prev === id ? null : id);
-    scrollToBottom();
   };
 
+  // On a merged ticket, a reply goes to the conversation of the email it answers (ids there are "<email id>:<message id>").
+  const emailOfReply = conversation?.emails && activeReplyId ? conversation.emails.find((e) => activeReplyId.startsWith(`${e.id}:`)) : null;
+  // `msg` is the email being replied to: the reply box's "..." shows it.
+  const renderReplyBox = (msg, people) => (
+    <ReplySection
+      key={activeReplyId}
+      quotedEmail={{ time: msg.time, sender: people.senderOf(msg), body: msg.body }}
+      recipientName={contactNameOf(emailOfReply ?? thread)}
+      recipientEmail={emailOfReply ? customerEmailOf(emailOfReply) : customerEmail}
+      signatures={signatures}
+      setSignatures={setSignatures}
+      defaultSignatureId={defaultSignatureId}
+      currentInbox={conversation.inbox}
+      onSend={(body) => sendReply(body, emailOfReply ?? undefined)}
+      onDiscard={(e) => {
+        e.stopPropagation();
+        setActiveReplyId(null);
+      }}
+    />
+  );
+
   // An email card: open (header, body, Reply / Forward) or folded to one line. Clicking the header toggles it.
-  const renderMessage = (msg) => {
-    const isExpanded = expandedIds.includes(msg.id);
+  // `quoted` is the earlier email this one replied to, shown under "..."; `people` names the sender and recipient;
+  // `readOnly` hides
+  // the reply and forward actions. `open` flips the default (the Overview opens its latest email).
+  const renderMessage = (msg, { quoted, people = { senderOf, recipientOf }, from, readOnly, open = false } = {}) => {
+    const isExpanded = expandedIds.includes(msg.id) !== open;
+    const toggle = () => toggleExpand(msg.id);
+    const isQuoted = quotedIds.includes(msg.id);
     return (
-      isExpanded ? (
+      <>
+      {isExpanded ? (
         <div className="convo-card">
           <div className="convo-card-header">
             <div className="convo-avatar" style={{ backgroundColor: msg.avatarColor }}>
               <span>{msg.initial}</span>
             </div>
-            <div className="convo-info" onClick={() => toggleExpand(msg.id)} style={{ cursor: 'pointer' }}>
-              <h3 className="convo-email">{senderOf(msg)}</h3>
+            <div className="convo-info" onClick={toggle} style={{ cursor: 'pointer' }}>
+              <h3 className="convo-email">{people.senderOf(msg)}</h3>
               <div className="convo-to">
-                To: {recipientOf(msg)} <img src={chevronDownIcon} alt="Expand" width="14" height="14" style={{ marginLeft: 4 }} />
+                To: {people.recipientOf(msg)} <img src={chevronDownIcon} alt="Expand" width="14" height="14" style={{ marginLeft: 4 }} />
               </div>
             </div>
             <div className="header-actions-right">
               <span className="convo-time">{msg.time}</span>
-              <button className="icon-btn" onClick={(e) => handleReplyAll(e, msg.id)}>
-                 <img src={replyAllIcon} alt="Reply All" width="16" height="16" />
-              </button>
-              <button className="icon-btn">
-                 <img src={kebabIcon} alt="More" width="16" height="16" />
-              </button>
+              {!readOnly && (
+                <button className="icon-btn" onClick={(e) => handleReplyAll(e, msg.id)}>
+                   <img src={replyIcon} alt="Reply" width="16" height="16" />
+                </button>
+              )}
+              {/* ⋮ on an email: Reply opens the reply box under it; the rest have no action yet */}
+              <ConversationMenu
+                className="convo-card-menu"
+                options={readOnly ? EMAIL_CARD_MENU.filter((o) => o.value !== 'reply') : EMAIL_CARD_MENU}
+                onSelect={(value) => { if (value === 'reply') setActiveReplyId(msg.id); }}
+              />
             </div>
           </div>
           <div className="convo-body">
@@ -311,28 +369,48 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
               </React.Fragment>
             ))}
           </div>
-          <button className="btn-more-content">...</button>
-          <div className="convo-actions">
-            <button className="convo-btn" onClick={(e) => handleReplyAll(e, msg.id)}>
-              <img src={smallReplyIcon} alt="" width="14" height="14" /> Reply
-            </button>
-            <button className="convo-btn">
-              <img src={smallForwardIcon} alt="" width="14" height="14" /> Forward
-            </button>
-          </div>
+          {/* "..." shows the earlier email this one replied to, as a mail client quotes it (the first email has none) */}
+          {quoted && (
+            <button
+              type="button"
+              className={`btn-more-content${isQuoted ? ' is-open' : ''}`}
+              aria-expanded={isQuoted}
+              aria-label={isQuoted ? 'Hide trimmed content' : 'Show trimmed content'}
+              onClick={() => setQuotedIds((ids) => (ids.includes(msg.id) ? ids.filter((x) => x !== msg.id) : [...ids, msg.id]))}
+            ><Icon name="hmore" size={14} /></button>
+          )}
+          {quoted && isQuoted && (
+            <div className="convo-quote">
+              <p className="convo-quote__meta">On {quoted.time}, {people.senderOf(quoted)} wrote:</p>
+              {quoted.body.split('\n').map((line, i) => <React.Fragment key={i}>{line}<br /></React.Fragment>)}
+            </div>
+          )}
+          {!readOnly && (
+            <div className="convo-actions">
+              <button className="convo-btn" onClick={(e) => handleReplyAll(e, msg.id)}>
+                <img src={smallReplyIcon} alt="" width="14" height="14" /> Reply
+              </button>
+              <button className="convo-btn">
+                <img src={smallForwardIcon} alt="" width="14" height="14" /> Forward
+              </button>
+            </div>
+          )}
         </div>
       ) : (
-        <div className="convo-card-collapsed" onClick={() => toggleExpand(msg.id)}>
+        <div className="convo-card-collapsed" onClick={toggle}>
           <div className="convo-avatar" style={{ backgroundColor: msg.avatarColor }}>
             <span>{msg.initial}</span>
           </div>
           <div className="convo-info">
-            <h3 className="convo-email">{senderOf(msg)}</h3>
+            <h3 className="convo-email">{people.senderOf(msg)}</h3>
             <p className="collapsed-text">{msg.body.substring(0, 80)}...</p>
           </div>
           <span className="convo-time">{msg.time}</span>
         </div>
-      )
+      )}
+      {/* The reply box opens right below the email whose Reply was clicked */}
+      {activeReplyId === msg.id && renderReplyBox(msg, people)}
+      </>
     );
   };
 
@@ -356,8 +434,68 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
     if (index === lastIndex) items.push(...asActivity(activity.last), ...later);
     return groupActivity(items);
   };
+  // The thread's emails in order, so each one can quote the email before it under "...".
+  const threadEmails = [...threadMessages, ...(notesThread?.replies ?? [])];
+  const previousOf = (list, msg) => list[list.findIndex((m) => m.id === msg.id) - 1];
+
+  // A merged ticket: one timeline, earliest to latest, of every email, note and activity from all its conversations,
+  // plus the ticket's own notes and activity. Each email is labelled with its conversation, and a reply to it goes
+  // to that conversation. Its conversations' notes are read-only here; the ticket's own notes can be pinned and edited.
+  // Joining the ticket shows once per merge: "2 conversations merged into TKT#88".
+  const timeline = emails ? (() => {
+    const items = [];
+    const atOf = (x) => x.at ?? timestampOf(x.time ?? '');
+    const joins = new Map();
+    const pushActivity = (row) => {
+      if (row.kind !== 'ticket') { items.push({ kind: 'activity', at: row.at ?? atOf(row), row }); return; }
+      const [action, , , , id] = row.verb.split(' '); // "merged this conversation into TKT#88" / "added this conversation to TKT#88"
+      const key = `${row.at}-${action}`;
+      if (!joins.has(key)) {
+        const item = { kind: 'activity', at: row.at, row: { ...row, id: `join-${key}`, count: 0 } };
+        joins.set(key, item);
+        items.push(item);
+      }
+      const join = joins.get(key).row;
+      join.count += 1;
+      join.text = `${join.count} ${join.count === 1 ? 'conversation' : 'conversations'} ${action === 'merged' ? 'merged into' : 'added to'} ${id}`;
+    };
+    emails.forEach((e) => {
+      const saved = threads[String(e.id)];
+      const list = [...e.messages, ...(saved?.replies ?? [])].map((m) => ({ ...m, id: `${e.id}:${m.id}` }));
+      list.forEach((msg) => items.push({ kind: 'message', at: atOf(msg), key: msg.id, msg, email: e, quoted: previousOf(list, msg) }));
+      seedActivity({ id: e.id, firstTime: e.messages[0]?.time }).first.forEach(pushActivity);
+      (saved?.notes ?? seedNotes(e)).forEach((note) => items.push({ kind: 'note', at: atOf(note), key: `${e.id}:${note.id}`, note }));
+      activityOf(e.id).forEach(pushActivity);
+    });
+    activityOf(conversation.id).forEach(pushActivity);
+    notesThread.notes.forEach((note) => items.push({ kind: 'note', at: note.at ?? 0, key: note.id, note, own: true }));
+    // A stable sort, so things at the same minute keep their order (an email, then what followed it).
+    return items.sort((a, b) => a.at - b.at);
+  })() : null;
+  const lastTimelineEmail = timeline?.filter((i) => i.kind === 'message').pop();
+  const renderTimeline = () => groupActivity(onlyNotes ? timeline.filter((i) => i.kind === 'note') : timeline).map((item) => {
+    if (item.kind === 'activity') return <ActivityGroup key={item.key} rows={item.rows} />;
+    if (item.kind === 'note') {
+      if (item.own) return renderNote(item.note);
+      const id = `timeline-${item.key}`;
+      return (
+        <NoteCard
+          key={id}
+          note={item.note}
+          elementId={`email-note-${id}`}
+          expanded={openNoteIds[id] ?? false}
+          onToggle={() => setOpenNoteIds((o) => ({ ...o, [id]: !o[id] }))}
+        />
+      );
+    }
+    return (
+      <React.Fragment key={item.key}>
+        {renderMessage(item.msg, { quoted: item.quoted, people: peopleOf(item.email), open: item === lastTimelineEmail })}
+      </React.Fragment>
+    );
+  });
   const pinned = notesThread?.pin ? findNote(notesThread.pin.id) : null;
-  // The Reply / Add note footer shows wherever a thread does (not on the Slack tab or a merged ticket's Overview).
+  // The Reply / Add note footer shows wherever a thread does (not on the Slack tab).
   const showThread = tab !== 'slack' && !!source;
 
   return (
@@ -366,18 +504,9 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
       <div className="detail-header">
         <div className="header-left">
           <button className="icon-btn">
-             <img src={titleUnread} alt="Unread" width="16" height="16" />
-          </button>
-          <button className="icon-btn">
-             <img src={titleMailbox} alt="Mailbox" width="16" height="16" />
-          </button>
-          <button className="icon-btn">
              <img src={titlePrint} alt="Print" width="16" height="16" />
           </button>
-          <button className="icon-btn">
-             <img src={titleAi} alt="AI" width="16" height="16" />
-          </button>
-          {/* Ticket and conversation actions. None of them do anything yet. */}
+          {/* Ticket and conversation actions. Merging is a bulk action only (from the list), not in this header. */}
           {conversation.ticketId ? (
             <Tooltip content="Add conversation" placement="bottom">
               <button type="button" className="icon-btn" aria-label="Add conversation" onClick={onAddConversationClick}><MessagePlusSquare size={16} /></button>
@@ -397,35 +526,36 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
                   onChange={(value) => { setTicketMenuOpen(false); if (value === 'add') onAddToTicketClick?.(); }}
                 />
               </Popover>
-              <Tooltip content="Merge conversations" placement="bottom">
-                <button type="button" className="icon-btn" aria-label="Merge conversations" onClick={onMergeClick}><ArrowMerge /></button>
-              </Tooltip>
             </>
           )}
-          <Tooltip content="Delete" placement="bottom">
-            <button type="button" className="icon-btn" aria-label="Delete"><Icon name="delete" size={16} /></button>
-          </Tooltip>
         </div>
       </div>
 
       {/* Scrollable Area */}
       <div className="detail-scroll-area" ref={scrollRef}>
+        {/* The subject bar and the Conversation / Slack tabs stay at the top while the thread scrolls */}
+        <div className="detail-sticky">
         {/* Subject Bar */}
         <div className="subject-bar-detail">
           <h1 className="subject-text-large text-label-medium">{conversation.subject}</h1>
           <div className="subject-actions">
-             <button className="icon-btn" onClick={(e) => handleReplyAll(e, expandedIds[0] || (conversation.messages.length > 0 ? conversation.messages[0].id : null))}>
-               <img src={replyIcon} alt="Reply" width="16" height="16" />
-             </button>
-             <button className="icon-btn" onClick={(e) => handleReplyAll(e, expandedIds[0])}>
-               <img src={replyAllIcon} alt="Reply All" width="16" height="16" />
-             </button>
-             <button className="icon-btn">
-               <img src={forwardIcon} alt="Forward" width="16" height="16" />
-             </button>
+             {/* A ticket has no reply, reply all or forward of its own: each email in its timeline has them */}
+             {!emails && (
+               <>
+                 <button className="icon-btn" onClick={(e) => handleReplyAll(e, expandedIds[0] || (conversation.messages.length > 0 ? conversation.messages[0].id : null))}>
+                   <img src={replyIcon} alt="Reply" width="16" height="16" />
+                 </button>
+                 <button className="icon-btn" onClick={(e) => handleReplyAll(e, expandedIds[0])}>
+                   <img src={replyAllIcon} alt="Reply All" width="16" height="16" />
+                 </button>
+                 <button className="icon-btn">
+                   <img src={forwardIcon} alt="Forward" width="16" height="16" />
+                 </button>
+               </>
+             )}
              {source && (
                <ConversationMenu
-                 options={EMAIL_MENU}
+                 options={emails ? EMAIL_MENU.filter((o) => !['reply', 'reply-all', 'forward'].includes(o.value)) : EMAIL_MENU}
                  onlyNotes={onlyNotes}
                  onSelect={(value) => {
                    const last = threadMessages[lastIndex]?.id;
@@ -448,24 +578,19 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
             { value: 'slack', label: slackChannelFor(conversation.id), icon: <Icon name="slack" size={14} /> },
           ]}
         />
+        </div>
 
         {/* The Slack tab is a placeholder for now; the email thread shows on the Conversation tab */}
         {tab === 'slack' ? (
           <div className="detail-slack-placeholder text-body-small">Slack internal collaboration page</div>
         ) : (
         <>
-        {/* A merged ticket: Overview, then a tab per merged email (Figma 4028:16172) */}
-        {emails && (
-          <Tabs
-            className="detail-tabs detail-email-tabs"
-            aria-label="Merged conversations"
-            value={emailTab}
-            onChange={selectEmail}
-            tabs={[{ value: 'overview', label: 'Overview' }, ...emails.map((e) => ({ value: String(e.id), label: emailTabLabel(e), icon: <Icon name="mailbox" size={14} /> }))]}
-          />
-        )}
-        {emails && emailTab === 'overview' ? (
-          <TicketOverview ticketId={conversation.id} emails={emails} onOpen={selectEmail} />
+        {timeline ? (
+          <div className="messages-container">
+            {pinned && <PinnedNote by={notesThread.pin.by}>{renderNote(pinned, 'pin')}</PinnedNote>}
+            {onlyNotes && !timeline.some((i) => i.kind === 'note') && <p className="en-notes-empty">No notes in this ticket yet.</p>}
+            {renderTimeline()}
+          </div>
         ) : (
         <div className="messages-container">
           {pinned && <PinnedNote by={notesThread.pin.by}>{renderNote(pinned, 'pin')}</PinnedNote>}
@@ -475,31 +600,16 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
           {!onlyNotes && threadMessages.map((msg, index) => {
             return (
               <React.Fragment key={msg.id}>
-                {renderMessage(msg)}
+                {renderMessage(msg, { quoted: previousOf(threadEmails, msg) })}
 
                 {itemsAfter(index).map((item) => {
                   if (item.kind === 'note') return renderNote(item.note);
-                  if (item.kind === 'message') return <React.Fragment key={item.key}>{renderMessage(item.msg)}</React.Fragment>;
+                  if (item.kind === 'message') return <React.Fragment key={item.key}>{renderMessage(item.msg, { quoted: previousOf(threadEmails, item.msg) })}</React.Fragment>;
                   return <ActivityGroup key={item.key} rows={item.rows} />;
                 })}
               </React.Fragment>
             );
           })}
-          {activeReplyId && source && (
-            <ReplySection
-              key={activeReplyId}
-              recipientEmail={customerEmail}
-              signatures={signatures}
-              setSignatures={setSignatures}
-              defaultSignatureId={defaultSignatureId}
-              currentInbox={conversation.inbox}
-              onSend={sendReply}
-              onDiscard={(e) => {
-                e.stopPropagation();
-                setActiveReplyId(null);
-              }}
-            />
-          )}
         </div>
         )}
         </>
@@ -517,7 +627,8 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
         />
       ) : !activeReplyId && (
         <div className="en-footer">
-          <button type="button" className="en-footer__btn" onClick={(e) => handleReplyAll(e, threadMessages[lastIndex]?.id)}><Icon name="reply" size={16} />Reply</button>
+          {/* A ticket has no reply of its own: each email in its timeline is replied to from its card */}
+          {!emails && <button type="button" className="en-footer__btn" onClick={(e) => handleReplyAll(e, threadMessages[lastIndex]?.id)}><Icon name="reply" size={16} />Reply</button>}
           <button type="button" className="en-footer__btn" onClick={() => openComposer({ mode: 'new' })}><img src={noteIcon} alt="" />Add note</button>
         </div>
       ))}

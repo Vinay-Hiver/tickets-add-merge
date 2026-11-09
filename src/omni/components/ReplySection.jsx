@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Extension } from '@tiptap/core';
 
+import { Icon } from '../../icons/Icon';
 import './ReplySection.css';
 
 // Icons from assets/icons
@@ -79,8 +80,12 @@ const ReplySection = ({
   recipientEmail, 
   onDiscard, 
   onSend,
+  quotedEmail,
+  recipientName,
   currentInbox 
 }) => {
+  // "..." under the editor shows the email being replied to (the same button and quote as on an email card).
+  const [showQuoted, setShowQuoted] = useState(false);
   const [activeTab, setActiveTab] = useState('templates');
   const [showFormatting, setShowFormatting] = useState(true);
   // Send turns blue once something is typed.
@@ -122,7 +127,7 @@ const ReplySection = ({
           <div className="reply-icon-wrapper">
              <img src={replyIcon} alt="" className="reply-icon-main" />
           </div>
-          <span className="reply-type-text">Reply</span>
+          <span className="reply-type-text">{recipientName ? `Replying to ${recipientName}` : 'Reply'}</span>
         </div>
       </div>
 
@@ -151,6 +156,23 @@ const ReplySection = ({
       {/* Tiptap Editor Content */}
       <div className="reply-editor-wrapper">
         <EditorContent editor={editor} className="reply-tiptap-content" />
+        {quotedEmail && (
+          <>
+            <button
+              type="button"
+              className={`btn-more-content reply-quoted-toggle${showQuoted ? ' is-open' : ''}`}
+              aria-expanded={showQuoted}
+              aria-label={showQuoted ? 'Hide the email you are replying to' : 'Show the email you are replying to'}
+              onClick={() => setShowQuoted((o) => !o)}
+            ><Icon name="hmore" size={14} /></button>
+            {showQuoted && (
+              <div className="convo-quote reply-quoted">
+                <p className="convo-quote__meta">On {quotedEmail.time}, {quotedEmail.sender} wrote:</p>
+                {quotedEmail.body.split('\n').map((line, i) => <React.Fragment key={i}>{line}<br /></React.Fragment>)}
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Toolbars Container */}

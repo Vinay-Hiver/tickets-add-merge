@@ -233,10 +233,13 @@ function NoteActions({ pinned, attachments, onPin, onReply, onEdit, onDelete }) 
           <Icon name="download" size={14} />
         </NoteAction>
       )}
-      <NoteAction label={pinned ? 'Unpin' : 'Pin to top'} aria-pressed={pinned} className={pinned ? 'is-pinned' : ''} onClick={onPin}>
-        <Icon name={pinned ? 'unpin' : 'pin'} size={14} />
-      </NoteAction>
-      <NoteAction label="Reply" onClick={onReply}><Icon name="reply" size={14} /></NoteAction>
+      {/* A read-only copy (the ticket Overview) passes no handlers, so it shows none of these. */}
+      {onPin && (
+        <NoteAction label={pinned ? 'Unpin' : 'Pin to top'} aria-pressed={pinned} className={pinned ? 'is-pinned' : ''} onClick={onPin}>
+          <Icon name={pinned ? 'unpin' : 'pin'} size={14} />
+        </NoteAction>
+      )}
+      {onReply && <NoteAction label="Reply" onClick={onReply}><Icon name="reply" size={14} /></NoteAction>}
       {/* Edit and Delete only show on your own notes (no handler is passed for anyone else's). */}
       {onEdit && <NoteAction label="Edit" onClick={onEdit}><Icon name="edit" size={14} /></NoteAction>}
       {onDelete && <NoteAction label="Delete" onClick={onDelete}><Icon name="delete" size={14} /></NoteAction>}

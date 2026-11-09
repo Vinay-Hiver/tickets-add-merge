@@ -444,3 +444,7 @@
   color: white;
   cursor: pointer;
 }
+
+/* "..." under the editor: the email being replied to */
+.reply-quoted-toggle { align-self: flex-start; flex: none; margin-top: 8px; }
+.reply-quoted { margin-top: 12px; }

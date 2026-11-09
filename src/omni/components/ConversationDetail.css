@@ -97,6 +97,17 @@
   align-items: center;
 }
 
+/* Open or folded, a card has 12px padding on every side and a 40px top row (avatar, name, To / preview line), so the
+   avatar never moves when a card opens or folds */
+.convo-card, .convo-card-collapsed { box-sizing: border-box; padding: 12px; }
+.convo-card-header, .convo-card-collapsed { --convo-row: 40px; }
+.convo-card-header { height: var(--convo-row); }
+.convo-card-header .convo-info, .convo-card-collapsed .convo-info { height: var(--convo-row); justify-content: center; }
+/* The two lines take the same room in both states (20px name + 2px gap + 18px To / preview = 40px), so the name sits
+   at the same height whether the card is open or folded */
+.convo-info .convo-email { line-height: 20px; }
+.convo-info .convo-to, .convo-info .collapsed-text { line-height: 18px; height: 18px; }
+
 .header-actions-right {
   display: flex;
   align-items: center;
@@ -109,7 +120,7 @@
   border-radius: 8px;
   padding: 12px;
   display: flex;
-  align-items: flex-start;
+  align-items: center; /* the avatar sits centred against the name and preview, as in the open card's header */
   gap: 12px;
   cursor: pointer;
 }
@@ -217,6 +228,7 @@
 }
 
 .collapsed-text {
+  margin: 0;
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -251,7 +263,8 @@
 .detail-tabs.detail-email-tabs.hot-tabs--outlined .hot-tab { height: 50px; }
 
 /* Header actions: 28px buttons (only here; .icon-btn is 24px elsewhere) */
-.detail-header .icon-btn { width: 28px; height: 28px; padding: 6px; color: var(--slateIconsActive); }
+/* Every header icon uses the Print icon's colour, hover and pressed backgrounds */
+.detail-header .icon-btn { width: 28px; height: 28px; padding: 6px; color: var(--slateIconsSubtle); }
 .detail-header .icon-btn svg { flex: none; }
 .detail-header .hot-tooltip-wrap { display: inline-flex; }
 /* The Popover lines the menu up with the button's left edge; this moves its centre under the 28px button's centre */
@@ -259,7 +272,7 @@
 /* Wider than the longest option: the left keeps the Dropdown's own padding, the extra room is on the right */
 .hot-dropdown.detail-ticket-menu .hot-list-item.hot-list-item--compact.hot-list-item--no-leading { padding-right: 16px; }
 /* The Ticket button keeps its hover fill while its flyout is open, so it's clear which icon the flyout belongs to */
-.detail-header .icon-btn.is-active { background-color: var(--slateSurfaceSubtle100Hover); }
+.detail-header .icon-btn.is-active { background-color: var(--slateSurfaceSubtle100); }
 
 /* Merged ticket tabs: a mail icon on each conversation tab, and a short line between two tabs that are both
    inactive (never next to the selected one). The line sits at the left edge of the second tab. */
@@ -268,3 +281,16 @@
   content: ''; position: absolute; left: 0; top: 50%; width: 1px; height: 16px; transform: translateY(-50%);
   background: var(--slateBorderLight);
 }
+
+/* "..." on an email: shows the earlier email it replied to */
+.btn-more-content { color: var(--slateIconsActive); }
+.btn-more-content:hover, .btn-more-content.is-open { background-color: var(--slateSurfaceSubtle300); }
+.convo-quote {
+  margin-top: -8px; padding-left: 12px; border-left: 2px solid var(--slateBorderLight);
+  font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextSubtle);
+}
+.convo-quote__meta { margin: 0 0 8px; }
+
+
+/* Subject bar + Conversation / Slack tabs: pinned to the top of the scrolling thread */
+.detail-sticky { position: sticky; top: 0; z-index: 2; flex: none; background: var(--slateSurfaceWhite); }

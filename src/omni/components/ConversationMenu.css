@@ -18,3 +18,6 @@
 .conversation-menu__btn.is-open { background: var(--slateSurfaceSubtle100Hover); }
 
 .hot-dropdown.conversation-menu { width: 240px; }
+
+/* The ⋮ on an open email card: the 24px size and grey of the icons beside it */
+.conversation-menu__btn.convo-card-menu { width: 24px; height: 24px; color: var(--slateIconsSubtle); }

@@ -295,7 +295,6 @@ function App() {
                       conversation={selectedConversation}
                       emailTab={emailTab}
                       onEmailTabChange={setEmailTab}
-                      onMergeClick={() => setMergeSourceId(selectedConversation.id)}
                       onAddToTicketClick={() => setAddSourceIds([selectedConversation.id])}
                       onAddConversationClick={() => setAddTargetId(selectedConversation.id)}
                       signatures={signatures}
