@@ -73,7 +73,6 @@ function Sheet({ title, onClose, children, footer, confirm }) {
         <header className="mc-header">
           <div>
             <h2 id="att-title" className="mc-header__title">{title}</h2>
-            <p className="mc-header__subtitle">Bring related conversations together in one place.</p>
           </div>
           <Button variant="ghost" size="sm" iconOnly aria-label="Close" onClick={() => exit(onClose)}>
             <Icon name="close" size={16} />
@@ -149,8 +148,6 @@ export function AddConversationsSheet({ ticket, candidates, others = [], onClose
         <div className="mc-card mc-pick">
           <Input search size="md" fullWidth placeholder="Search conversation" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search conversation" />
           <div className="mc-filters">
-            <FilterChip>From</FilterChip>
-            <FilterChip>To</FilterChip>
             <FilterChip icon="flag">Status</FilterChip>
             <FilterChip icon="tag">Tag</FilterChip>
           </div>
@@ -222,8 +219,6 @@ export default function AddToTicketSheet({ conversations, tickets, others = [], 
         <div className="mc-card mc-pick">
           <Input search size="md" fullWidth placeholder="Search by ticket ID or title" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search by ticket ID or title" />
           <div className="mc-filters">
-            <FilterChip>From</FilterChip>
-            <FilterChip>To</FilterChip>
             <FilterChip icon="flag">Status</FilterChip>
             <FilterChip icon="tag">Tag</FilterChip>
           </div>

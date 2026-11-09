@@ -167,8 +167,6 @@ function PickStep({ source, candidates, others, onCancel, onNext }) {
           <div className="mc-card mc-pick">
             <Input search size="md" fullWidth placeholder="Search conversation" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search conversation" />
             <div className="mc-filters">
-              <FilterChip>From</FilterChip>
-              <FilterChip>To</FilterChip>
               <FilterChip icon="flag">Status</FilterChip>
               <FilterChip icon="tag">Tag</FilterChip>
             </div>
@@ -235,7 +233,6 @@ export default function MergeConversationsSheet({ conversations: preselected, so
         <header className="mc-header">
           <div>
             <h2 id="mc-title" className="mc-header__title">Merge conversations into a ticket</h2>
-            <p className="mc-header__subtitle">Bring related conversations together in one place.</p>
           </div>
           <Button variant="ghost" size="sm" iconOnly aria-label="Close" onClick={() => exit(onClose)}>
             <Icon name="close" size={16} />

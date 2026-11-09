@@ -38,15 +38,14 @@
 
 /* Header: grey band with the title, subtitle and close (Figma 4023:10700) */
 .mc-header {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
-  padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 16px 20px; /* a title only: 24px line + 16px padding top and bottom */
   border-bottom: 1px solid var(--slateBorderMild);
   background: var(--slateSurfaceSubtle);
 }
 .mc-header > div { display: flex; flex-direction: column; gap: 0; }
-/* Typography: Label/Medium (500 16/24) for the title, Body/Small (400 14/20) for the subtext */
+/* Typography: Label/Medium (500 16/24) */
 .mc-header__title { margin: 0; font: var(--fontWeightMedium) 16px/24px var(--fontFamily); color: var(--slateTextTitle); }
-.mc-header__subtitle { margin: 0; font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextSubtle); }
 
 .mc-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 40px; padding: 20px 20px 40px; }
 .mc-section-title:has(+ .mc-section-subtitle) { margin-bottom: 0; }
