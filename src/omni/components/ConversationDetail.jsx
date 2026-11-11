@@ -137,6 +137,20 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
   const thread = openEmail ?? conversation;
   const customerEmail = customerEmailOf(thread);
   const { senderOf, recipientOf } = peopleOf(thread);
+  // The email just opened from the Overview, outlined for a moment so it's easy to spot.
+  const [targetId, setTargetId] = useState(null);
+  const targetTimer = React.useRef(0);
+  // From the Overview: switch to the email's conversation, open that email there and scroll to it.
+  const openInTab = (email, messageId) => {
+    selectEmail(String(email.id));
+    setExpandedIds([messageId]);
+    setTargetId(messageId);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      document.getElementById(`email-card-${messageId}`)?.scrollIntoView({ block: 'center' });
+    }));
+    window.clearTimeout(targetTimer.current);
+    targetTimer.current = window.setTimeout(() => setTargetId(null), 1600);
+  };
   const selectEmail = (value) => {
     setEmailTab(value);
     if (value === 'overview') { setExpandedIds([]); scrollToBottom(); }
@@ -329,16 +343,24 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
 
   // An email card: open (header, body, Reply / Forward) or folded to one line. Clicking the header toggles it.
   // `quoted` is the earlier email this one replied to, shown under "..."; `people` names the sender and recipient;
-  // `readOnly` hides
-  // the reply and forward actions. `open` flips the default (the Overview opens its latest email).
-  const renderMessage = (msg, { quoted, people = { senderOf, recipientOf }, from, readOnly, open = false } = {}) => {
+  // `readOnly` hides the reply and forward actions (Overview cards: replying happens in each conversation's own view). `open` flips the default (the Overview opens its latest email).
+  // `onOpenInTab` (Overview only) shows the open-in-tab button beside the date on hover.
+  const renderMessage = (msg, { quoted, people = { senderOf, recipientOf }, from, readOnly, open = false, onOpenInTab } = {}) => {
     const isExpanded = expandedIds.includes(msg.id) !== open;
     const toggle = () => toggleExpand(msg.id);
     const isQuoted = quotedIds.includes(msg.id);
+    const cardProps = { id: `email-card-${msg.id}`, 'data-target': targetId === msg.id ? '' : undefined };
+    const openInTab = onOpenInTab && (
+      <Tooltip content="Open in conversation tab" placement="left" portal>
+        <button type="button" className="detail-open-in-tab" aria-label="Open in conversation tab" onClick={(e) => { e.stopPropagation(); onOpenInTab(); }}>
+          <Icon name="newtab" size={14} />
+        </button>
+      </Tooltip>
+    );
     return (
       <>
       {isExpanded ? (
-        <div className="convo-card">
+        <div className="convo-card" {...cardProps}>
           <div className="convo-card-header">
             <div className="convo-avatar" style={{ backgroundColor: msg.avatarColor }}>
               <span>{msg.initial}</span>
@@ -350,6 +372,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
               </div>
             </div>
             <div className="header-actions-right">
+              {openInTab}
               <span className="convo-time">{msg.time}</span>
               {!readOnly && (
                 <button className="icon-btn" onClick={(e) => handleReplyAll(e, msg.id)}>
@@ -359,7 +382,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
               {/* ⋮ on an email: Reply opens the reply box under it; the rest have no action yet */}
               <ConversationMenu
                 className="convo-card-menu"
-                options={readOnly ? EMAIL_CARD_MENU.filter((o) => o.value !== 'reply') : EMAIL_CARD_MENU}
+                options={readOnly ? EMAIL_CARD_MENU.filter((o) => o.value !== 'reply' && o.value !== 'forward') : EMAIL_CARD_MENU}
                 onSelect={(value) => { if (value === 'reply') setActiveReplyId(msg.id); }}
               />
             </div>
@@ -399,7 +422,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
           )}
         </div>
       ) : (
-        <div className="convo-card-collapsed" onClick={toggle}>
+        <div className="convo-card-collapsed" onClick={toggle} {...cardProps}>
           <div className="convo-avatar" style={{ backgroundColor: msg.avatarColor }}>
             <span>{msg.initial}</span>
           </div>
@@ -407,6 +430,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
             <h3 className="convo-email">{people.senderOf(msg)}</h3>
             <p className="collapsed-text">{msg.body.substring(0, 80)}...</p>
           </div>
+          {openInTab}
           <span className="convo-time">{msg.time}</span>
         </div>
       )}
@@ -467,41 +491,28 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
     emails.forEach((e) => {
       const saved = threads[String(e.id)];
       const list = [...e.messages, ...(saved?.replies ?? [])].map((m) => ({ ...m, id: `${e.id}:${m.id}` }));
-      list.forEach((msg) => items.push({ kind: 'message', at: atOf(msg), key: msg.id, msg, email: e, quoted: previousOf(list, msg) }));
-      seedActivity({ id: e.id, firstTime: e.messages[0]?.time }).first.forEach(pushActivity);
-      (saved?.notes ?? seedNotes(e)).forEach((note) => items.push({ kind: 'note', at: atOf(note), key: `${e.id}:${note.id}`, note }));
-      activityOf(e.id).forEach(pushActivity);
+      list.forEach((msg, i) => items.push({ kind: 'message', at: atOf(msg), key: msg.id, msg, email: e, originalId: [...e.messages, ...(saved?.replies ?? [])][i].id, quoted: previousOf(list, msg) }));
+      // Only the merge itself from each conversation's history: its own activity stays in its view.
+      activityOf(e.id).filter((row) => row.kind === 'ticket').forEach(pushActivity);
     });
     activityOf(conversation.id).forEach(pushActivity);
-    notesThread.notes.forEach((note) => items.push({ kind: 'note', at: note.at ?? 0, key: note.id, note, own: true }));
     // A stable sort, so things at the same minute keep their order (an email, then what followed it).
     return items.sort((a, b) => a.at - b.at);
   })() : null;
   const lastTimelineEmail = timeline?.filter((i) => i.kind === 'message').pop();
-  const renderTimeline = () => groupActivity(onlyNotes ? timeline.filter((i) => i.kind === 'note') : timeline).map((item) => {
+  // The Overview has no notes: they stay in each conversation's own view.
+  const renderTimeline = () => groupActivity(timeline).map((item) => {
     if (item.kind === 'activity') return <ActivityGroup key={item.key} rows={item.rows} />;
-    if (item.kind === 'note') {
-      if (item.own) return renderNote(item.note);
-      const id = `timeline-${item.key}`;
-      return (
-        <NoteCard
-          key={id}
-          note={item.note}
-          elementId={`email-note-${id}`}
-          expanded={openNoteIds[id] ?? false}
-          onToggle={() => setOpenNoteIds((o) => ({ ...o, [id]: !o[id] }))}
-        />
-      );
-    }
     return (
       <React.Fragment key={item.key}>
-        {renderMessage(item.msg, { quoted: item.quoted, people: peopleOf(item.email), open: item === lastTimelineEmail })}
+        {renderMessage(item.msg, { quoted: item.quoted, people: peopleOf(item.email), open: item === lastTimelineEmail, readOnly: true, onOpenInTab: () => openInTab(item.email, item.originalId) })}
       </React.Fragment>
     );
   });
   const pinned = notesThread?.pin ? findNote(notesThread.pin.id) : null;
   // The Reply / Add note footer shows wherever a thread does (not on the Slack tab).
-  const showThread = tab !== 'slack' && !!source;
+  // The Overview has no footer: no reply and no notes at the ticket level.
+  const showThread = tab !== 'slack' && !!source && !timeline;
 
   return (
     <div className="conversation-detail">
@@ -560,7 +571,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
              )}
              {source && (
                <ConversationMenu
-                 options={emails ? EMAIL_MENU.filter((o) => !['reply', 'reply-all', 'forward'].includes(o.value)) : EMAIL_MENU}
+                 options={emails ? EMAIL_MENU.filter((o) => !['reply', 'reply-all', 'forward'].includes(o.value) && !(timeline && o.value === VIEW_ONLY_NOTES.value)) : EMAIL_MENU}
                  onlyNotes={onlyNotes}
                  onSelect={(value) => {
                    const last = threadMessages[lastIndex]?.id;
@@ -615,8 +626,6 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
         <>
         {timeline ? (
           <div className="messages-container">
-            {pinned && <PinnedNote by={notesThread.pin.by}>{renderNote(pinned, 'pin')}</PinnedNote>}
-            {onlyNotes && !timeline.some((i) => i.kind === 'note') && <p className="en-notes-empty">No notes in this ticket yet.</p>}
             {renderTimeline()}
           </div>
         ) : (

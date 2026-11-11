@@ -323,3 +323,21 @@
 /* The ⚡: a red bolt in a 20px box, the same red as the FRT chip */
 .detail-email-chip__frt { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 20px; height: 20px; margin: -4px -4px -4px 0; }
 .detail-email-chip .detail-email-chip__frt svg { color: var(--errorSurfaceDisabled); }
+
+/* Overview: on hover, the open-in-tab button shows beside the date (the side sheet's button). It opens the email
+   in its conversation, outlined for a moment. */
+/* A folded card shows it on hover; an open card always shows it. */
+.messages-container .convo-card-collapsed .hot-tooltip-wrap:has(.detail-open-in-tab) { display: none; }
+.messages-container .convo-card-collapsed:hover .hot-tooltip-wrap:has(.detail-open-in-tab) { display: inline-flex; }
+.convo-card-collapsed .hot-tooltip-wrap:has(.detail-open-in-tab) { align-self: flex-start; }
+.detail-open-in-tab {
+  display: flex; align-items: center; justify-content: center; flex: none; width: 24px; height: 24px; margin: -2px 0; padding: 0;
+  border: none; border-radius: 6px; background: transparent;
+  color: var(--slateIconsActive); cursor: pointer;
+}
+.detail-open-in-tab:hover { background: var(--slateSurfaceSubtle); }
+:is(.convo-card, .convo-card-collapsed)[data-target] { animation: detail-target 1.6s ease-out; }
+@keyframes detail-target {
+  0%, 60% { box-shadow: 0 0 0 2px var(--primaryBorderDefault); }
+  100% { box-shadow: 0 0 0 2px transparent; }
+}
