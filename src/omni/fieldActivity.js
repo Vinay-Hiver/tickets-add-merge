@@ -38,13 +38,14 @@ export function fieldChangeHandlers({ fields, user, id, logIds = [id] }) {
     changeTags: (value) => {
       const before = fields.tagsOf(id);
       fields.setTags(id, value);
-      value.filter((v) => !before.includes(v)).forEach((v) => log('tag-add', { icon: 'tag', verb: `applied ${tagLabel(v)} tag` }));
-      before.filter((v) => !value.includes(v)).forEach((v) => log('tag-remove', { icon: 'tag', verb: `removed ${tagLabel(v)} tag` }));
+      // `tag` is what merging reads (rows by one person within a minute become "applied A and B tags")
+      value.filter((v) => !before.includes(v)).forEach((v) => log('tag-add', { icon: 'tag', verb: `applied ${tagLabel(v)} tag`, tag: tagLabel(v) }));
+      before.filter((v) => !value.includes(v)).forEach((v) => log('tag-remove', { icon: 'tag', verb: `removed ${tagLabel(v)} tag`, tag: tagLabel(v) }));
     },
     changeCustomField: (fieldId, value) => {
       fields.setCustomField(id, fieldId, value);
       const label = CUSTOM_FIELDS.find((f) => f.id === fieldId)?.label ?? fieldId;
-      log('field', { icon: 'text', verb: value ? `updated ${label} to ${value}` : `cleared ${label}` });
+      log('field', { icon: 'text', verb: value ? `updated ${label} to ${value}` : `cleared ${label}`, field: label, value: value ?? '' });
     },
   };
 }

@@ -311,10 +311,12 @@
 .detail-email-chip {
   flex: none; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   padding: 6px 10px; border: 1px solid var(--slateBorderLight); border-radius: 1000px; background: transparent;
-  font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextSubtle); white-space: nowrap; cursor: pointer;
+  /* Inactive: Body/Small (400 14/20) in Slate/Text/Body */
+  font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextBody); white-space: nowrap; cursor: pointer;
 }
 .detail-email-chip:hover { background: var(--slateSurfaceSubtle100); }
-.detail-email-chip[aria-selected='true'] { background: var(--primarySurfaceSubtle); border-color: var(--primarySurfaceLighter); color: var(--primarySurfaceDefault); }
+/* Active: Body/Medium (500 14/20) */
+.detail-email-chip[aria-selected='true'] { background: var(--primarySurfaceSubtle); border-color: var(--primarySurfaceLighter); color: var(--primarySurfaceDefault); font-weight: var(--fontWeightMedium); }
 .detail-email-chip svg { flex: none; color: currentColor; }
 .detail-email-chip--conversation { max-width: 250px; }
 .detail-email-chip__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }

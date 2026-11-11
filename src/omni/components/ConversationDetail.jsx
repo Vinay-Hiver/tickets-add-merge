@@ -426,6 +426,9 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
   const later = source ? [
     ...notesThread.notes.filter((n) => !seedIds.has(n.id)).map((n) => ({ kind: 'note', at: n.at ?? 0, note: n })),
     ...activityOf(source.id).map((row) => ({ kind: 'activity', at: row.at, row })),
+    // In a merged conversation's tab, changes made on the ticket (tags, assignee, status, custom fields) show too,
+    // marked "Ticket". The Overview shows them as they are.
+    ...(openEmail ? activityOf(conversation.id).map((row) => ({ kind: 'activity', at: row.at, row: { ...row, id: `ticket-${row.id}`, prefix: 'Ticket' } })) : []),
     ...(notesThread.replies ?? []).map((msg) => ({ kind: 'message', at: msg.at, key: msg.id, msg })),
   ].sort((a, b) => a.at - b.at) : [];
   const asActivity = (rows) => rows.map((row) => ({ kind: 'activity', row }));
