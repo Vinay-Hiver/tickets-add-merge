@@ -294,3 +294,30 @@
 
 /* Subject bar + Conversation / Slack tabs: pinned to the top of the scrolling thread */
 .detail-sticky { position: sticky; top: 0; z-index: 2; flex: none; background: var(--slateSurfaceWhite); }
+
+/* The date (and what sits beside it) lines up with the top of the card's row, open or folded, not its middle */
+.convo-card-collapsed .convo-time { align-self: flex-start; line-height: 20px; }
+.convo-card-header .header-actions-right { align-self: flex-start; }
+.convo-card-header .header-actions-right .convo-time { line-height: 20px; }
+
+/* Two email cards in a row sit 8px apart (the thread's 16px gap stays around notes and activity) */
+.messages-container > :is(.convo-card, .convo-card-collapsed) + :is(.convo-card, .convo-card-collapsed) { margin-top: -8px; }
+
+/* Merged ticket: Overview and conversation chips (Figma: Tickets Add/Merge › 4068:299) */
+.detail-email-chips {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px; overflow-x: auto;
+  background: var(--slateSurfaceSubtle); box-shadow: inset 0 -1px 0 var(--slateBorderMild);
+}
+.detail-email-chip {
+  flex: none; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 6px 10px; border: 1px solid var(--slateBorderLight); border-radius: 1000px; background: transparent;
+  font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextSubtle); white-space: nowrap; cursor: pointer;
+}
+.detail-email-chip:hover { background: var(--slateSurfaceSubtle100); }
+.detail-email-chip[aria-selected='true'] { background: var(--primarySurfaceSubtle); border-color: var(--primarySurfaceLighter); color: var(--primarySurfaceDefault); }
+.detail-email-chip svg { flex: none; color: currentColor; }
+.detail-email-chip--conversation { max-width: 250px; }
+.detail-email-chip__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* The ⚡: a red bolt in a 20px box, the same red as the FRT chip */
+.detail-email-chip__frt { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 20px; height: 20px; margin: -4px -4px -4px 0; }
+.detail-email-chip .detail-email-chip__frt svg { color: var(--errorSurfaceDisabled); }

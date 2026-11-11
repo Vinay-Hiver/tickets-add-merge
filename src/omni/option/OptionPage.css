@@ -1,0 +1,27 @@
+/* /option: a merged ticket with an Overview tab (every email on one page) and a tab per conversation. Tokens only. */
+
+.opt-page { flex: 1; min-width: 0; display: flex; height: 100vh; background: var(--slateSurfaceWhite); }
+.opt-page .hot-right-panel { height: 100%; }
+
+/* Overview: on hover, the open-in-tab button shows beside the date (the side sheet's button, Merge conversations) */
+.opt-email .hot-tooltip-wrap { display: none; }
+.opt-email:hover .hot-tooltip-wrap { display: inline-flex; }
+.opt-email .convo-card-collapsed .hot-tooltip-wrap { align-self: flex-start; }
+.opt-open {
+  display: flex; align-items: center; justify-content: center; flex: none; width: 24px; height: 24px; margin: -2px 0; padding: 0;
+  border: 1px solid var(--slateBorderLight); border-radius: 6px; background: var(--slateSurfaceWhite);
+  color: var(--slateIconsActive); cursor: pointer;
+}
+.opt-open:hover { background: var(--slateSurfaceSubtle); }
+.opt-email .convo-btn svg { flex: none; color: var(--slateIconsSubtle); }
+
+/* Two email cards in a row sit 8px apart */
+.messages-container > .opt-email + .opt-email { margin-top: -8px; }
+
+/* The email just opened from the Overview: outlined for a moment so it's easy to spot */
+.opt-email.is-target .convo-card,
+.opt-email.is-target .convo-card-collapsed { animation: opt-target 1.6s ease-out; }
+@keyframes opt-target {
+  0%, 60% { box-shadow: 0 0 0 2px var(--primaryBorderDefault); }
+  100% { box-shadow: 0 0 0 2px transparent; }
+}

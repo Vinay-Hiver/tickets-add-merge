@@ -276,3 +276,7 @@
 .hot-rp-flyout__group-list.hot-dropdown { width: 100%; box-shadow: none; background: transparent; border-radius: 0; }
 .hot-rp-flyout__group-list .hot-list-item--compact { min-height: 40px; }
 .hot-rp-history { outline: none; }
+
+/* A conversation's heading inside a ticket can carry a control at the right of its subject */
+.hot-rp-top__title-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.hot-rp-top__title-row .hot-rp-top__title { flex: 1; min-width: 0; }

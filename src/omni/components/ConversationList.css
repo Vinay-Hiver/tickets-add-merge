@@ -308,3 +308,6 @@
   border-color: #97c0e2;
   color: #255c87;
 }
+
+/* The FRT chip under the preview, on conversations past their first response time */
+.card-sla { display: flex; margin-top: 6px; }

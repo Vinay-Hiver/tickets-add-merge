@@ -268,12 +268,15 @@ export type RightPanelTopProps = {
   title: string
   /** The rows under the heading. Each row is `<div className="hot-rp-field">` with an icon and label on the left and the value on the right (see the Docs page). */
   children?: ReactNode
+  /** Shown between the heading and the rows, for example an SLA alert. */
+  alert?: ReactNode
 }
 
-export function RightPanelTop({ title, children }: RightPanelTopProps) {
+export function RightPanelTop({ title, children, alert }: RightPanelTopProps) {
   return (
     <section className="hot-rp-top">
       <h2 className="hot-rp-top__title">{title}</h2>
+      {alert}
       <div className="hot-rp-fields">{children}</div>
     </section>
   )

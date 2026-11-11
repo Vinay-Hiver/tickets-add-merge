@@ -1,0 +1,179 @@
+/* /post-merge: the approach bar, notes and the ticket frame, then each approach's own pieces. Tokens only. */
+
+.pm-page {
+  flex: 1; min-width: 0; height: 100vh; display: flex; flex-direction: column;
+  background: var(--slateSurfaceSubtle); font-family: var(--fontFamily);
+}
+
+/* ---------- Approach bar (demo chrome, not part of the product) ---------- */
+.pm-bar {
+  flex: none; display: flex; align-items: center; gap: 16px; padding: 8px 16px;
+  background: var(--slateSurfaceDarkest); color: var(--slateSurfaceWhite);
+}
+.pm-bar__title { display: flex; flex-direction: column; flex: none; }
+.pm-bar__name { font: var(--fontWeightMedium) 14px/20px var(--fontFamily); }
+.pm-bar__meta { font: var(--fontWeightRegular) 12px/18px var(--fontFamily); color: var(--slateBorderDefault); }
+.pm-bar__approaches { flex: 1; min-width: 0; display: flex; gap: 4px; overflow-x: auto; }
+.pm-bar__approach {
+  flex: none; display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px;
+  border: 0; border-radius: 6px; background: transparent; cursor: pointer;
+  font: var(--fontWeightRegular) 13px/18px var(--fontFamily); color: var(--slateBorderDefault); white-space: nowrap;
+}
+.pm-bar__approach:hover { background: var(--slateSurfaceDark600); color: var(--slateSurfaceWhite); }
+.pm-bar__approach[aria-selected='true'] { background: var(--slateSurfaceWhite); color: var(--slateTextTitle); font-weight: var(--fontWeightMedium); }
+.pm-bar__num {
+  display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--slateSurfaceDark600); color: var(--slateSurfaceWhite); font-size: 11px;
+}
+.pm-bar__approach[aria-selected='true'] .pm-bar__num { background: var(--primarySurfaceDefault); }
+.pm-bar__controls { flex: none; display: flex; gap: 16px; }
+.pm-bar__controls .hot-switch, .pm-bar__controls label { color: var(--slateSurfaceWhite); }
+
+/* ---------- Notes ---------- */
+.pm-notes {
+  flex: none; display: flex; flex-direction: column; gap: 8px; padding: 12px 16px;
+  background: var(--slateSurfaceWhite); border-bottom: 1px solid var(--slateBorderMild);
+}
+.pm-notes__summary { font: var(--fontWeightMedium) 14px/20px var(--fontFamily); color: var(--slateTextTitle); }
+.pm-notes__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.pm-notes__grid dt { font: var(--fontWeightMedium) 12px/18px var(--fontFamily); color: var(--slateTextSubtle); text-transform: uppercase; letter-spacing: 0.04em; }
+.pm-notes__grid dd { margin: 2px 0 0; font: var(--fontWeightRegular) 13px/18px var(--fontFamily); color: var(--slateTextBody); }
+
+/* ---------- Stage and frame ---------- */
+.pm-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px; overflow: auto; }
+.pm-frame {
+  flex: 1; align-self: stretch; min-height: 0; display: flex; overflow: hidden;
+  border: 1px solid var(--slateBorderMild); border-radius: 8px; background: var(--slateSurfaceWhite);
+}
+.pm-frame--small { flex: none; align-self: center; width: 960px; height: 640px; box-shadow: 0 8px 24px var(--slateBorderLight); }
+.pm-stage__caption { font: var(--fontWeightRegular) 12px/18px var(--fontFamily); color: var(--slateTextSubtle); }
+
+.pm-ticket { flex: 1; min-width: 0; display: flex; height: 100%; }
+.pm-ticket .conversation-detail { height: 100%; }
+.pm-ticket .hot-right-panel { height: 100%; }
+
+/* The Conversation / Slack row, with room on its right for an approach's control */
+.pm-tabrow { display: flex; align-items: center; background: var(--slateSurfaceWhite); box-shadow: inset 0 -1px 0 var(--slateBorderMild); }
+.pm-tabrow .detail-tabs.hot-tabs--outlined { flex: 1; min-width: 0; box-shadow: none; }
+.pm-tabrow__slot { flex: none; display: flex; align-items: center; min-width: 0; max-width: 60%; padding-right: 12px; }
+
+/* ---------- Emails ---------- */
+.pm-email .header-actions-right .hot-tooltip-wrap, .pm-email .convo-card-collapsed .hot-tooltip-wrap { display: inline-flex; }
+.pm-email .convo-card-collapsed .collapsed-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The conversation in focus: a blue edge on each of its emails */
+.pm-email.is-selected .convo-card,
+.pm-email.is-selected .convo-card-collapsed { box-shadow: inset 3px 0 0 var(--primaryBorderDefault); }
+.pm-email .convo-btn svg { flex: none; color: var(--slateIconsSubtle); }
+
+/* ---------- Right panel: conversations list ---------- */
+.pm-convs { gap: 12px; }
+.pm-convs__overdue {
+  flex: none; display: inline-flex; align-items: center; gap: 4px;
+  font: var(--fontWeightMedium) 12px/18px var(--fontFamily); color: var(--errorTextSubtle);
+}
+.pm-convs__list { display: flex; flex-direction: column; gap: 4px; margin: 0 -8px; }
+.pm-convs__item { border-radius: 8px; }
+.pm-convs__item.is-selected { background: var(--slateSurfaceSubtle); box-shadow: inset 0 0 0 1px var(--slateBorderMild); }
+.pm-convs__row {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px; border: 0; border-radius: 8px;
+  background: transparent; cursor: pointer; text-align: left; font-family: var(--fontFamily);
+}
+.pm-convs__row:hover { background: var(--slateSurfaceSubtle); }
+.pm-convs__row .hot-tooltip-wrap { display: inline-flex; flex: none; }
+.pm-convs__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pm-convs__name { font: var(--fontWeightMedium) 13px/18px var(--fontFamily); color: var(--slateTextTitle); }
+.pm-convs__subject { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: var(--fontWeightRegular) 12px/18px var(--fontFamily); color: var(--slateTextSubtle); }
+.pm-convs__detail { padding: 0 8px 8px; }
+.pm-convs__hint { font: var(--fontWeightRegular) 12px/18px var(--fontFamily); color: var(--slateTextSubtle); }
+
+/* "2 of 4" ‹ › */
+.pm-stepper { flex: none; display: inline-flex; align-items: center; gap: 2px; }
+.pm-stepper .hot-tooltip-wrap { display: inline-flex; }
+.pm-stepper__count { margin-right: 4px; font: var(--fontWeightRegular) 12px/18px var(--fontFamily); color: var(--slateTextSubtle); white-space: nowrap; }
+.pm-stepper__btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0;
+  border: 0; border-radius: 6px; background: transparent; color: var(--slateIconsSubtle); cursor: pointer;
+}
+.pm-stepper__btn:hover:not(:disabled) { background: var(--slateSurfaceSubtle100); }
+.pm-stepper__btn:disabled { color: var(--slateIconsDisabled); cursor: default; }
+
+/* ---------- Approach 2: jump to the next breach ---------- */
+.pm-breach {
+  display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px 0 6px;
+  border: 0; border-radius: 6px; background: var(--pastelRedSurfaceSubtle); cursor: pointer;
+  font: var(--fontWeightMedium) 12px/18px var(--fontFamily); color: var(--errorTextSubtle); white-space: nowrap;
+}
+.pm-breach:hover { box-shadow: inset 0 0 0 1px var(--errorTextSubtle); }
+.pm-breach__badge {
+  display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--errorTextSubtle); color: var(--slateSurfaceWhite);
+}
+
+/* ---------- Approach 3: grouped by conversation ---------- */
+.pm-groups { gap: 8px; }
+.pm-group { display: flex; flex-direction: column; border: 1px solid var(--slateBorderMild); border-radius: 8px; background: var(--slateSurfaceWhite); }
+.pm-group.is-selected { border-color: var(--primaryBorderDefault); }
+.pm-group__header {
+  position: sticky; top: 92px; z-index: 1; /* pinned under the subject bar and tab row while its emails scroll */
+  display: flex; align-items: center; gap: 8px; width: 100%; height: 44px; padding: 0 12px;
+  border: 0; border-radius: 8px; background: var(--slateSurfaceWhite); cursor: pointer; text-align: left; font-family: var(--fontFamily);
+}
+.pm-group.is-open .pm-group__header { border-radius: 8px 8px 0 0; box-shadow: 0 1px 0 var(--slateBorderMild); }
+.pm-group__header:hover { background: var(--slateSurfaceSubtle); }
+.pm-group__chevron { display: inline-flex; color: var(--slateIconsSubtle); transition: transform 150ms ease; }
+.pm-group.is-open .pm-group__chevron { transform: rotate(90deg); }
+.pm-group__title { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.pm-group__name { flex: none; font: var(--fontWeightMedium) 14px/20px var(--fontFamily); color: var(--slateTextTitle); }
+.pm-group__subject { min-width: 0; overflow: hidden; text-overflow: ellipsis; font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextSubtle); }
+.pm-group__count, .pm-group__time { flex: none; font: var(--fontWeightRegular) 12px/18px var(--fontFamily); color: var(--slateTextSubtle); white-space: nowrap; }
+.pm-group__header .hot-tooltip-wrap { display: inline-flex; flex: none; }
+.pm-group__emails { display: flex; flex-direction: column; gap: 8px; padding: 8px; background: var(--slateSurfaceSubtle); border-radius: 0 0 8px 8px; }
+
+/* ---------- Approach 4: switcher in the tab row ---------- */
+.pm-switcher {
+  display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; height: 28px; padding: 0 8px;
+  border: 1px solid var(--slateBorderLight); border-radius: 6px; background: var(--slateSurfaceWhite); cursor: pointer;
+  font: var(--fontWeightRegular) 13px/18px var(--fontFamily); color: var(--slateTextBody);
+}
+.pm-switcher:hover, .pm-switcher.is-open { background: var(--slateSurfaceSubtle); }
+.pm-switcher > svg { flex: none; color: var(--slateIconsSubtle); }
+.pm-switcher__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pm-switcher__count {
+  flex: none; padding: 0 6px; border-radius: 9px; background: var(--slateSurfaceSubtle300);
+  font: var(--fontWeightMedium) 11px/16px var(--fontFamily); color: var(--slateTextBody);
+}
+.pm-switcher__breach {
+  flex: none; display: inline-flex; align-items: center; gap: 2px; padding: 0 6px; border-radius: 9px;
+  background: var(--errorSurfaceDisabled); color: var(--slateSurfaceWhite); font: var(--fontWeightMedium) 11px/16px var(--fontFamily);
+}
+.hot-dropdown.pm-menu { width: 320px; }
+.pm-menu__divider { height: 1px; margin: 4px 0; background: var(--slateBorderMild); }
+.pm-menu__label { display: inline-flex; align-items: center; gap: 8px; }
+
+/* ---------- Approach 5: conversation rail ---------- */
+.pm-railwrap { display: flex; align-items: flex-start; flex: 1; }
+.pm-railwrap > .messages-container { flex: 1; min-width: 0; align-self: stretch; }
+.pm-rail {
+  /* Pinned 8px under the subject bar and tab row while the thread scrolls */
+  position: sticky; top: 100px; flex: none; align-self: flex-start; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  width: 48px; margin: 8px 0 8px 8px; padding: 4px 0; border: 1px solid var(--slateBorderMild); border-radius: 8px;
+  background: var(--slateSurfaceWhite);
+}
+.pm-rail .hot-tooltip-wrap { display: inline-flex; }
+.pm-rail__item {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0;
+  border: 0; border-radius: 8px; background: transparent; color: var(--slateIconsSubtle); cursor: pointer;
+}
+.pm-rail__item:hover { background: var(--slateSurfaceSubtle100); }
+.pm-rail__item.is-active { background: var(--primarySurfaceSubtle); box-shadow: inset 0 0 0 1px var(--primaryBorderDefault); color: var(--primaryTextLabel); }
+.pm-rail__divider { width: 24px; height: 1px; margin: 4px 0; background: var(--slateBorderMild); }
+.pm-rail__badge {
+  position: absolute; top: 3px; right: 3px; display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border: 2px solid var(--slateSurfaceWhite); border-radius: 50%; color: var(--slateSurfaceWhite);
+}
+.pm-rail__badge--overdue { background: var(--errorSurfaceDisabled); }
+.pm-rail__badge--due { background: var(--warningSurfaceDark); }
+.pm-convs__detail { display: flex; flex-direction: column; gap: 4px; }
+.pm-convs__detail .hot-rp-field__label { width: 104px; }
+.pm-email .convo-card-collapsed .hot-tooltip-wrap { align-self: flex-start; margin-top: 1px; }
+.messages-container > .pm-email + .pm-email { margin-top: -8px; }

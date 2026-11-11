@@ -7,6 +7,7 @@ const COMPANY_BY_DOMAIN = {
   'fedex.com': 'FedEx',
   'paypal.com': 'PayPal',
   'shopify.com': 'Shopify',
+  'stripe.com': 'Stripe',
 };
 
 // The customer's email domain: the first message is always from the customer (a merged ticket, whose messages run

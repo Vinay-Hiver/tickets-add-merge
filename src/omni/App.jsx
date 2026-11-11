@@ -11,6 +11,10 @@ import MergeConversationsSheet from './components/MergeConversationsSheet';
 import AddToTicketSheet, { AddConversationsSheet } from './components/AddToTicketSheet';
 import { CUSTOM_FIELDS } from './data/customFields';
 import { formatNoteTime } from './components/notes/EmailNotes';
+import PostMergePage from './postMerge/PostMergePage';
+import { frtOf } from './data/sla';
+import { recent } from './data/relativeTime';
+import OptionPage from './option/OptionPage';
 import { ArrowMerge } from '../icons/ArrowMerge';
 import { domainOf } from './data/companies';
 import ChannelChatView from './components/ChannelChatView';
@@ -79,7 +83,7 @@ const generateDummyConversations = (inbox, type) => {
       sender: person.sender,
       initial: person.initial,
       avatarColor: person.avatarColor,
-      time: 'Feb 4, 0' + (1 + (i % 9)) + ':00 PM',
+      time: recent('Feb 4, 0' + (1 + (i % 9)) + ':00 PM'),
       subject: topic.subject,
       preview: topic.preview,
       threadCount: 1 + (i % 3),
@@ -88,7 +92,7 @@ const generateDummyConversations = (inbox, type) => {
           id: 'm1',
           sender: person.sender,
           email: person.email,
-          time: 'Feb 4, 0' + (1 + (i % 9)) + ':00 PM',
+          time: recent('Feb 4, 0' + (1 + (i % 9)) + ':00 PM'),
           initial: person.initial,
           avatarColor: person.avatarColor,
           body: `Hi,\n\n${topic.preview}\n\nLooking forward to your help.`
@@ -97,7 +101,7 @@ const generateDummyConversations = (inbox, type) => {
           id: 'm2',
           sender: 'Ruben Geidt',
           email: 'support@hiver.com',
-          time: 'Feb 4, 0' + (1 + ((i + 1) % 9)) + ':30 PM',
+          time: recent('Feb 4, 0' + (1 + ((i + 1) % 9)) + ':30 PM'),
           initial: 'R',
           avatarColor: 'var(--pastelLightBlueBorderDefault)',
           body: 'Thanks for reaching out — taking a look into this now and will follow up shortly.'
@@ -107,14 +111,14 @@ const generateDummyConversations = (inbox, type) => {
   });
 };
 
-// Each user opens on the Unassigned view of the first inbox they are a member of
-// (Chat Support 01 for Michael, Chat Support 02 for Jim).
-const firstInboxFor = (user) =>
-  Object.keys(INITIAL_VIEWS_BY_INBOX).find((name) => !user.hiddenInboxes?.includes(name));
+// The prototype opens on Email Support 01 → Mine; someone who isn't a member of it opens on the first inbox they are in.
+const START_INBOX = 'Email Support 01';
+const firstInboxFor = (user) => (!user.hiddenInboxes?.includes(START_INBOX) ? START_INBOX
+  : Object.keys(INITIAL_VIEWS_BY_INBOX).find((name) => !user.hiddenInboxes?.includes(name)));
 
 function App() {
   const { user } = useCurrentUser();
-  const [activeFilter, setActiveFilter] = useState(() => ({ inbox: firstInboxFor(user), type: 'Unassigned' }));
+  const [activeFilter, setActiveFilter] = useState(() => ({ inbox: firstInboxFor(user), type: 'Mine' }));
   const [selectedId, setSelectedId] = useState(null);
   // Conversations ticked in the list for bulk actions.
   const [checkedIds, setCheckedIds] = useState([]);
@@ -143,7 +147,8 @@ function App() {
 
   const filteredConversations = React.useMemo(() => {
     const inView = (c) => c.inbox === activeFilter.inbox && c.type === activeFilter.type;
-    let base = conversationsData.filter(inView);
+    // Newest first, by the time of each conversation's latest email
+    let base = conversationsData.filter(inView).sort((a, b) => timestampOf(b.time) - timestampOf(a.time));
     if (base.length === 0) {
       const key = `${activeFilter.inbox}|${activeFilter.type}`;
       if (!dummyCacheRef.current[key]) {
@@ -304,7 +309,7 @@ function App() {
                     {selectedConversation?.emails ? (
                       <TicketPanel ticket={selectedConversation} emailTab={emailTab} inboxName={activeFilter.inbox} />
                     ) : (
-                      <LinkedRightPanel channel="email" ticketId={selectedConversation?.ticketId} inboxName={activeFilter.inbox} unassigned={activeFilter.type === 'Unassigned'} conversationId={String(selectedId)} />
+                      <LinkedRightPanel channel="email" ticketId={selectedConversation?.ticketId} sla={frtOf(selectedConversation)} inboxName={activeFilter.inbox} unassigned={activeFilter.type === 'Unassigned'} conversationId={String(selectedId)} />
                     )}
                   </>
                 )}
@@ -313,6 +318,10 @@ function App() {
           </>
         } />
         <Route path="/my-settings" element={<MySettingsPage />} />
+        {/* Explorations for the merged ticket view without tabs (one demo ticket) */}
+        <Route path="/post-merge" element={<PostMergePage />} />
+        {/* Overview (every email on one page) plus a tab per conversation */}
+        <Route path="/option" element={<OptionPage />} />
       </Routes>
       {addSource && (
         <AddToTicketSheet

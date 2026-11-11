@@ -1,3 +1,4 @@
+import { parseTime } from './relativeTime';
 import { CUSTOM_FIELDS } from './customFields';
 
 // How merging emails into a ticket combines their values. The merge side sheet previews these,
@@ -16,11 +17,8 @@ export const mergeCustomFields = (conversations, primaryId, customFieldsOf) => {
   }));
 };
 
-// 'Feb 4, 02:45 PM' -> a timestamp, so messages can be ordered (the dummy data has no year).
-export const timestampOf = (time) => {
-  const [day, clock] = time.split(', ');
-  return new Date(`${day}, 2026 ${clock}`).getTime() || 0;
-};
+// 'Nov 9, 02:45 PM' -> a timestamp, so messages can be ordered (shown dates have no year).
+export const timestampOf = (time) => parseTime(time);
 
 const nowClock = () => new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 

@@ -5,6 +5,8 @@ import { Button } from '../../components/Button'
 import { Input } from '../../components/Input'
 import { Tooltip } from '../../components/Tooltip'
 import { Tag } from '../../components/Tag'
+import { SlaAlert } from '../../components/Sla'
+import type { SlaStatus } from '../../components/Sla/sla'
 import { Icon } from '../../icons/Icon'
 import { MessagePlusSquare } from '../../icons/MessagePlusSquare'
 import type { IconName } from '../../icons/iconData'
@@ -105,9 +107,9 @@ function EditableFieldValue({ field, empty, onChange }: { field: CustomFieldValu
 }
 
 /** The Custom fields section with editable values, laid out like every other section. */
-function customFieldsSection(section: ResolvedSection, fields: CustomFieldValue[], conversationId: string | undefined, onChange: (fieldId: string, value: string | undefined) => void) {
+function customFieldsSection(section: ResolvedSection, fields: CustomFieldValue[], conversationId: string | undefined, onChange: (fieldId: string, value: string | undefined) => void, defaultExpanded = true) {
   return (
-    <RightPanelSection key={section.id} id={section.id} title={section.title} icon={section.icon} defaultExpanded>
+    <RightPanelSection key={section.id} id={section.id} title={section.title} icon={section.icon} defaultExpanded={defaultExpanded}>
       {fields.map((f) => (
         <div key={f.id} className="hot-rp-field">
           <div className="hot-rp-field__label"><Icon name={customFieldIcon(f.kind)} size={14} /><span className="hot-rp-cf-label">{f.label}</span></div>
@@ -251,15 +253,17 @@ const EMAIL_HIDDEN_SECTIONS = ['activity']
 /**
  * A ticket (an email conversation turned into a ticket) uses the Email panel with changes
  * (Figma: Delete › 6018:50493): the top section adds Ticket ID, and the only sub-sections are
- * Linked conversations and Custom fields (Activity & Notes is in the thread). Plain emails do not show Ticket ID.
+ * Custom fields and Account (Activity & Notes is in the thread). Plain emails do not show Ticket ID.
  */
-const TICKET_SECTIONS = ['customFields']
+const TICKET_SECTIONS = ['customFields', 'emailAccount']
 
 /** The storybook right panel for one channel: its tab, top section, sub-sections in order and "Customize widgets". */
-export function ChannelRightPanel({ channel, inboxName, unassigned, conversationId, ticketId, assignee, onAssigneeChange, status, onStatusChange, tagOptions, tags, onTagsChange, customFields, onCustomFieldChange, onLinkClick, linkedConversations = [], onViewAll, onUnlink, onOpenConversation }: {
+export function ChannelRightPanel({ channel, inboxName, unassigned, conversationId, ticketId, sla, assignee, onAssigneeChange, status, onStatusChange, tagOptions, tags, onTagsChange, customFields, onCustomFieldChange, onLinkClick, linkedConversations = [], onViewAll, onUnlink, onOpenConversation }: {
   channel: ChannelId
   /** Email only: the conversation is a ticket with this ID, so the panel uses the ticket layout. */
   ticketId?: string
+  /** The conversation's first response time, shown as an alert under the heading (when it needs attention). */
+  sla?: SlaTime | null
   /** The conversation's assignee (`none` when unassigned), when the caller keeps it. Leave out to let the field manage itself. */
   assignee?: string
   onAssigneeChange?: (value: string) => void
@@ -294,7 +298,7 @@ export function ChannelRightPanel({ channel, inboxName, unassigned, conversation
   const isTicket = channel === 'email' && !!ticketId
   const editableCustomFields = !!customFields && !!onCustomFieldChange
   // Linked conversations sits after the field sections, before lists, notes and activity (the omni-boilerplate order).
-  // A ticket shows Linked conversations first, then Custom fields.
+  // A ticket has no Linked conversations: it shows Custom fields, then Account.
   const shown = isTicket
     ? TICKET_SECTIONS.map((id) => def.sections.find((s) => s.id === id)).filter((s): s is ResolvedSection => !!s)
     : def.sections.filter((s) => {
@@ -303,11 +307,11 @@ export function ChannelRightPanel({ channel, inboxName, unassigned, conversation
     })
   const at = isTicket ? 0 : shown.findIndex((s) => s.type === 'list' || s.type === 'notes' || s.type === 'activity')
   const sections: (ResolvedSection | 'linked')[] = [...shown]
-  sections.splice(at === -1 ? shown.length : at, 0, 'linked')
+  if (!isTicket) sections.splice(at === -1 ? shown.length : at, 0, 'linked')
   const topFields = def.top.fields.filter((f) => f.id !== 'ticketId' || isTicket)
   return (
     <RightPanel key={isTicket ? 'ticket' : channel} aria-label="Details" tabs={def.tabs} customizeWidgets={def.footer.some((f) => f.id === 'customizeWidgets')}>
-      <RightPanelTop title={inboxName ?? sample.inboxName}>
+      <RightPanelTop title={inboxName ?? sample.inboxName} alert={sla && <SlaAlert kind="frt" status={sla.status} time={sla.time} />}>
         {topFields.map((f) => {
           if (f.kind === 'assignee') return <AssigneeField key={`${f.id}-${conversationId}-${unassigned}`} value={assignee} onChange={onAssigneeChange} defaultValue={unassigned ? 'none' : undefined} />
           if (f.kind === 'status') return <StatusField key={`${f.id}-${conversationId}`} value={status} onChange={onStatusChange} />
@@ -339,9 +343,16 @@ export function ChannelRightPanel({ channel, inboxName, unassigned, conversation
 /** A merged ticket's customer account, from the conversations' email domain. */
 export type TicketAccount = { name: string; domain: string; contacts: number; conversations: number }
 
+/** An SLA time on a ticket (resolution) or a conversation (first response): where it stands and the time it names. */
+export type SlaTime = { status: SlaStatus; time: string }
+
 /** One conversation inside a merged ticket, shown under the ticket in that conversation's tab. */
 export type TicketConversation = {
   subject: string
+  /** The conversation's first response time: each conversation in a ticket keeps its own. */
+  sla?: SlaTime
+  /** Shown at the right of the subject, for example a control to step to the next conversation. */
+  nav?: React.ReactNode
   /** The conversation's own assignee and status from before it joined the ticket: history only, shown faded. */
   assignee: string
   status: 'open' | 'pending' | 'closed'
@@ -354,8 +365,18 @@ export type TicketConversation = {
  * In a conversation's tab, that conversation follows: its subject with its old assignee and status (read-only), then
  * its Contact (its notes and activity are in the thread).
  */
-export function TicketRightPanel({ inboxName, ticketId, ticketKey, assignee, onAssigneeChange, status, onStatusChange, tagOptions, tags, onTagsChange, customFields, onCustomFieldChange, account, conversation }: {
+export function TicketRightPanel({ inboxName, ticketId, ticketKey, assignee, onAssigneeChange, status, onStatusChange, tagOptions, tags, onTagsChange, customFields, onCustomFieldChange, account, conversation, sla, title, conversationGroup, afterTicket, sectionsFolded }: {
   inboxName: string
+  /** The heading of the ticket block. The inbox name when left out. */
+  title?: string
+  /** The ticket's resolution time, shown as an alert under the heading. */
+  sla?: SlaTime
+  /** Starts the ticket's Custom fields folded too (Account details always starts folded), so the conversation below shows on short screens. */
+  sectionsFolded?: boolean
+  /** Shown right under the ticket's top block, before its sections (for example the ticket's conversations). */
+  afterTicket?: React.ReactNode
+  /** Replaces the conversation group below the ticket (for example a list of the ticket's conversations). */
+  conversationGroup?: { heading?: React.ReactNode; sections?: React.ReactNode }
   ticketId: string
   /** The ticket's id, so the fields reset when another ticket opens. */
   ticketKey: string
@@ -379,11 +400,15 @@ export function TicketRightPanel({ inboxName, ticketId, ticketKey, assignee, onA
 
   // In a conversation's tab, the conversation is the panel's second group: Customize widgets lists its sections under
   // "Conversation", after the ticket's under "Ticket".
-  const conversationGroup = conversation && {
+  const defaultConversationGroup = conversation && {
     title: 'Conversation',
     heading: (
       <section className="hot-rp-top hot-rp-top--conversation">
-        <h2 className="hot-rp-top__title hot-rp-top__title--truncate" title={conversation.subject}>{conversation.subject}</h2>
+        <div className="hot-rp-top__title-row">
+          <h2 className="hot-rp-top__title hot-rp-top__title--truncate" title={conversation.subject}>{conversation.subject}</h2>
+          {conversation.nav}
+        </div>
+        {conversation.sla && <SlaAlert kind="frt" status={conversation.sla.status} time={conversation.sla.time} />}
         <div className="hot-rp-fields">
           {/* The values are history: hovering one explains why, in a tooltip to the value's left */}
           <Row icon="assigned" label="Assignee">
@@ -412,15 +437,19 @@ export function TicketRightPanel({ inboxName, ticketId, ticketKey, assignee, onA
   }
 
   return (
-    <RightPanel key={`ticket-${ticketKey}`} aria-label="Ticket details" tabs={def.tabs} customizeWidgets title="Ticket" secondary={conversationGroup || undefined}>
-      <RightPanelTop title={inboxName}>
+    <RightPanel
+      key={`ticket-${ticketKey}`} aria-label="Ticket details" tabs={def.tabs} customizeWidgets title="Ticket"
+      secondary={conversationGroup ? { title: 'Conversation', heading: conversationGroup.heading, sections: conversationGroup.sections } : defaultConversationGroup || undefined}
+    >
+      <RightPanelTop title={title ?? inboxName} alert={sla && <SlaAlert kind="rt" status={sla.status} time={sla.time} />}>
         <Row icon="ticket" label="Ticket ID"><span className="hot-rp-ticket-id">{ticketId}</span></Row>
         <AssigneeField key={`assignee-${ticketKey}`} value={assignee} onChange={onAssigneeChange} />
         <StatusField key={`status-${ticketKey}`} value={status} onChange={onStatusChange} />
         <TagsField key={`tags-${ticketKey}`} options={tagOptions} value={tags} onChange={onTagsChange} />
       </RightPanelTop>
-      {cfSection && customFieldsSection(cfSection, customFields, ticketKey, onCustomFieldChange)}
-      <RightPanelSection key="ticketAccount" id="ticketAccount" title="Account details" icon="building" defaultExpanded>
+      {afterTicket}
+      {cfSection && customFieldsSection(cfSection, customFields, ticketKey, onCustomFieldChange, !sectionsFolded)}
+      <RightPanelSection key="ticketAccount" id="ticketAccount" title="Account details" icon="building" defaultExpanded={false}>
         <Row icon="building" label="Account">{account.name}</Row>
         <Row icon="domain" label="Domain">{account.domain}</Row>
         <Row icon="contact" label="Contacts">{account.contacts}</Row>

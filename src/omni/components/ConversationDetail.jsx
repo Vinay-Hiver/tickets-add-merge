@@ -9,6 +9,8 @@ import { Popover } from '../../components/Popover';
 import { Dropdown } from '../../components/Dropdown';
 import { slackChannelFor } from '../data/slackChannels';
 import { timestampOf } from '../data/merge';
+import { emailTabLabel } from './TicketOverview';
+import { frtOf } from '../data/sla';
 import ConversationMenu, { VIEW_ONLY_NOTES } from './ConversationMenu';
 // The Note icon from Figma (Activity - Notes › 12:24260), used as it is.
 import noteIcon from '../assets/icons/note.svg';
@@ -438,11 +440,11 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
   const threadEmails = [...threadMessages, ...(notesThread?.replies ?? [])];
   const previousOf = (list, msg) => list[list.findIndex((m) => m.id === msg.id) - 1];
 
-  // A merged ticket: one timeline, earliest to latest, of every email, note and activity from all its conversations,
+  // A merged ticket's Overview tab: one timeline, earliest to latest, of every email, note and activity from all its conversations,
   // plus the ticket's own notes and activity. Each email is labelled with its conversation, and a reply to it goes
   // to that conversation. Its conversations' notes are read-only here; the ticket's own notes can be pinned and edited.
   // Joining the ticket shows once per merge: "2 conversations merged into TKT#88".
-  const timeline = emails ? (() => {
+  const timeline = emails && !openEmail ? (() => {
     const items = [];
     const atOf = (x) => x.at ?? timestampOf(x.time ?? '');
     const joins = new Map();
@@ -578,6 +580,29 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
             { value: 'slack', label: slackChannelFor(conversation.id), icon: <Icon name="slack" size={14} /> },
           ]}
         />
+        {/* A merged ticket: chips for Overview (every email on one page) and each merged conversation, with a red ⚡
+            on a conversation past its first response time (Figma: Tickets Add/Merge › 4068:299) */}
+        {emails && tab === 'conversation' && (
+          <div className="detail-email-chips" role="tablist" aria-label="Merged conversations">
+            {[{ value: 'overview', label: 'Overview' }, ...emails.map((e) => ({ value: String(e.id), label: emailTabLabel(e), email: e }))].map((chip) => (
+              <button
+                key={chip.value}
+                type="button"
+                role="tab"
+                aria-selected={emailTab === chip.value}
+                className={`detail-email-chip${chip.email ? ' detail-email-chip--conversation' : ''}`}
+                title={chip.email ? `${chip.email.messages[0]?.sender ?? chip.email.sender} • ${chip.email.subject}` : undefined}
+                onClick={() => selectEmail(chip.value)}
+              >
+                {chip.email && <Icon name="mailbox" size={14} />}
+                <span className="detail-email-chip__label">{chip.label}</span>
+                {chip.email && frtOf(chip.email) && (
+                  <span className="detail-email-chip__frt" role="img" aria-label="First response time overdue"><Icon name="boltfilled" size={12} /></span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
         </div>
 
         {/* The Slack tab is a placeholder for now; the email thread shows on the Conversation tab */}
@@ -627,8 +652,9 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
         />
       ) : !activeReplyId && (
         <div className="en-footer">
-          {/* A ticket has no reply of its own: each email in its timeline is replied to from its card */}
-          {!emails && <button type="button" className="en-footer__btn" onClick={(e) => handleReplyAll(e, threadMessages[lastIndex]?.id)}><Icon name="reply" size={16} />Reply</button>}
+          {/* A ticket's own view (a merged ticket's Overview, or a ticket that was never merged) has no reply: only Add
+              note. A merged conversation's tab has both. */}
+          {(openEmail || !conversation.ticketId) && <button type="button" className="en-footer__btn" onClick={(e) => handleReplyAll(e, threadMessages[lastIndex]?.id)}><Icon name="reply" size={16} />Reply</button>}
           <button type="button" className="en-footer__btn" onClick={() => openComposer({ mode: 'new' })}><img src={noteIcon} alt="" />Add note</button>
         </div>
       ))}

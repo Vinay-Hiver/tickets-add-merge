@@ -1,6 +1,7 @@
+import { recent } from './relativeTime';
 // Dummy email conversations for the Email Shared Inboxes (moved out of App.jsx so
 // the link-conversation search can index them).
-export const conversationsData = [
+const WRITTEN = [
   // --- Email: Mine (2) ---
   {
     id: 1,
@@ -358,7 +359,7 @@ export const conversationsData = [
     id: 33,
     ticketId: 'TKT#24', // a ticket: email conversation with the ticket right panel
     inbox: "Email Support 01",
-    type: "Unassigned",
+    type: 'Mine',
     sender: "Clara Jensen",
     initial: "C",
     avatarColor: "var(--pastelVioletBorderDefault)",
@@ -472,14 +473,14 @@ export const conversationsData = [
   {
     id: 41,
     inbox: 'Email Support 01',
-    type: 'Unassigned',
+    type: 'Mine',
     sender: 'Sarah Miller',
     initial: 'S',
     avatarColor: 'var(--pastelVioletBorderDefault)',
-    time: 'Feb 4, 11:05 AM',
+    time: "Feb 4, 12:40 PM",
     subject: 'Reports won\'t export to CSV',
     preview: 'The export button spins and nothing downloads.',
-    threadCount: 1,
+    threadCount: 2,
     messages: [
       {
         id: 'm1',
@@ -489,20 +490,29 @@ export const conversationsData = [
         initial: 'S',
         avatarColor: 'var(--pastelVioletBorderDefault)',
         body: 'Hi team,\n\nWhen I try to export the monthly report to CSV, the button spins and nothing downloads. Can you take a look?'
+      },
+      {
+        id: 'm2',
+        sender: "Sarah Miller",
+        email: "sarah.miller@paypal.com",
+        time: "Feb 4, 12:40 PM",
+        initial: "S",
+        avatarColor: "var(--pastelVioletBorderDefault)",
+        body: "Following up, the export still fails for any range over two weeks. Is there a workaround?\n\nSarah"
       }
     ]
   },
   {
     id: 42,
     inbox: 'Email Support 01',
-    type: 'Unassigned',
+    type: 'Mine',
     sender: 'Kevin Park',
     initial: 'K',
     avatarColor: 'var(--pastelLightBlueBorderDefault)',
-    time: 'Feb 4, 10:40 AM',
+    time: "Feb 4, 11:55 AM",
     subject: 'CSV export failing for our team',
-    preview: 'Several of us at FedEx can\'t export reports.',
-    threadCount: 1,
+    preview: 'Several of us at PayPal can\'t export reports.',
+    threadCount: 3,
     messages: [
       {
         id: 'm1',
@@ -511,21 +521,39 @@ export const conversationsData = [
         time: 'Feb 4, 10:40 AM',
         initial: 'K',
         avatarColor: 'var(--pastelLightBlueBorderDefault)',
-        body: 'Hello,\n\nA few of us at FedEx are unable to export reports to CSV since this morning. Is this a known issue?'
+        body: 'Hello,\n\nA few of us at PayPal are unable to export reports to CSV since this morning. Is this a known issue?'
+      },
+      {
+        id: 'm2',
+        sender: "Ruben Geidt",
+        email: "support@hiver.com",
+        time: "Feb 4, 11:20 AM",
+        initial: "R",
+        avatarColor: "var(--pastelLightBlueBorderDefault)",
+        body: "Hi Kevin,\n\nWe're seeing slow exports for large reports today. Could you try a shorter date range while we fix it?\n\nRuben"
+      },
+      {
+        id: 'm3',
+        sender: "Kevin Park",
+        email: "kevin.park@paypal.com",
+        time: "Feb 4, 11:55 AM",
+        initial: "K",
+        avatarColor: "var(--pastelLightBlueBorderDefault)",
+        body: "Shorter ranges work. Please let us know when full exports are back.\n\nKevin"
       }
     ]
   },
   {
     id: 43,
     inbox: 'Email Support 01',
-    type: 'Unassigned',
+    type: 'Mine',
     sender: 'Rachel Green',
     initial: 'R',
     avatarColor: 'var(--pastelOrangeBorderDefault)',
-    time: 'Feb 4, 09:55 AM',
+    time: "Feb 4, 01:30 PM",
     subject: 'Copy of January invoice',
     preview: 'Could you resend the January invoice?',
-    threadCount: 1,
+    threadCount: 2,
     messages: [
       {
         id: 'm1',
@@ -535,6 +563,15 @@ export const conversationsData = [
         initial: 'R',
         avatarColor: 'var(--pastelOrangeBorderDefault)',
         body: 'Hi,\n\nCould you resend the January invoice? Our accounts team can\'t find the original email.'
+      },
+      {
+        id: 'm2',
+        sender: "Rachel Green",
+        email: "rachel.green@shopify.com",
+        time: "Feb 4, 01:30 PM",
+        initial: "R",
+        avatarColor: "var(--pastelOrangeBorderDefault)",
+        body: "Hi again, just checking on the January invoice. Our month-end close is tomorrow.\n\nRachel"
       }
     ]
   },
@@ -545,10 +582,10 @@ export const conversationsData = [
     sender: 'Tom Hardy',
     initial: 'T',
     avatarColor: 'var(--pastelRedBorderDefault)',
-    time: 'Feb 4, 08:30 AM',
+    time: "Feb 4, 10:15 AM",
     subject: 'SSO login is broken',
     preview: 'Our team gets an error when signing in with SSO.',
-    threadCount: 1,
+    threadCount: 2,
     messages: [
       {
         id: 'm1',
@@ -558,6 +595,15 @@ export const conversationsData = [
         initial: 'T',
         avatarColor: 'var(--pastelRedBorderDefault)',
         body: 'Hi,\n\nSince yesterday our team gets an "invalid assertion" error when signing in with SSO.'
+      },
+      {
+        id: 'm2',
+        sender: "Tom Hardy",
+        email: "tom.hardy@airbnb.com",
+        time: "Feb 4, 10:15 AM",
+        initial: "T",
+        avatarColor: "var(--pastelRedBorderDefault)",
+        body: "Following up on this. Half the team still can't sign in, and we have a client demo at 2 PM.\n\nTom"
       }
     ]
   },
@@ -568,10 +614,10 @@ export const conversationsData = [
     sender: 'Lisa Wong',
     initial: 'L',
     avatarColor: 'var(--pastelVioletBorderDefault)',
-    time: 'Feb 4, 08:10 AM',
+    time: "Feb 4, 09:40 AM",
     subject: 'New hires can\'t sign in',
     preview: 'SSO fails for the accounts we created this week.',
-    threadCount: 1,
+    threadCount: 3,
     messages: [
       {
         id: 'm1',
@@ -581,6 +627,24 @@ export const conversationsData = [
         initial: 'L',
         avatarColor: 'var(--pastelVioletBorderDefault)',
         body: 'Hello,\n\nThe accounts we created for new hires this week can\'t sign in through SSO. Older accounts work fine.'
+      },
+      {
+        id: 'm2',
+        sender: "Ruben Geidt",
+        email: "support@hiver.com",
+        time: "Feb 4, 09:05 AM",
+        initial: "R",
+        avatarColor: "var(--pastelLightBlueBorderDefault)",
+        body: "Hi Lisa,\n\nThanks for the details. New accounts need to be added to the SSO group in your identity provider before they can sign in. Could you check that group?\n\nRuben"
+      },
+      {
+        id: 'm3',
+        sender: "Lisa Wong",
+        email: "lisa.wong@airbnb.com",
+        time: "Feb 4, 09:40 AM",
+        initial: "L",
+        avatarColor: "var(--pastelVioletBorderDefault)",
+        body: "That was it, two of them weren't in the group. The others still fail though, same error.\n\nLisa"
       }
     ]
   },
@@ -798,10 +862,10 @@ export const conversationsData = [
     sender: 'Nora Quinn',
     initial: 'N',
     avatarColor: 'var(--pastelLightBlueBorderDefault)',
-    time: 'Feb 3, 01:10 PM',
+    time: "Feb 3, 03:00 PM",
     subject: 'SSO users missing from directory',
     preview: 'Users who signed in with SSO aren\'t listed.',
-    threadCount: 1,
+    threadCount: 3,
     messages: [
       {
         id: 'm1',
@@ -811,6 +875,24 @@ export const conversationsData = [
         initial: 'N',
         avatarColor: 'var(--pastelLightBlueBorderDefault)',
         body: 'Hi,\n\nPeople who signed in through SSO this week don\'t show up in the user directory. Can you check?'
+      },
+      {
+        id: 'm2',
+        sender: "Ruben Geidt",
+        email: "support@hiver.com",
+        time: "Feb 3, 02:20 PM",
+        initial: "R",
+        avatarColor: "var(--pastelLightBlueBorderDefault)",
+        body: "Hi Nora,\n\nThe directory syncs every 6 hours, so new SSO users can take a while to appear. Could you tell me one of the missing names?\n\nRuben"
+      },
+      {
+        id: 'm3',
+        sender: "Nora Quinn",
+        email: "nora.quinn@shopify.com",
+        time: "Feb 3, 03:00 PM",
+        initial: "N",
+        avatarColor: "var(--pastelLightBlueBorderDefault)",
+        body: "Sure, ana.ruiz@shopify.com signed in on Monday and still isn't listed.\n\nNora"
       }
     ]
   },
@@ -821,10 +903,10 @@ export const conversationsData = [
     sender: 'Chris Diaz',
     initial: 'C',
     avatarColor: 'var(--pastelOrangeBorderDefault)',
-    time: 'Feb 3, 11:45 AM',
+    time: "Feb 3, 01:40 PM",
     subject: 'Update our SAML certificate',
     preview: 'Our identity provider certificate expires Friday.',
-    threadCount: 1,
+    threadCount: 4,
     messages: [
       {
         id: 'm1',
@@ -834,6 +916,33 @@ export const conversationsData = [
         initial: 'C',
         avatarColor: 'var(--pastelOrangeBorderDefault)',
         body: 'Hello,\n\nOur SAML signing certificate expires on Friday. What\'s the safest way to upload the new one without locking people out?'
+      },
+      {
+        id: 'm2',
+        sender: "Ruben Geidt",
+        email: "support@hiver.com",
+        time: "Feb 3, 12:30 PM",
+        initial: "R",
+        avatarColor: "var(--pastelLightBlueBorderDefault)",
+        body: "Hi Chris,\n\nYou can add the new certificate alongside the old one, so both are valid during the switch. I'll send the steps.\n\nRuben"
+      },
+      {
+        id: 'm3',
+        sender: "Chris Diaz",
+        email: "chris.diaz@shopify.com",
+        time: "Feb 3, 12:55 PM",
+        initial: "C",
+        avatarColor: "var(--pastelOrangeBorderDefault)",
+        body: "Great, please do. Can we do it Thursday evening?\n\nChris"
+      },
+      {
+        id: 'm4',
+        sender: "Ruben Geidt",
+        email: "support@hiver.com",
+        time: "Feb 3, 01:40 PM",
+        initial: "R",
+        avatarColor: "var(--pastelLightBlueBorderDefault)",
+        body: "Thursday evening works. Steps attached, I'll be online in case anything goes wrong.\n\nRuben"
       }
     ]
   },
@@ -844,10 +953,10 @@ export const conversationsData = [
     sender: 'Fatima Ali',
     initial: 'F',
     avatarColor: 'var(--pastelVioletBorderDefault)',
-    time: 'Feb 3, 10:05 AM',
+    time: "Feb 3, 11:50 AM",
     subject: 'Nonprofit discount',
     preview: 'Do you offer pricing for registered charities?',
-    threadCount: 1,
+    threadCount: 3,
     messages: [
       {
         id: 'm1',
@@ -857,6 +966,24 @@ export const conversationsData = [
         initial: 'F',
         avatarColor: 'var(--pastelVioletBorderDefault)',
         body: 'Hi,\n\nWe\'re a registered charity. Do you offer a nonprofit discount, and what do you need from us to apply?'
+      },
+      {
+        id: 'm2',
+        sender: "Ruben Geidt",
+        email: "support@hiver.com",
+        time: "Feb 3, 11:10 AM",
+        initial: "R",
+        avatarColor: "var(--pastelLightBlueBorderDefault)",
+        body: "Hi Fatima,\n\nYes, registered charities get 30% off. Please send your charity registration certificate and we'll apply it.\n\nRuben"
+      },
+      {
+        id: 'm3',
+        sender: "Fatima Ali",
+        email: "fatima.ali@paypal.com",
+        time: "Feb 3, 11:50 AM",
+        initial: "F",
+        avatarColor: "var(--pastelVioletBorderDefault)",
+        body: "Thank you! Certificate attached. Will the discount apply to this month's invoice?\n\nFatima"
       }
     ]
   },
@@ -1020,5 +1147,174 @@ export const conversationsData = [
         body: 'Hi,\n\nOur evaluation is taking longer than planned. Could you extend our trial by two weeks?'
       }
     ]
+  },
+  // Airbnb in Email Support 02 had one email conversation; these two make it three, like every other customer.
+  {
+    id: 78,
+    inbox: 'Email Support 02',
+    type: 'Unassigned',
+    sender: 'Nina Alvarez',
+    initial: 'N',
+    avatarColor: 'var(--pastelGreenBorderDefault)',
+    time: 'Feb 4, 11:25 AM',
+    subject: 'Invoice address needs updating',
+    preview: 'Our billing address changed last month.',
+    threadCount: 2,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Nina Alvarez',
+        email: 'nina.alvarez@airbnb.com',
+        time: 'Feb 4, 10:50 AM',
+        initial: 'N',
+        avatarColor: 'var(--pastelGreenBorderDefault)',
+        body: 'Hi,\n\nOur billing address changed last month. Could you update it so the next invoice goes to the new office?'
+      },
+      {
+        id: 'm2',
+        sender: 'Ruben Geidt',
+        email: 'support@hiver.com',
+        time: 'Feb 4, 11:25 AM',
+        initial: 'R',
+        avatarColor: 'var(--pastelLightBlueBorderDefault)',
+        body: 'Hi Nina,\n\nHappy to help. Could you send the new address, including the postcode?'
+      }
+    ]
+  },
+  {
+    id: 79,
+    inbox: 'Email Support 02',
+    type: 'Mine',
+    sender: 'Omar Haddad',
+    initial: 'O',
+    avatarColor: 'var(--pastelOrangeBorderDefault)',
+    time: 'Feb 3, 04:15 PM',
+    subject: 'SSO login fails for new hires',
+    preview: 'New team members get an error after signing in.',
+    threadCount: 1,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Omar Haddad',
+        email: 'omar.haddad@airbnb.com',
+        time: 'Feb 3, 04:15 PM',
+        initial: 'O',
+        avatarColor: 'var(--pastelOrangeBorderDefault)',
+        body: 'Hello,\n\nNew team members get an "account not found" error after signing in with SSO. Existing users are fine. Any idea what we missed?'
+      }
+    ]
+  },
+  // Stripe: a fourth customer in Email Support 01 → Mine.
+  {
+    id: 80,
+    inbox: 'Email Support 01',
+    type: 'Mine',
+    sender: 'Hannah Brooks',
+    initial: 'H',
+    avatarColor: 'var(--pastelYellowBorderDefault)',
+    time: "Feb 4, 12:05 PM",
+    subject: 'Webhook events arriving late',
+    preview: 'Payment events reach us 20 minutes late.',
+    threadCount: 2,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Hannah Brooks',
+        email: 'hannah.brooks@stripe.com',
+        time: 'Feb 4, 10:20 AM',
+        initial: 'H',
+        avatarColor: 'var(--pastelYellowBorderDefault)',
+        body: 'Hi,\n\nSince this morning our payment webhooks arrive about 20 minutes late. Is there a delay on your side?\n\nHannah'
+      },
+      {
+        id: 'm2',
+        sender: "Hannah Brooks",
+        email: "hannah.brooks@stripe.com",
+        time: "Feb 4, 12:05 PM",
+        initial: "H",
+        avatarColor: "var(--pastelYellowBorderDefault)",
+        body: "It's getting worse, some events now arrive an hour late and our order emails are going out late.\n\nHannah"
+      }
+    ]
+  },
+  {
+    id: 81,
+    inbox: 'Email Support 01',
+    type: 'Mine',
+    sender: 'Victor Lin',
+    initial: 'V',
+    avatarColor: 'var(--pastelGreenBorderDefault)',
+    time: 'Feb 3, 03:05 PM',
+    subject: 'Need a copy of our DPA',
+    preview: 'Our legal team asked for the signed DPA.',
+    threadCount: 2,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Victor Lin',
+        email: 'victor.lin@stripe.com',
+        time: 'Feb 3, 02:10 PM',
+        initial: 'V',
+        avatarColor: 'var(--pastelGreenBorderDefault)',
+        body: 'Hello,\n\nOur legal team needs a copy of the signed data processing agreement. Could you send it over?\n\nVictor'
+      },
+      {
+        id: 'm2',
+        sender: 'Victor Lin',
+        email: 'victor.lin@stripe.com',
+        time: 'Feb 3, 03:05 PM',
+        initial: 'V',
+        avatarColor: 'var(--pastelGreenBorderDefault)',
+        body: 'Just following up, our audit starts Monday and we still need the DPA.\n\nVictor'
+      }
+    ]
+  },
+  {
+    id: 82,
+    inbox: 'Email Support 01',
+    type: 'Mine',
+    sender: 'Grace Kim',
+    initial: 'G',
+    avatarColor: 'var(--pastelVioletBorderDefault)',
+    time: 'Feb 2, 01:15 PM',
+    subject: 'Seats not updating after upgrade',
+    preview: 'We upgraded to 40 seats but still see 25.',
+    threadCount: 3,
+    messages: [
+      {
+        id: 'm1',
+        sender: 'Grace Kim',
+        email: 'grace.kim@stripe.com',
+        time: 'Feb 2, 11:45 AM',
+        initial: 'G',
+        avatarColor: 'var(--pastelVioletBorderDefault)',
+        body: 'Hi,\n\nWe upgraded to 40 seats yesterday but the admin page still shows 25.\n\nGrace'
+      },
+      {
+        id: 'm2',
+        sender: 'Ruben Geidt',
+        email: 'support@hiver.com',
+        time: 'Feb 2, 12:30 PM',
+        initial: 'R',
+        avatarColor: 'var(--pastelLightBlueBorderDefault)',
+        body: 'Hi Grace,\n\nThanks for flagging. Could you try signing out and back in? The seat count refreshes on login.\n\nRuben'
+      },
+      {
+        id: 'm3',
+        sender: 'Grace Kim',
+        email: 'grace.kim@stripe.com',
+        time: 'Feb 2, 01:15 PM',
+        initial: 'G',
+        avatarColor: 'var(--pastelVioletBorderDefault)',
+        body: 'Still showing 25 after signing back in.\n\nGrace'
+      }
+    ]
   }
 ];
+
+// The dates above are fixed (Feb 2–4); they're moved into the past week of whenever the prototype is opened.
+export const conversationsData = WRITTEN.map((c) => ({
+  ...c,
+  time: recent(c.time),
+  messages: c.messages.map((m) => ({ ...m, time: recent(m.time) })),
+}));

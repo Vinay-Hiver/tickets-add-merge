@@ -32,7 +32,7 @@ const makeInbox = (views, fav = ['mine'], channel = 'email') => ({
 // Two email Shared Inboxes.
 export const INITIAL_VIEWS_BY_INBOX = {
   'Email Support 01': makeInbox([
-    ...systemViews({ mine: 9, unassigned: 10, team: 0, tickets: 0, pending: 0, closed: 0 }),
+    ...systemViews({ mine: 16, unassigned: 6, team: 0, tickets: 0, pending: 0, closed: 0 }),
   ], ['mine', 'unassigned'], 'email'),
   'Email Support 02': makeInbox([
     ...systemViews({ mine: 9, unassigned: 10, team: 0, tickets: 0, pending: 0, closed: 0 }),
