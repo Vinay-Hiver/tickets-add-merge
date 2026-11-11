@@ -318,9 +318,29 @@
 /* Active: Body/Medium (500 14/20) */
 .detail-email-chip[aria-selected='true'] { background: var(--primarySurfaceSubtle); border-color: var(--primarySurfaceLighter); color: var(--primarySurfaceDefault); font-weight: var(--fontWeightMedium); }
 .detail-email-chip svg { flex: none; color: currentColor; }
-/* Every conversation chip is 220px; its label fills what's left and ends in "…" (Figma 4068:302) */
-.detail-email-chip--conversation { width: 220px; }
-.detail-email-chip--conversation .detail-email-chip__label { flex: 1 0 0; text-align: center; }
+/* A merged ticket's tabs: each conversation tab is 220px at most, its label ending in "…" (Figma 4089:1970) */
+.detail-ticket-tabs.hot-tabs--outlined { overflow-x: auto; }
+.detail-ticket-tabs.hot-tabs--outlined .hot-tab { flex: none; max-width: 220px; }
+.detail-ticket-tab__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.detail-ticket-tabs .detail-email-chip__frt svg { width: 12px; height: 12px; color: var(--errorSurfaceDisabled); }
+.detail-ticket-tabs .detail-email-chip__flags { margin: -4px -4px -4px 0; }
+/* A Slack channel pill: 250px at most (Figma 4089:1994) */
+.detail-email-chip--slack { max-width: 250px; }
+.detail-email-chip--slack svg { flex: none; }
+/* No channels yet: one pill to add Slack or ClickUp, 6px around overlapping 20px circles (Figma 4089:2923) */
+.detail-email-chip.detail-email-chip--add { padding: 6px; background: var(--slateSurfaceWhite); }
+.detail-add-apps { display: flex; padding: 0 2px; } /* no padding top and bottom, so the pill is 34px like the others */
+.detail-add-apps__item {
+  display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 20px; height: 20px; margin-right: -2px;
+  border: 2px solid var(--slateSurfaceWhite); border-radius: 50%; background: var(--slateSurfaceSubtle100); color: var(--slateIconsSubtle);
+}
+.detail-add-apps__item:last-child { margin-right: 0; }
+.detail-add-apps__item img { width: 10px; height: 12px; }
+.detail-add-apps__item .detail-add-apps__slack { width: 12px; }
+/* Slack's colour logo: 12px inside a 16px box (14px in the tabs) */
+.detail-slack-logo { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 16px; height: 16px; }
+.detail-tabs .detail-slack-logo { width: 14px; height: 14px; }
+.detail-slack-logo img { width: 12px; height: 12px; }
 .detail-email-chip__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 /* The ⚡: a red bolt in a 20px box, the same red as the FRT chip */
 /* Unread dot and FRT bolt, each in a 20px slot, side by side (Figma 4068:302) */
