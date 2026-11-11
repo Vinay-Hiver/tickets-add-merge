@@ -318,10 +318,17 @@
 /* Active: Body/Medium (500 14/20) */
 .detail-email-chip[aria-selected='true'] { background: var(--primarySurfaceSubtle); border-color: var(--primarySurfaceLighter); color: var(--primarySurfaceDefault); font-weight: var(--fontWeightMedium); }
 .detail-email-chip svg { flex: none; color: currentColor; }
-.detail-email-chip--conversation { max-width: 250px; }
+/* Every conversation chip is 220px; its label fills what's left and ends in "…" (Figma 4068:302) */
+.detail-email-chip--conversation { width: 220px; }
+.detail-email-chip--conversation .detail-email-chip__label { flex: 1 0 0; text-align: center; }
 .detail-email-chip__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 /* The ⚡: a red bolt in a 20px box, the same red as the FRT chip */
-.detail-email-chip__frt { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 20px; height: 20px; margin: -4px -4px -4px 0; }
+/* Unread dot and FRT bolt, each in a 20px slot, side by side (Figma 4068:302) */
+.detail-email-chip__flags { display: inline-flex; align-items: center; flex: none; margin: -4px -4px -4px 0; }
+.detail-email-chip__unread,
+.detail-email-chip__frt { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 20px; height: 20px; }
+.detail-email-chip__unread { width: 10px; } /* 6px gap + 2px = 8px from the label to the dot */
+.detail-email-chip__unread::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--primarySurfaceDefault); }
 .detail-email-chip .detail-email-chip__frt svg { color: var(--errorSurfaceDisabled); }
 
 /* Overview: on hover, the open-in-tab button shows beside the date (the side sheet's button). It opens the email

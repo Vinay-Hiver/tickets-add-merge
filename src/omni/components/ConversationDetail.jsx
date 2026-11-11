@@ -137,6 +137,14 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
   const thread = openEmail ?? conversation;
   const customerEmail = customerEmailOf(thread);
   const { senderOf, recipientOf } = peopleOf(thread);
+  // A merged conversation is unread (blue dot on its chip) while its latest email is from the customer, until its
+  // chip is opened.
+  const [readIds, setReadIds] = useState([]);
+  const isUnread = (email) => {
+    const saved = threads[String(email.id)];
+    const latest = [...email.messages, ...(saved?.replies ?? [])].pop();
+    return !!latest && latest.email !== 'support@hiver.com' && !saved?.replies?.length && !readIds.includes(String(email.id));
+  };
   // The email just opened from the Overview, outlined for a moment so it's easy to spot.
   const [targetId, setTargetId] = useState(null);
   const targetTimer = React.useRef(0);
@@ -152,6 +160,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
     targetTimer.current = window.setTimeout(() => setTargetId(null), 1600);
   };
   const selectEmail = (value) => {
+    setReadIds((ids) => (ids.includes(value) ? ids : [...ids, value]));
     setEmailTab(value);
     if (value === 'overview') { setExpandedIds([]); scrollToBottom(); }
     const email = emails?.find((e) => String(e.id) === value);
@@ -610,8 +619,13 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
               >
                 {chip.email && <Icon name="mailbox" size={14} />}
                 <span className="detail-email-chip__label">{chip.label}</span>
-                {chip.email && frtOf(chip.email) && (
-                  <span className="detail-email-chip__frt" role="img" aria-label="First response time overdue"><Icon name="boltfilled" size={12} /></span>
+                {chip.email && (isUnread(chip.email) || frtOf(chip.email)) && (
+                  <span className="detail-email-chip__flags">
+                    {isUnread(chip.email) && <span className="detail-email-chip__unread" role="img" aria-label="Unread" />}
+                    {frtOf(chip.email) && (
+                      <span className="detail-email-chip__frt" role="img" aria-label="First response time overdue"><Icon name="boltfilled" size={12} /></span>
+                    )}
+                  </span>
                 )}
               </button>
             ))}
