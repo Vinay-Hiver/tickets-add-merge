@@ -306,7 +306,7 @@
 /* Merged ticket: Overview and conversation chips (Figma: Tickets Add/Merge › 4068:299) */
 .detail-email-chips {
   display: flex; align-items: center; gap: 8px; padding: 10px 12px; overflow-x: auto;
-  background: var(--slateSurfaceSubtle);
+  background: var(--slateSurfaceWhite);
 }
 .detail-email-chip {
   flex: none; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -316,7 +316,7 @@
 }
 .detail-email-chip:hover { background: var(--slateSurfaceSubtle100); }
 /* Active: Body/Medium (500 14/20) */
-.detail-email-chip[aria-selected='true'] { background: var(--primarySurfaceSubtle); border-color: var(--primarySurfaceLighter); color: var(--primarySurfaceDefault); font-weight: var(--fontWeightMedium); }
+.detail-email-chip[aria-selected='true'] { background: transparent; border-color: var(--primarySurfaceLighter); color: var(--primarySurfaceDefault); font-weight: var(--fontWeightMedium); }
 .detail-email-chip svg { flex: none; color: currentColor; }
 /* A merged ticket's tabs: each conversation tab is 220px at most, its label ending in "…" (Figma 4089:1970) */
 .detail-ticket-tabs.hot-tabs--outlined { overflow-x: auto; }

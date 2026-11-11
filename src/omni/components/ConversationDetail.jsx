@@ -616,7 +616,11 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
                   {(isUnread(e) || frtOf(e)) && (
                     <span className="detail-email-chip__flags">
                       {isUnread(e) && <span className="detail-email-chip__unread" role="img" aria-label="Unread" />}
-                      {frtOf(e) && <span className="detail-email-chip__frt" role="img" aria-label="First response time overdue"><Icon name="boltfilled" size={12} /></span>}
+                      {frtOf(e) && (
+                        <Tooltip content="First response time overdue" placement="top" portal>
+                          <span className="detail-email-chip__frt" role="img" aria-label="First response time overdue"><Icon name="boltfilled" size={12} /></span>
+                        </Tooltip>
+                      )}
                     </span>
                   )}
                 </>
