@@ -1,0 +1,321 @@
+/* The demo intro slideshow (concept.html) */
+
+/* Slide text uses APK Galeria (from the Demo folder); the product UI on the slides keeps its own font */
+@font-face { font-family: 'APK Galeria'; src: url('./fonts/APK-Galeria-Thin-Trial.otf') format('opentype'); font-weight: 100; font-display: block; }
+@font-face { font-family: 'APK Galeria'; src: url('./fonts/APK-Galeria-Light-Trial.otf') format('opentype'); font-weight: 300; font-display: block; }
+@font-face { font-family: 'APK Galeria'; src: url('./fonts/APK-Galeria-Regular-Trial.otf') format('opentype'); font-weight: 400; font-display: block; }
+@font-face { font-family: 'APK Galeria'; src: url('./fonts/APK-Galeria-Medium-Trial.otf') format('opentype'); font-weight: 500; font-display: block; }
+@font-face { font-family: 'APK Galeria'; src: url('./fonts/APK-Galeria-Semi-Bold-Trial.otf') format('opentype'); font-weight: 600; font-display: block; }
+:root { --storyFont: 'APK Galeria', var(--fontFamily); }
+
+html, body { background: var(--slateSurfaceSubtle); overflow: hidden; }
+
+.story {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--slateSurfaceSubtle);
+}
+.story-stage {
+  flex: none; position: relative;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 96px 0 0; box-sizing: border-box;
+  transform-origin: center;
+}
+
+.story-title {
+  margin: 0 0 80px; align-self: center; text-align: center;
+  font: var(--fontWeightMedium) 48px/56px var(--storyFont); color: var(--slateTextBody);
+}
+
+/* The story's point turns blue once it's been shown */
+.story-title__lead, .story-title__point { display: inline-block; }
+.story-title__point { transition: color 400ms ease; }
+.story-title__point.is-on { color: var(--primaryTextLabel); }
+
+/* NEW / EXISTING in the two ways */
+.story-key { color: var(--errorTextBody); }
+.story-key--base { color: var(--primaryTextLabel); }
+
+/* "via" and the two ways conversations get into one ticket */
+.story-ways { display: flex; flex-direction: column; align-items: center; gap: 24px; margin-top: 40px; }
+.story-ways__via { margin: 0; font: var(--fontWeightRegular) 24px/32px var(--storyFont); color: var(--slateTextSubtle); }
+.story-ways__item { margin: 0; font: var(--fontWeightMedium) 36px/44px var(--storyFont); color: var(--slateTextBody); }
+
+/* Card and ticket sizes: a ticket is its card plus the list's 8px strip and a 1px border on each side */
+.story-stage { --card-w: 352px; --ticket-w: 370px; }
+.story-stack { display: flex; flex-direction: column; gap: 16px; }
+.story-row { display: flex; gap: 24px; align-items: flex-start; justify-content: center; }
+
+/* A conversation, as its list card in the product; on its own it gets a border so it reads as a card */
+.story-card { width: var(--card-w); box-sizing: border-box; cursor: default; }
+/* Same size on every slide (on its own or in a ticket), so a card never jumps while it moves */
+.story-card { padding: 16px; gap: 12px; }
+.story-card:hover { background: var(--slateSurfaceWhite); }
+/* Stacked cards: hovering one lifts it (1.05×) and turns its email address blue */
+.story-stack .story-card { transition: transform 200ms ease, box-shadow 200ms ease; }
+.story-stack .story-card:hover { transform: scale(1.05); position: relative; z-index: 1; box-shadow: 0 8px 24px rgba(7, 26, 46, 0.12); }
+.story-stack .story-card .sender-name-primary { transition: color 200ms ease; }
+.story-stack .story-card:hover .sender-name-primary { color: var(--primaryTextLabel); }
+.story-stack .story-card, .story-ticket.is-hidden .story-card {
+  border-color: var(--slateBorderLight); box-shadow: 0 2px 8px rgba(7, 26, 46, 0.06);
+}
+
+/* A ticket, built from the product's list pane: [ticket icon] TKT#, then its conversation cards */
+.story-ticket {
+  width: var(--ticket-w); min-height: 400px; box-sizing: border-box;
+  display: flex; flex-direction: column;
+  background: var(--slateSurfaceWhite);
+  border: 1px solid var(--slateBorderLight); border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(7, 26, 46, 0.06);
+  overflow: hidden;
+}
+.story-ticket__head {
+  display: flex; align-items: center; gap: 8px;
+  height: 48px; padding: 0 16px; flex: none;
+  border-bottom: 1px solid var(--slateBorderMild);
+}
+.story-ticket__title { font: var(--fontWeightMedium) 16px/24px var(--fontFamily); color: var(--primaryTextLabel); }
+.story-ticket__list .email-card-wrap:last-child { border-bottom: 1px solid var(--slateBorderMild); }
+/* Before the tickets come in: same space, nothing drawn but the cards */
+.story-ticket.is-hidden { background: transparent; border-color: transparent; box-shadow: none; overflow: visible; }
+.story-ticket.is-hidden .story-ticket__head { visibility: hidden; border-color: transparent; }
+.story-ticket.is-hidden .email-card-wrap { border-color: transparent; }
+
+/* Merging: the cards gather into one pile in the middle of where the new ticket will be */
+.story-merge { position: relative; }
+.story-pile { position: absolute; inset: 0; display: grid; place-items: center; }
+.story-pile .story-card { grid-area: 1 / 1; border-color: var(--slateBorderLight); box-shadow: 0 2px 8px rgba(7, 26, 46, 0.06); }
+/* A deck: the first card on top; each one under it is a little narrower and peeks out 16px below */
+.story-pile .story-card:nth-child(1) { z-index: 4; }
+.story-pile .story-card:nth-child(2) { z-index: 3; transform: translateY(20px) scale(0.93); }
+.story-pile .story-card:nth-child(3) { z-index: 2; transform: translateY(40px) scale(0.86); }
+.story-pile .story-card:nth-child(4) { z-index: 1; transform: translateY(58px) scale(0.79); }
+/* Adding: the existing ticket in the middle, the conversations scattered around it (two left, one right) */
+.story-scatter { position: relative; width: 1400px; height: 620px; }
+.story-scatter__ticket { position: absolute; top: 0; left: calc(50% - var(--card-w) / 2 - 1px); }
+.story-scatter__spot { position: absolute; }
+.story-scatter__spot .story-card { border-color: var(--slateBorderLight); box-shadow: 0 2px 8px rgba(7, 26, 46, 0.06); }
+.story-scatter__spot--1 { left: 0; top: 24px; }
+.story-scatter__spot--2 { left: 48px; top: 312px; }
+.story-scatter__spot--3 { right: 0; top: 120px; }
+.story-card.is-ghost { visibility: hidden; }
+/* An empty place in a ticket: no divider until its card arrives */
+.story-ticket .email-card-wrap.is-empty { border-color: transparent; }
+
+/* One conversation → ticket: [card] — Converted to Ticket → [ticket] */
+.story-convert { display: flex; align-items: flex-end; gap: 32px; margin-top: 48px; }
+/* Bottoms line up, so both captions sit on one line; the arrow stays in the middle */
+.story-convert__arrow { align-self: center; }
+.story-convert__arrow {
+  display: flex; align-items: center; gap: 12px; color: var(--slateSurfaceDefault);
+  font: var(--fontWeightMedium) 24px/32px var(--storyFont); white-space: nowrap;
+}
+.story-convert__arrow > span:nth-child(2) { color: var(--slateTextBody); }
+.story-convert__side { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+/* Hidden captions keep their space, so nothing shifts when they appear */
+.story-convert__caption { margin: 0; font: var(--fontWeightMedium) 20px/28px var(--storyFont); letter-spacing: 0.08em; color: var(--slateTextBody); }
+.story-convert__caption.is-hidden { visibility: hidden; }
+.story-convert__line { width: 32px; height: 2px; background: currentColor; }
+.story-convert__line + .story-convert__head { margin-left: -24px; }
+.story-convert__arrow > .story-convert__line:nth-of-type(3) { width: 64px; }
+
+/* Pointing at the attributes: the card stays as it is, and its fields get a green band behind them
+   (on the slides that mark single rows instead, the rows carry their own colours) */
+.story-fields { position: relative; isolation: isolate; }
+/* Drawn behind the rows (absolute), so nothing moves when it appears */
+.story-card.is-dim .story-fields.is-lit::before, .story-ticket--attrs .story-fields.is-lit::before {
+  content: ''; position: absolute; inset: -8px -8px; z-index: -1; background: var(--pastelGreenSurfaceSubtle);
+}
+/* ...with the field names in pure black (the tokens have no pure black, so the keyword) */
+.story-card.is-dim .story-field__key, .story-fields.is-lit .story-field__key { color: black; }
+
+/* Picking conversations to merge: [detailed cards]   [bulk actions, once something is picked] */
+.story-select { display: flex; align-items: flex-start; gap: 120px; }
+.story-stack--pick { gap: 12px; }
+.story-select__side { width: 360px; min-height: 360px; display: flex; align-items: center; justify-content: center; align-self: center; }
+.story-stage--untitled { padding-top: 0; justify-content: center; }
+/* A conversation's (or ticket's) fields, as label – value rows */
+.story-fields { display: flex; flex-direction: column; gap: 2px; font: var(--fontWeightRegular) 14px/20px var(--fontFamily); }
+.story-field {
+  display: grid; grid-template-columns: 104px 1fr; gap: 8px; align-items: center;
+  margin: 0 -6px; padding: 2px 6px; border-radius: 6px; transition: background-color 300ms ease, opacity 300ms ease;
+}
+.story-field__key { color: var(--slateTextSubtle); }
+.story-field__value { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 24px; color: var(--slateTextBody); }
+/* Row highlights: taken from the base / combined from all / not used */
+.story-subject { margin: 0 -6px; padding: 2px 6px; border-radius: 6px; transition: background-color 300ms ease, opacity 300ms ease; }
+.story-subject.is-base { background: var(--primarySurfaceSubtle); box-shadow: inset 0 0 0 1px var(--primarySurfaceLighter); }
+.story-subject.is-out { opacity: 0.3; }
+.story-field.is-base { background: var(--primarySurfaceSubtle); box-shadow: inset 0 0 0 1px var(--primarySurfaceLighter); }
+.story-field.is-merge { background: var(--pastelGreenSurfaceSubtle); box-shadow: inset 0 0 0 1px var(--pastelGreenBorderLight); }
+.story-field.is-out { opacity: 0.3; }
+/* A value nobody has decided yet */
+.story-unknown {
+  display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 6px;
+  border: 1px dashed var(--pastelRedBorderDefault); color: var(--errorTextBody); font: var(--fontWeightMedium) 14px/20px var(--fontFamily);
+}
+
+/* Base vs ticket attributes: [conversations] ──> [ticket's attributes] */
+.story-resolve { display: flex; align-items: center; gap: 32px; }
+.story-stack--detail { gap: 12px; }
+.story-stack--detail .story-card:hover { transform: none; box-shadow: none; }
+.story-stack--detail .story-card:hover .sender-name-primary { color: inherit; }
+.story-resolve__ticket { display: flex; flex-direction: column; align-items: flex-start; gap: 48px; }
+/* The slide's point, above the ticket instead of at the top */
+.story-side-title {
+  margin: 0; width: 640px; font: var(--fontWeightMedium) 40px/48px var(--storyFont); color: var(--slateTextBody);
+}
+.story-ticket--attrs { position: relative; width: 440px; min-height: 0; overflow: visible; }
+.story-ticket__attrs { padding: 16px; }
+.story-arrow { position: relative; width: 144px; color: var(--slateSurfaceDefault); }
+.story-arrow__shaft { display: flex; align-items: center; }
+/* The label sits above the line, without pushing it off centre */
+.story-arrow__label {
+  position: absolute; bottom: 100%; left: 0; right: 0; margin-bottom: 8px; text-align: center; white-space: nowrap;
+  font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextBody);
+}
+/* A bracket on the right of the cards it gathers */
+.story-gather { display: flex; align-items: stretch; gap: 24px; }
+.story-gather__bracket {
+  width: 24px; margin: -16px 0; box-sizing: border-box;
+  border: 2px solid var(--slateSurfaceDefault); border-left: 0; border-radius: 0 24px 24px 0;
+}
+.story-arrow__line { flex: 1; height: 2px; background: currentColor; }
+.story-arrow__head { flex: none; margin-left: -14px; }
+/* "BASE" on the top edge of a card or ticket */
+.story-card { position: relative; }
+.story-badge {
+  position: absolute; top: -10px; left: 12px; padding: 0 8px; border-radius: 4px;
+  background: var(--primarySurfaceDefault); color: var(--slateSurfaceWhite);
+  font: var(--fontWeightMedium) 12px/20px var(--fontFamily); letter-spacing: 0.08em;
+}
+.story-card.is-pickable { cursor: pointer; }
+.story-stack--pick .story-card:hover { transform: none; box-shadow: 0 2px 8px rgba(7, 26, 46, 0.06); }
+.story-stack--pick .story-card:hover .sender-name-primary { color: inherit; }
+/* Picked: the list's selected card (blue border) */
+.story-stack--pick .story-card.active { border-color: var(--primaryBorderDefault); box-shadow: 0 3px 4px 0 rgba(7, 26, 46, 0.08); }
+.story-bulk { display: flex; flex-direction: column; align-items: center; animation: story-bulk-in 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes story-bulk-in { from { opacity: 0; transform: translateY(8px); } }
+.story-bulk__merge { font-size: 16px; line-height: 24px; color: var(--slateTextBody); cursor: default; }
+.story-bulk__merge svg { width: 18px; height: 18px; }
+.story-bulk__why { margin: 8px 0 0; font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--errorTextBody); }
+
+/* The ticket on these slides: its cards are the same size as the ones beside it, one under another with a
+   divider (no strip around them), so the cards in the ticket stand as tall as the ones beside it */
+.story-ticket--compact { width: calc(var(--card-w) + 2px); min-height: 0; }
+.story-ticket--compact .email-card-wrap { padding: 0; }
+.story-ticket--compact .story-ticket__list .email-card-wrap:last-child { border-bottom: 0; }
+
+/* Slide dots, bottom centre */
+.story-progress {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 8px;
+}
+.story-progress span { width: 6px; height: 6px; border-radius: 50%; background: var(--slateSurfaceSubtle200); transition: background 0.3s, width 0.3s; }
+.story-progress span.is-on { width: 20px; border-radius: 4px; background: var(--slateSurfaceDefault); }
+
+/* Morph: every named element glides from its old box to its new one */
+::view-transition-group(*) {
+  animation-duration: 680ms;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+}
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: 680ms;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+}
+/* The title changes width as its words change: crossfade the words in place instead of stretching them */
+::view-transition-old(title), ::view-transition-new(title) { height: 100%; object-fit: none; object-position: center; }
+/* Tickets grow and shrink (one card to three): keep the snapshot's own aspect, pinned to the top */
+::view-transition-old(ticket-existing), ::view-transition-new(ticket-existing),
+::view-transition-old(ticket-1), ::view-transition-new(ticket-1),
+::view-transition-old(ticket-2), ::view-transition-new(ticket-2),
+::view-transition-old(ticket-3), ::view-transition-new(ticket-3),
+::view-transition-old(ticket-4), ::view-transition-new(ticket-4) {
+  height: 100%; object-fit: none; object-position: top left;
+}
+/* A ticket coming in fades up and grows into place, one after another; a ticket leaving fades out */
+@keyframes story-ticket-in { from { opacity: 0; transform: scale(0.94); } }
+@keyframes story-ticket-out { to { opacity: 0; transform: scale(0.97); } }
+::view-transition-new(ticket-1):only-child, ::view-transition-new(ticket-2):only-child,
+::view-transition-new(ticket-3):only-child, ::view-transition-new(ticket-4):only-child {
+  animation: story-ticket-in 510ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+::view-transition-new(ticket-2):only-child { animation-delay: 100ms; }
+::view-transition-new(ticket-3):only-child { animation-delay: 210ms; }
+::view-transition-new(ticket-4):only-child { animation-delay: 300ms; }
+::view-transition-old(ticket-1):only-child, ::view-transition-old(ticket-2):only-child,
+::view-transition-old(ticket-3):only-child, ::view-transition-old(ticket-4):only-child {
+  animation: story-ticket-out 340ms ease-in both;
+}
+/* The two ways come up one after the other, after the ticket has gone */
+@keyframes story-rise { from { opacity: 0; transform: translateY(16px); } }
+::view-transition-new(way-via):only-child { animation: story-rise 510ms cubic-bezier(0.2, 0.8, 0.2, 1) 260ms both; }
+::view-transition-new(way-1):only-child { animation: story-rise 510ms cubic-bezier(0.2, 0.8, 0.2, 1) 430ms both; }
+::view-transition-new(way-2):only-child { animation: story-rise 510ms cubic-bezier(0.2, 0.8, 0.2, 1) 600ms both; }
+/* Cards leaving with no place to go (the ticket is hidden) fade out with it */
+::view-transition-old(card-1):only-child, ::view-transition-old(card-2):only-child,
+::view-transition-old(card-3):only-child, ::view-transition-old(card-4):only-child,
+::view-transition-old(add-card-1):only-child, ::view-transition-old(add-card-2):only-child,
+::view-transition-old(add-card-3):only-child, ::view-transition-old(add-card-4):only-child {
+  animation: story-ticket-out 340ms ease-in both;
+}
+
+/* Merging: once the title has moved to the top (680ms), the cards come in one by one */
+:root[data-to="merge"]::view-transition-new(card-1):only-child { animation: story-rise 430ms cubic-bezier(0.2, 0.8, 0.2, 1) 680ms both; }
+:root[data-to="merge"]::view-transition-new(card-2):only-child { animation: story-rise 430ms cubic-bezier(0.2, 0.8, 0.2, 1) 800ms both; }
+:root[data-to="merge"]::view-transition-new(card-3):only-child { animation: story-rise 430ms cubic-bezier(0.2, 0.8, 0.2, 1) 940ms both; }
+:root[data-to="merge"]::view-transition-new(card-4):only-child { animation: story-rise 430ms cubic-bezier(0.2, 0.8, 0.2, 1) 1070ms both; }
+/* ...they stack into a deck; then the new ticket comes in and the deck spreads out inside it, card by card */
+:root[data-to="merge-done"]::view-transition-new(ticket-merged):only-child { animation: story-ticket-in 510ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+:root[data-to="merge-done"]::view-transition-group(card-1) { animation-delay: 120ms; animation-fill-mode: both; }
+:root[data-to="merge-done"]::view-transition-group(card-2) { animation-delay: 190ms; animation-fill-mode: both; }
+:root[data-to="merge-done"]::view-transition-group(card-3) { animation-delay: 270ms; animation-fill-mode: both; }
+:root[data-to="merge-done"]::view-transition-group(card-4) { animation-delay: 330ms; animation-fill-mode: both; }
+:root[data-to="merge-done"]::view-transition-old(card-1), :root[data-to="merge-done"]::view-transition-new(card-1) { animation-delay: 120ms; animation-fill-mode: both; }
+:root[data-to="merge-done"]::view-transition-old(card-2), :root[data-to="merge-done"]::view-transition-new(card-2) { animation-delay: 190ms; animation-fill-mode: both; }
+:root[data-to="merge-done"]::view-transition-old(card-3), :root[data-to="merge-done"]::view-transition-new(card-3) { animation-delay: 270ms; animation-fill-mode: both; }
+:root[data-to="merge-done"]::view-transition-old(card-4), :root[data-to="merge-done"]::view-transition-new(card-4) { animation-delay: 330ms; animation-fill-mode: both; }
+
+/* Adding (right after the two ways): the title moves up, the existing ticket comes in, then the conversations around it, all at once */
+::view-transition-old(ticket-merged):only-child { animation: story-ticket-out 340ms ease-in both; }
+:root[data-to="merge"]::view-transition-new(way-2):only-child { animation: story-rise 510ms cubic-bezier(0.2, 0.8, 0.2, 1) 170ms both; }
+:root[data-to="add"]::view-transition-new(ticket-existing):only-child { animation: story-ticket-in 510ms cubic-bezier(0.2, 0.8, 0.2, 1) 680ms both; }
+:root[data-to="add"]::view-transition-new(add-card-1):only-child { animation: story-rise 430ms cubic-bezier(0.2, 0.8, 0.2, 1) 1020ms both; }
+:root[data-to="add"]::view-transition-new(add-card-3):only-child { animation: story-rise 430ms cubic-bezier(0.2, 0.8, 0.2, 1) 1020ms both; }
+:root[data-to="add"]::view-transition-new(add-card-2):only-child { animation: story-rise 430ms cubic-bezier(0.2, 0.8, 0.2, 1) 1020ms both; }
+:root[data-to="add"]::view-transition-new(add-card-4):only-child { animation: story-rise 430ms cubic-bezier(0.2, 0.8, 0.2, 1) 1020ms both; }
+/* ...then the cards fly into it, one after another */
+:root[data-to="added"]::view-transition-group(add-card-1) { animation-duration: 770ms; animation-delay: 0ms; animation-fill-mode: both; }
+:root[data-to="added"]::view-transition-group(add-card-2) { animation-duration: 770ms; animation-delay: 130ms; animation-fill-mode: both; }
+:root[data-to="added"]::view-transition-group(add-card-3) { animation-duration: 770ms; animation-delay: 260ms; animation-fill-mode: both; }
+:root[data-to="added"]::view-transition-group(add-card-4) { animation-duration: 770ms; animation-delay: 390ms; animation-fill-mode: both; }
+:root[data-to="added"]::view-transition-old(add-card-1), :root[data-to="added"]::view-transition-new(add-card-1) { animation-delay: 0ms; animation-fill-mode: both; }
+:root[data-to="added"]::view-transition-old(add-card-2), :root[data-to="added"]::view-transition-new(add-card-2) { animation-delay: 130ms; animation-fill-mode: both; }
+:root[data-to="added"]::view-transition-old(add-card-3), :root[data-to="added"]::view-transition-new(add-card-3) { animation-delay: 260ms; animation-fill-mode: both; }
+:root[data-to="added"]::view-transition-old(add-card-4), :root[data-to="added"]::view-transition-new(add-card-4) { animation-delay: 390ms; animation-fill-mode: both; }
+
+/* Cards ride above the tickets they sit in */
+/* ...in the same order as the deck (first card on top), so nothing swaps places mid-move */
+::view-transition-group(card-1) { z-index: 5; }
+::view-transition-group(card-2) { z-index: 4; }
+::view-transition-group(card-3) { z-index: 3; }
+::view-transition-group(card-4),
+::view-transition-group(add-card-1), ::view-transition-group(add-card-2), ::view-transition-group(add-card-3), ::view-transition-group(add-card-4) { z-index: 2; }
+
+/* Conflict: once the cards have stacked up, the bracket draws, the arrow reaches out, then the ticket comes in */
+:root[data-to="resolve-gather"]::view-transition-new(resolve-bracket):only-child { animation: story-grow-y 430ms cubic-bezier(0.2, 0.8, 0.2, 1) 300ms both; }
+:root[data-to="resolve-gather"]::view-transition-new(resolve-arrow):only-child { transform-origin: left center; animation: story-grow-x 340ms ease-out 600ms both; }
+:root[data-to="resolve-gather"]::view-transition-new(ticket-attrs):only-child { animation: story-ticket-in 510ms cubic-bezier(0.2, 0.8, 0.2, 1) 850ms both; }
+@keyframes story-grow-y { from { opacity: 0; transform: scaleY(0.4); } }
+@keyframes story-grow-x { from { opacity: 0; transform: scaleX(0); } }
+
+/* "With this story –" fades out quickly as the point slides to the centre */
+::view-transition-old(title-lead):only-child { animation: story-ticket-out 260ms ease-in both; }
+
+/* Root (dots, background) cross-fades quickly */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 340ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation-duration: 1ms; }
+}
