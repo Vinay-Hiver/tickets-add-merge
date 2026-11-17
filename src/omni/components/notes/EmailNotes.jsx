@@ -265,11 +265,15 @@ export function AttachmentChip({ file, onRemove }) {
 
 function NoteHeading({ note, onTicket }) {
   const { user } = useCurrentUser();
+  // Replying to your own note: "You replied to yourself", or "Maya replied to their note" for someone else.
+  const selfReply = note.replyTo && (note.replyTo.authorId != null ? note.replyTo.authorId === note.authorId : note.replyTo.author === note.author);
   return (
     <div className="en-note__heading">
       <span className="en-note__name">{personLabel({ id: note.authorId, name: note.author }, user.id, { start: true })}</span>
       <span className="en-note__action">{note.replyTo ? 'replied to' : onTicket ? 'added a note on the ticket' : 'added a note'}</span>
-      {note.replyTo && <span className="en-note__name">{personLabel({ id: note.replyTo.authorId, name: note.replyTo.author }, user.id)}</span>}
+      {note.replyTo && (selfReply
+        ? <span className="en-note__name">{note.authorId === user.id ? 'yourself' : 'their note'}</span>
+        : <span className="en-note__name">{personLabel({ id: note.replyTo.authorId, name: note.replyTo.author }, user.id)}</span>)}
     </div>
   );
 }
