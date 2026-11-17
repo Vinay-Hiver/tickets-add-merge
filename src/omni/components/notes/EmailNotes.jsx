@@ -263,12 +263,12 @@ export function AttachmentChip({ file, onRemove }) {
   );
 }
 
-function NoteHeading({ note }) {
+function NoteHeading({ note, onTicket }) {
   const { user } = useCurrentUser();
   return (
     <div className="en-note__heading">
       <span className="en-note__name">{personLabel({ id: note.authorId, name: note.author }, user.id, { start: true })}</span>
-      <span className="en-note__action">{note.replyTo ? 'replied to' : 'added a note'}</span>
+      <span className="en-note__action">{note.replyTo ? 'replied to' : onTicket ? 'added a note on the ticket' : 'added a note'}</span>
       {note.replyTo && <span className="en-note__name">{personLabel({ id: note.replyTo.authorId, name: note.replyTo.author }, user.id)}</span>}
     </div>
   );
@@ -304,7 +304,7 @@ function NoteActions({ pinned, attachments, onPin, onReply, onEdit, onDelete }) 
   );
 }
 
-export function NoteCard({ note, elementId, expanded, pinned, highlighted, onToggle, onPin, onReply, onQuoteClick, onEdit, onDelete }) {
+export function NoteCard({ note, onTicket, elementId, expanded, pinned, highlighted, onToggle, onPin, onReply, onQuoteClick, onEdit, onDelete }) {
   const actions = <NoteActions pinned={pinned} attachments={note.attachments} onPin={onPin} onReply={onReply} onEdit={onEdit} onDelete={onDelete} />;
   return (
     <article
@@ -319,7 +319,7 @@ export function NoteCard({ note, elementId, expanded, pinned, highlighted, onTog
         <>
           <div className="en-note__top">
             <NoteAvatar initial={note.initial} color={note.color} />
-            <NoteHeading note={note} />
+            <NoteHeading note={note} onTicket={onTicket} />
             {actions}
             <span className="en-note__time">{note.time}</span>
           </div>
@@ -339,7 +339,7 @@ export function NoteCard({ note, elementId, expanded, pinned, highlighted, onTog
           <NoteAvatar initial={note.initial} color={note.color} />
           <div className="en-note__collapsed">
             <div className="en-note__top">
-              <NoteHeading note={note} />
+              <NoteHeading note={note} onTicket={onTicket} />
               {actions}
               <span className="en-note__time">{note.time}</span>
             </div>

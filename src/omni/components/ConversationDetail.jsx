@@ -517,13 +517,14 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
     if (item.kind === 'activity') return <ActivityGroup key={item.key} rows={item.rows} />;
     return renderNote(item.note);
   });
-  // A ticket note inside a conversation's tab: read-only, it's edited and pinned on the Overview.
+  // A ticket note inside a conversation's tab: worded "added a note on the ticket" so it isn't mistaken for the conversation's own; read-only, it's edited and pinned on the Overview.
   const renderTicketNote = (note) => {
     const id = `ticket-${note.id}`;
     return (
       <NoteCard
         key={id}
         note={note}
+        onTicket
         elementId={`email-note-${id}`}
         expanded={openNoteIds[id] ?? false}
         onToggle={() => setOpenNoteIds((o) => ({ ...o, [id]: !o[id] }))}
