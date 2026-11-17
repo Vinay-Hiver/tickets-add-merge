@@ -469,6 +469,8 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
     // In a merged conversation's tab, changes made on the ticket (tags, assignee, status, custom fields) show too,
     // marked "Ticket". The Overview shows them as they are.
     ...(openEmail ? activityOf(conversation.id).map((row) => ({ kind: 'activity', at: row.at, row: { ...row, id: `ticket-${row.id}`, prefix: 'Ticket' } })) : []),
+    // A note added on the Overview belongs to the ticket and shows in every conversation (read-only there).
+    ...(openEmail ? (threads[String(conversation.id)]?.notes ?? []).map((n) => ({ kind: 'note', at: n.at ?? 0, note: n, ticketNote: true })) : []),
     ...(notesThread.replies ?? []).map((msg) => ({ kind: 'message', at: msg.at, key: msg.id, msg })),
   ].sort((a, b) => a.at - b.at) : [];
   const asActivity = (rows) => rows.map((row) => ({ kind: 'activity', row }));
@@ -483,10 +485,8 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
   const threadEmails = [...threadMessages, ...(notesThread?.replies ?? [])];
   const previousOf = (list, msg) => list[list.findIndex((m) => m.id === msg.id) - 1];
 
-  // A merged ticket's Overview tab: one timeline, earliest to latest, of every email, note and activity from all its conversations,
-  // plus the ticket's own notes and activity. Each email is labelled with its conversation, and a reply to it goes
-  // to that conversation. Its conversations' notes are read-only here; the ticket's own notes can be pinned and edited.
-  // Joining the ticket shows once per merge: "2 conversations merged into TKT#88".
+  // A merged ticket's Overview tab: the ticket's own notes and activity, earliest to latest. No emails: they're in each
+  // conversation's tab. Joining the ticket shows once per merge: "2 conversations merged into TKT#88".
   const timeline = emails && !openEmail ? (() => {
     const items = [];
     const atOf = (x) => x.at ?? timestampOf(x.time ?? '');
@@ -505,30 +505,35 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
       join.text = `${join.count} ${join.count === 1 ? 'conversation' : 'conversations'} ${action === 'merged' ? 'merged into' : 'added to'} ${id}`;
     };
     emails.forEach((e) => {
-      const saved = threads[String(e.id)];
-      const list = [...e.messages, ...(saved?.replies ?? [])].map((m) => ({ ...m, id: `${e.id}:${m.id}` }));
-      list.forEach((msg, i) => items.push({ kind: 'message', at: atOf(msg), key: msg.id, msg, email: e, originalId: [...e.messages, ...(saved?.replies ?? [])][i].id, quoted: previousOf(list, msg) }));
       // Only the merge itself from each conversation's history: its own activity stays in its view.
       activityOf(e.id).filter((row) => row.kind === 'ticket').forEach(pushActivity);
     });
     activityOf(conversation.id).forEach(pushActivity);
+    notesThread.notes.forEach((note) => items.push({ kind: 'note', at: note.at ?? 0, key: note.id, note }));
     // A stable sort, so things at the same minute keep their order (an email, then what followed it).
     return items.sort((a, b) => a.at - b.at);
   })() : null;
-  const lastTimelineEmail = timeline?.filter((i) => i.kind === 'message').pop();
-  // The Overview has no notes: they stay in each conversation's own view.
-  const renderTimeline = () => groupActivity(timeline).map((item) => {
+  const renderTimeline = () => groupActivity(onlyNotes ? timeline.filter((i) => i.kind === 'note') : timeline).map((item) => {
     if (item.kind === 'activity') return <ActivityGroup key={item.key} rows={item.rows} />;
-    return (
-      <React.Fragment key={item.key}>
-        {renderMessage(item.msg, { quoted: item.quoted, people: peopleOf(item.email), open: item === lastTimelineEmail, readOnly: true, onOpenInTab: () => openInTab(item.email, item.originalId) })}
-      </React.Fragment>
-    );
+    return renderNote(item.note);
   });
+  // A ticket note inside a conversation's tab: read-only, it's edited and pinned on the Overview.
+  const renderTicketNote = (note) => {
+    const id = `ticket-${note.id}`;
+    return (
+      <NoteCard
+        key={id}
+        note={note}
+        elementId={`email-note-${id}`}
+        expanded={openNoteIds[id] ?? false}
+        onToggle={() => setOpenNoteIds((o) => ({ ...o, [id]: !o[id] }))}
+      />
+    );
+  };
   const pinned = notesThread?.pin ? findNote(notesThread.pin.id) : null;
   // The Reply / Add note footer shows wherever a thread does (not on the Slack tab).
-  // The Overview has no footer: no reply and no notes at the ticket level.
-  const showThread = tab === 'conversation' && !!source && !timeline;
+  // The Overview's footer has Add note only (a ticket has no reply of its own).
+  const showThread = tab === 'conversation' && !!source;
 
   return (
     <div className="conversation-detail">
@@ -587,7 +592,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
              )}
              {source && (
                <ConversationMenu
-                 options={emails ? EMAIL_MENU.filter((o) => !['reply', 'reply-all', 'forward'].includes(o.value) && !(timeline && o.value === VIEW_ONLY_NOTES.value)) : EMAIL_MENU}
+                 options={emails ? EMAIL_MENU.filter((o) => !['reply', 'reply-all', 'forward'].includes(o.value)) : EMAIL_MENU}
                  onlyNotes={onlyNotes}
                  onSelect={(value) => {
                    const last = threadMessages[lastIndex]?.id;
@@ -675,6 +680,8 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
         <>
         {timeline ? (
           <div className="messages-container">
+            {pinned && <PinnedNote by={notesThread.pin.by}>{renderNote(pinned, 'pin')}</PinnedNote>}
+            {onlyNotes && !timeline.some((i) => i.kind === 'note') && <p className="en-notes-empty">No notes in this ticket yet.</p>}
             {renderTimeline()}
           </div>
         ) : (
@@ -689,6 +696,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
                 {renderMessage(msg, { quoted: previousOf(threadEmails, msg) })}
 
                 {itemsAfter(index).map((item) => {
+                  if (item.kind === 'note' && item.ticketNote) return renderTicketNote(item.note);
                   if (item.kind === 'note') return renderNote(item.note);
                   if (item.kind === 'message') return <React.Fragment key={item.key}>{renderMessage(item.msg, { quoted: previousOf(threadEmails, item.msg) })}</React.Fragment>;
                   return <ActivityGroup key={item.key} rows={item.rows} />;

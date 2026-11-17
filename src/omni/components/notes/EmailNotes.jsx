@@ -196,16 +196,16 @@ export function ActivityGroup({ rows: events }) {
   // Same-kind tag or custom field changes by one person within a minute become one row first (ACTIVITY_LOGIC.md).
   const rows = mergeActivity(events);
   if (rows.length === 0) return null;
-  // Joining a ticket shows its date and time in the line itself ("… into TKT#950 • Nov 5, 10:42 AM"); other rows
-  // show it on hover.
+  // Every row, joining a ticket included, is left-aligned and shows its time on hover. Joining a ticket is never
+  // grouped with other rows (see groupActivity).
   const row = (r) => (
     <div key={r.id} className="en-activity__row">
       {typeof r.icon === 'string' ? <Icon name={r.icon} size={14} /> : r.icon}
-      <p>{r.prefix && <span className="en-activity__prefix">{r.prefix}</span>}{activityText(r, user.id)}{r.kind === 'ticket' && <><span className="en-activity__dot">•</span><span className="en-activity__inline-time">{r.time}</span></>}</p>
-      {r.kind !== 'ticket' && <span className="en-activity__time">{r.time}</span>}
+      <p>{r.prefix && <span className="en-activity__prefix">{r.prefix}</span>}{activityText(r, user.id)}</p>
+      <span className="en-activity__time">{r.time}</span>
     </div>
   );
-  if (rows.length === 1) return <div className={`en-activity${rows[0].kind === 'ticket' ? ' en-activity--center' : ''}`}>{row(rows[0])}</div>;
+  if (rows.length === 1) return <div className="en-activity">{row(rows[0])}</div>;
   if (open) {
     return (
       <div className="en-activity">
