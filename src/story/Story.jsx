@@ -70,6 +70,7 @@ const SINGLE_TICKET = 'TKT#610';
 const BASE_SETS = 'The BASE conversation sets Title, Status, Assignee and custom fields';
 const COMBINE = 'Tags are a union of all conversations';
 const ADD_BASE = 'Adding to an EXISTING ticket – the ticket is the BASE';
+const SAME_DOMAIN = 'Only conversations from the same domain can be in one ticket';
 const TODAY = 'Experience today – each ticket can have only one conversation';
 const STORY = 'With this story – a single ticket can have multiple conversations';
 const STORY_LEAD = 'With this story – ';
@@ -114,6 +115,9 @@ const SLIDES = [
   { title: null, caption: COMBINE, layout: 'resolve', stage: 'union' }, // then: tags from all three, each once
   { title: ADD_BASE, layout: 'addbase' }, // adding: the existing ticket keeps its own, like a base
   { title: ADD_BASE, layout: 'addbase', joined: true },
+  // Last: the rule for both ways: one customer domain per ticket. Their domains lit, then only the airbnb.com ones go in.
+  { title: SAME_DOMAIN, layout: 'domain', vt: 'domain' },
+  { title: SAME_DOMAIN, layout: 'domain', joined: true, vt: 'domain-done' },
 ];
 
 // `named`: the card keeps its morph name (false for copies, which move with whatever holds them).
@@ -123,19 +127,22 @@ const SLIDES = [
 // `onClick` make it pickable.
 // `dim` points at its fields: a band behind them, or (with `marks`) the marked rows.
 // `marks` highlights some of its fields (see Fields); `badge` puts a label on its top edge (BASE).
-function ConvoCard({ convo, named = true, ghost, prefix = 'card', details, dim, selected, onClick, marks, badge }) {
+// `domain` lights up the sender's domain ('no': in red, it can't join).
+function ConvoCard({ convo, named = true, ghost, prefix = 'card', details, dim, selected, onClick, marks, badge, domain, badgeTone }) {
   return (
     <div
       className={`email-card story-card${ghost ? ' is-ghost' : ''}${selected ? ' active' : ''}${onClick ? ' is-pickable' : ''}${dim ? ' is-dim' : ''}`}
       style={named && !ghost ? { viewTransitionName: `${prefix}-${convo.id}` } : undefined}
       onClick={onClick}
     >
-      {badge && <span className="story-badge">{badge}</span>}
+      {badge && <span className={`story-badge${badgeTone ? ` story-badge--${badgeTone}` : ''}`}>{badge}</span>}
       <div className="card-header">
         <div className="card-sender-info">
           <span className="card-select"><span className="card-select__icon"><InboxIcon channel="email" /></span></span>
           <div className="sender-names">
-            <span className="sender-name-primary">{convo.from}</span>
+            <span className="sender-name-primary">
+              {domain ? <>{convo.from.split('@')[0]}<span className={`story-domain${domain === 'no' ? ' is-no' : ''}`}>@{convo.from.split('@')[1]}</span></> : convo.from}
+            </span>
             {convo.count && <span className="thread-count">{convo.count}</span>}
           </div>
         </div>
@@ -241,7 +248,7 @@ function SelectSlide() {
 // `copies` draws its cards as copies of the cards beside it; `ghosts` keeps their space but draws them later
 // (true for all, or a list of the ones still to come); `prefix` is their morph name's start (see ConvoCard).
 // `details` / `dim` pass on to its cards (and `dim` fades the ticket itself too).
-function Ticket({ name, label, convos, hidden, compact, copies, ghosts, prefix, details, dim }) {
+function Ticket({ name, label, convos, hidden, compact, copies, ghosts, prefix, details, dim, domain }) {
   const isGhost = (c) => (Array.isArray(ghosts) ? ghosts.includes(c) : !!ghosts);
   return (
     <section className={`story-ticket${hidden ? ' is-hidden' : ''}${compact ? ' story-ticket--compact' : ''}${dim ? ' is-dim' : ''}`} style={hidden ? undefined : { viewTransitionName: name }}>
@@ -252,7 +259,7 @@ function Ticket({ name, label, convos, hidden, compact, copies, ghosts, prefix, 
       <div className="story-ticket__list">
         {convos.map((c) => (
           <div key={c.id} className={`email-card-wrap${isGhost(c) ? ' is-empty' : ''}`}>
-            <ConvoCard convo={c} named={!copies && c !== EXISTING} ghost={isGhost(c)} prefix={prefix} details={details} dim={dim} />
+            <ConvoCard convo={c} named={!copies && c !== EXISTING} ghost={isGhost(c)} prefix={prefix} details={details} dim={dim} domain={domain} />
           </div>
         ))}
       </div>
@@ -293,6 +300,25 @@ function Slide({ slide, baseId, setBase }) {
     );
   }
   if (slide.layout === 'select') return <SelectSlide />;
+  if (slide.layout === 'domain') {
+    // First all four stacked (domains lit); then the three airbnb.com ones in a ticket, the uber.com one left out.
+    const other = DETAILED[3];
+    if (!slide.joined) {
+      return (
+        <div className="story-stack story-stack--detail story-domain-slide">
+          {[...CONVOS, other].map((c) => <ConvoCard key={c.id} convo={c} prefix="dom-card" domain="yes" />)}
+        </div>
+      );
+    }
+    return (
+      <div className="story-domain-slide story-domain-slide--split">
+        <Ticket name="ticket-domain" label={MERGED_TICKET} convos={CONVOS} compact prefix="dom-card" domain="yes" />
+        <div className="story-domain-slide__other is-out">
+          <ConvoCard convo={other} prefix="dom-card" domain="no" badge="DIFFERENT DOMAIN" badgeTone="no" />
+        </div>
+      </div>
+    );
+  }
   if (slide.layout === 'convert') {
     // [conversation]  — Converted to Ticket →  [ticket holding it]
     return (
@@ -417,29 +443,53 @@ export default function Story() {
     document.startViewTransition(() => flushSync(() => setBaseId(id)));
   }, []);
   const scale = useStageScale();
+  // Moving on. A press while something is still playing doesn't wait: what's playing is cut short (the slide
+  // jumps to where it was heading) and the next move starts at once, so pressing fast skips through slides.
+  const shown = React.useRef(0); // the slide on screen, or about to be
+  const stop = React.useRef(0); // the slide the current move ends on (after any steps it plays through)
+  const playing = React.useRef(null); // the running morph
+  const run = React.useRef(0); // bumped to cancel a move's remaining steps
   const busy = React.useRef(false);
 
-  const show = React.useCallback((next, then) => {
+  const show = React.useCallback((next) => {
     document.documentElement.dataset.to = SLIDES[next].vt ?? SLIDES[next].layout;
-    if (!document.startViewTransition) { setIndex(next); then?.(); return; }
-    const t = document.startViewTransition(() => flushSync(() => setIndex(next)));
-    return t.finished.then(() => then?.());
+    shown.current = next;
+    if (!document.startViewTransition) { setIndex(next); return Promise.resolve(); }
+    // Reads `shown` when it runs, so a morph cut short never puts back an older slide
+    const t = document.startViewTransition(() => flushSync(() => setIndex(shown.current)));
+    playing.current = t;
+    return t.finished.catch(() => {});
   }, []);
-  const go = React.useCallback((from, dir) => {
-    let next = from + dir;
+
+  const go = React.useCallback((dir) => {
+    if (busy.current) {
+      run.current += 1;
+      playing.current?.skipTransition();
+      if (shown.current !== stop.current) { shown.current = stop.current; flushSync(() => setIndex(stop.current)); }
+      busy.current = false;
+    }
+    let next = stop.current + dir;
     if (dir < 0) while (SLIDES[next]?.step) next -= 1; // back skips the in-between steps
-    if (next < 0 || next >= SLIDES.length || busy.current) return;
+    if (next < 0 || next >= SLIDES.length) return;
+    let end = next;
+    while (SLIDES[end].step && end + 1 < SLIDES.length) end += 1;
+    stop.current = end;
     busy.current = true;
-    const done = () => { busy.current = false; };
+    const mine = ++run.current;
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    const chain = (i) => (SLIDES[i].step && i + 1 < SLIDES.length ? () => wait(SLIDES[i].hold ?? 0).then(() => show(i + 1, chain(i + 1))) : done);
-    Promise.resolve(show(next, chain(next))).catch(done);
+    const play = async (i) => {
+      await show(i);
+      if (mine !== run.current) return;
+      if (i < end) { await wait(SLIDES[i].hold ?? 0); if (mine !== run.current) return; return play(i + 1); }
+      busy.current = false;
+    };
+    play(next);
   }, [show]);
 
   React.useEffect(() => {
     const onKey = (e) => {
-      if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); go(index, 1); }
-      else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); go(index, -1); }
+      if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); go(1); }
+      else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); go(-1); }
       else if (e.key === 'f' || e.key === 'F') {
         if (document.fullscreenElement) document.exitFullscreen();
         else document.documentElement.requestFullscreen?.();
@@ -447,7 +497,7 @@ export default function Story() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [index, go]);
+  }, [go]);
 
   const slide = SLIDES[index];
   return (

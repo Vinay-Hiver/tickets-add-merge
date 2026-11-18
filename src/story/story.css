@@ -129,6 +129,17 @@ html, body { background: var(--slateSurfaceSubtle); overflow: hidden; }
 /* ...with the field names in pure black (the tokens have no pure black, so the keyword) */
 .story-card.is-dim .story-field__key, .story-fields.is-lit .story-field__key { color: black; }
 
+/* Same domain only: four stacked cards, then [their ticket]   [the other customer's card, left out] */
+.story-domain-slide--split { display: flex; align-items: center; gap: 120px; }
+.story-domain-slide .story-card { border-color: var(--slateBorderLight); box-shadow: 0 2px 8px rgba(7, 26, 46, 0.06); }
+.story-domain-slide .story-ticket .story-card { border-color: transparent; box-shadow: none; }
+.story-domain-slide__other { transition: opacity 300ms ease; }
+.story-domain-slide__other.is-out .story-card > :not(.story-badge) { opacity: 0.5; }
+/* The sender's domain, lit up; red when it can't join */
+.story-domain { padding: 0 4px; border-radius: 4px; background: var(--primarySurfaceSubtle); color: var(--primaryTextLabel); }
+.story-domain.is-no { background: var(--pastelRedSurfaceSubtle); color: var(--errorTextBody); }
+.story-badge.story-badge--no { background: var(--errorTextBody); }
+
 /* Picking conversations to merge: [detailed cards]   [bulk actions, once something is picked] */
 .story-select { display: flex; align-items: flex-start; gap: 120px; }
 .story-stack--pick { gap: 12px; }
@@ -309,6 +320,10 @@ html, body { background: var(--slateSurfaceSubtle); overflow: hidden; }
 :root[data-to="resolve-gather"]::view-transition-new(ticket-attrs):only-child { animation: story-ticket-in 510ms cubic-bezier(0.2, 0.8, 0.2, 1) 850ms both; }
 @keyframes story-grow-y { from { opacity: 0; transform: scaleY(0.4); } }
 @keyframes story-grow-x { from { opacity: 0; transform: scaleX(0); } }
+
+/* Same domain: the ticket comes in around the three cards as they gather */
+:root[data-to="domain-done"]::view-transition-new(ticket-domain):only-child { animation: story-ticket-in 510ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+::view-transition-group(dom-card-1), ::view-transition-group(dom-card-2), ::view-transition-group(dom-card-3) { z-index: 2; }
 
 /* "With this story –" fades out quickly as the point slides to the centre */
 ::view-transition-old(title-lead):only-child { animation: story-ticket-out 260ms ease-in both; }
