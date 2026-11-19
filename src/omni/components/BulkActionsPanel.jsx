@@ -5,6 +5,7 @@ import { Tooltip } from '../../components/Tooltip';
 import bulkSelectIllustration from '../assets/bulk-select.png';
 import { domainOf } from '../data/companies';
 import MergeConversationsSheet from './MergeConversationsSheet';
+import useCmdHeld from '../useCmdHeld';
 import './BulkActionsPanel.css';
 
 // Why the selection can't be merged, or null when it can.
@@ -34,9 +35,12 @@ export default function BulkActionsPanel({ selected, onCancel, onMerge, onAddToT
   const allEmails = selected.every((c) => !c.ticketId);
   const mergeBlocked = allEmails ? mergeBlockedReason(selected) : null;
   const addBlocked = allEmails ? addBlockedReason(selected) : null;
+  // For demos: holding ⌘ and hovering the new actions (Merge, Add to ticket) tints them, to point them out
+  // (Figma: Tickets Add/Merge › 4122:14703 hover area, 4122:15140 tint).
+  const cmd = useCmdHeld();
 
   return (
-    <div className="bulk-actions-panel">
+    <div className={`bulk-actions-panel${cmd ? ' is-cmd' : ''}`}>
       <img src={bulkSelectIllustration} alt="" width="68" height="68" />
       <p className="bulk-actions-count">
         {selected.length} {selected.length === 1 ? 'item' : 'items'} selected
@@ -46,20 +50,24 @@ export default function BulkActionsPanel({ selected, onCancel, onMerge, onAddToT
         <Action icon="assigned" label="Assign to" />
         <Action icon="flag" label="Change status" />
         <Action icon="tag" label="Manage tags" />
-        {allEmails && (mergeBlocked ? (
-          <Tooltip content={mergeBlocked} placement="right">
-            <Action icon={<ArrowMerge />} label="Merge conversations" disabled />
-          </Tooltip>
-        ) : (
-          <Action icon={<ArrowMerge />} label="Merge conversations" onClick={() => setMerging(true)} />
-        ))}
-        {allEmails && (addBlocked ? (
-          <Tooltip content={addBlocked} placement="right">
-            <Action icon="ticket" label="Add to an existing ticket" disabled />
-          </Tooltip>
-        ) : (
-          <Action icon="ticket" label="Add to an existing ticket" onClick={() => onAddToTicket(selected)} />
-        ))}
+        {allEmails && (
+          <div className="bulk-actions-new">
+          {allEmails && (mergeBlocked ? (
+            <Tooltip content={mergeBlocked} placement="right">
+              <Action icon={<ArrowMerge />} label="Merge conversations" disabled />
+            </Tooltip>
+          ) : (
+            <Action icon={<ArrowMerge />} label="Merge conversations" onClick={() => setMerging(true)} />
+          ))}
+          {allEmails && (addBlocked ? (
+            <Tooltip content={addBlocked} placement="right">
+              <Action icon="ticket" label="Add to an existing ticket" disabled />
+            </Tooltip>
+          ) : (
+            <Action icon="ticket" label="Add to an existing ticket" onClick={() => onAddToTicket(selected)} />
+          ))}
+          </div>
+        )}
         <div className="bulk-actions-divider" />
         <Action icon="close" label="Cancel" onClick={onCancel} />
       </div>

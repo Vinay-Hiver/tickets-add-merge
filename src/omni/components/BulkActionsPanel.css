@@ -53,3 +53,14 @@
   margin: 8px 0;
   background-color: var(--slateBorderMild);
 }
+
+/* The new actions (Merge, Add to ticket) in one group. With ⌘ held, hovering the group tints it, for demos.
+   Its padding is offset by a negative margin, so the rows don't move. */
+.bulk-actions-new {
+  position: relative; isolation: isolate; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; align-self: stretch;
+  margin: -4px -12px; padding: 4px 12px; border-radius: 8px; transition: background-color 150ms ease;
+}
+/* The hover area is bigger than the tint (Figma 4122:14703): from mid "Manage tags" to past the divider, wider on both
+   sides. It only exists while ⌘ is held, so it never gets in the way of clicks otherwise. */
+.bulk-actions-panel.is-cmd .bulk-actions-new::after { content: ""; position: absolute; inset: -20px -40px -24px -36px; z-index: -1; } /* behind the rows, so they stay clickable */
+.bulk-actions-panel.is-cmd .bulk-actions-new:hover { background: color-mix(in srgb, var(--successSurfaceDefault) 30%, transparent); } /* Figma 4122:15532: successSurfaceDefault at 30% */

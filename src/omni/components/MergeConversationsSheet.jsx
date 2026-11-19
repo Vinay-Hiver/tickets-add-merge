@@ -11,6 +11,7 @@ import { Icon } from '../../icons/Icon';
 import { sampleAssignees, statusOptions } from '../../patterns/RightPanel/data/options';
 import { useConversationFields } from '../ConversationFields';
 import { companyOf, domainOf } from '../data/companies';
+import useCmdHeld from '../useCmdHeld';
 import './MergeConversationsSheet.css';
 
 // Figma: Tickets Add/Merge › Merge conversations side sheet (4015:129) and its ticket title list (4020:9048).
@@ -223,12 +224,39 @@ export default function MergeConversationsSheet({ conversations: preselected, so
     return () => window.removeEventListener('keydown', onKey);
   });
 
+  // For demos: holding ⌘ over one part of the sheet tints that part and labels it outside the sheet, "Ticket details"
+  // or "Conversation details" (Figma: Tickets Add/Merge › 4122:15577). One part at a time.
+  const cmd = useCmdHeld();
+  const ticketRef = React.useRef(null);
+  const convosRef = React.useRef(null);
+  const [hovered, setHovered] = React.useState(null); // 'ticket' | 'convos' | null
+  const [label, setLabel] = React.useState(null);
+  const shown = cmd ? hovered : null;
+  React.useLayoutEffect(() => {
+    if (!shown) { setLabel(null); return undefined; }
+    const [ref, text] = shown === 'ticket' ? [ticketRef, 'Ticket details'] : [convosRef, 'Conversation details'];
+    const place = () => {
+      if (!ref.current) return;
+      const b = ref.current.getBoundingClientRect();
+      setLabel({ text, left: b.left, top: b.top + b.height / 2 });
+    };
+    place();
+    window.addEventListener('resize', place);
+    return () => window.removeEventListener('resize', place);
+  }, [shown, picked]);
+  const annot = (key) => ({
+    className: `mc-annot${shown === key ? ' is-on' : ''}`,
+    onMouseEnter: () => setHovered(key),
+    onMouseLeave: () => setHovered((h) => (h === key ? null : h)),
+  });
+
   const person = sampleAssignees.find((p) => p.value === assigneeOf(titleId));
   const personName = person?.label.replace(/ \(Me\)$/, '');
   const status = statusOptions.find((o) => o.value === statusOf(titleId)) ?? statusOptions[0];
 
   return createPortal(
     <div className={`mc-backdrop${closing ? ' is-closing' : ''}`} onMouseDown={(e) => { if (e.target === e.currentTarget) dismiss(); }}>
+      {label && <div className="mc-annot-label" style={{ left: label.left, top: label.top }}>{label.text}</div>}
       <aside className={`mc-sheet${confirm !== 'hidden' ? ' is-faded' : ''}`} aria-hidden={confirm !== 'hidden'} role="dialog" aria-modal="true" aria-labelledby="mc-title">
         <header className="mc-header">
           <div>
@@ -244,7 +272,7 @@ export default function MergeConversationsSheet({ conversations: preselected, so
         ) : (
         <>
         <div className="mc-body">
-          <section>
+          <section {...annot('ticket')} ref={ticketRef}>
             <h3 className="mc-section-title">Ticket preview</h3>
             <div className="mc-card mc-ticket">
               <TicketTitleSelect conversations={conversations} value={titleId} onChange={setTitleId} />
@@ -259,7 +287,7 @@ export default function MergeConversationsSheet({ conversations: preselected, so
             </div>
           </section>
 
-          <section>
+          <section {...annot('convos')} ref={convosRef}>
             <h3 className="mc-section-title">Conversations in this ticket</h3>
             <p className="mc-section-subtitle">Each keeps its own thread, replies and notes.</p>
             <div className="mc-emails">
