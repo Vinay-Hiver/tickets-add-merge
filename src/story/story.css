@@ -34,7 +34,11 @@ html, body { background: var(--slateSurfaceSubtle); overflow: hidden; }
 
 /* NEW / EXISTING in the two ways */
 .story-key { color: var(--errorTextBody); }
-.story-key--base { color: var(--primaryTextLabel); }
+/* BASE in a title looks like the BASE label on a card: white on blue */
+.story-key--base {
+  display: inline-block; padding: 0 0.24em; border-radius: 0.16em; letter-spacing: 0.06em;
+  background: var(--primarySurfaceDefault); color: var(--slateSurfaceWhite); line-height: 1.2;
+}
 
 /* "via" and the two ways conversations get into one ticket */
 .story-ways { display: flex; flex-direction: column; align-items: center; gap: 24px; margin-top: 40px; }
@@ -111,9 +115,14 @@ html, body { background: var(--slateSurfaceSubtle); overflow: hidden; }
   font: var(--fontWeightMedium) 24px/32px var(--storyFont); white-space: nowrap;
 }
 .story-convert__arrow > span:nth-child(2) { color: var(--slateTextBody); }
-.story-convert__side { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+.story-convert__side { display: flex; flex-direction: column; align-items: center; gap: 24px; width: calc(var(--card-w) + 2px); }
+/* While the arrow comes in, the ticket's place is kept but nothing shows */
+.story-convert__side.is-waiting { visibility: hidden; }
 /* Hidden captions keep their space, so nothing shifts when they appear */
-.story-convert__caption { margin: 0; font: var(--fontWeightMedium) 20px/28px var(--storyFont); letter-spacing: 0.08em; color: var(--slateTextBody); }
+.story-convert__caption {
+  margin: 0; white-space: nowrap; /* may run wider than the card, centred under it, without widening the row */
+  font: var(--fontWeightMedium) 18px/24px var(--storyFont); letter-spacing: 0.08em; color: var(--slateTextBody);
+}
 .story-convert__caption.is-hidden { visibility: hidden; }
 .story-convert__line { width: 32px; height: 2px; background: currentColor; }
 .story-convert__line + .story-convert__head { margin-left: -24px; }
@@ -128,6 +137,17 @@ html, body { background: var(--slateSurfaceSubtle); overflow: hidden; }
 }
 /* ...with the field names in pure black (the tokens have no pure black, so the keyword) */
 .story-card.is-dim .story-field__key, .story-fields.is-lit .story-field__key { color: black; }
+
+/* Same domain only: four stacked cards, then [their ticket]   [the other customer's card, left out] */
+.story-domain-slide--split { display: flex; align-items: center; gap: 120px; }
+.story-domain-slide .story-card { border-color: var(--slateBorderLight); box-shadow: 0 2px 8px rgba(7, 26, 46, 0.06); }
+.story-domain-slide .story-ticket .story-card { border-color: transparent; box-shadow: none; }
+.story-domain-slide__other { transition: opacity 300ms ease; }
+.story-domain-slide__other.is-out .story-card > :not(.story-badge) { opacity: 0.5; }
+/* The sender's domain, lit up; red when it can't join */
+.story-domain { padding: 0 4px; border-radius: 4px; background: var(--primarySurfaceSubtle); color: var(--primaryTextLabel); }
+.story-domain.is-no { background: var(--pastelRedSurfaceSubtle); color: var(--errorTextBody); }
+.story-badge.story-badge--no { background: var(--errorTextBody); }
 
 /* Picking conversations to merge: [detailed cards]   [bulk actions, once something is picked] */
 .story-select { display: flex; align-items: flex-start; gap: 120px; }
@@ -157,7 +177,7 @@ html, body { background: var(--slateSurfaceSubtle); overflow: hidden; }
 
 /* Base vs ticket attributes: [conversations] ──> [ticket's attributes] */
 .story-resolve { display: flex; align-items: center; gap: 32px; }
-.story-stack--detail { gap: 12px; }
+.story-stack--detail { gap: 18px; }
 .story-stack--detail .story-card:hover { transform: none; box-shadow: none; }
 .story-stack--detail .story-card:hover .sender-name-primary { color: inherit; }
 .story-resolve__ticket { display: flex; flex-direction: column; align-items: flex-start; gap: 48px; }
@@ -182,6 +202,8 @@ html, body { background: var(--slateSurfaceSubtle); overflow: hidden; }
 }
 .story-arrow__line { flex: 1; height: 2px; background: currentColor; }
 .story-arrow__head { flex: none; margin-left: -14px; }
+/* The BASE card (or ticket): a 1px blue border */
+.story-card.is-base, .story-ticket.is-base { border-color: var(--primaryBorderDefault); }
 /* "BASE" on the top edge of a card or ticket */
 .story-card { position: relative; }
 .story-badge {
@@ -309,6 +331,14 @@ html, body { background: var(--slateSurfaceSubtle); overflow: hidden; }
 :root[data-to="resolve-gather"]::view-transition-new(ticket-attrs):only-child { animation: story-ticket-in 510ms cubic-bezier(0.2, 0.8, 0.2, 1) 850ms both; }
 @keyframes story-grow-y { from { opacity: 0; transform: scaleY(0.4); } }
 @keyframes story-grow-x { from { opacity: 0; transform: scaleX(0); } }
+
+/* Single conversation → ticket: the arrow draws out from the card, then the ticket comes in */
+:root[data-to="convert-arrow"]::view-transition-new(convert-arrow):only-child { transform-origin: left center; animation: story-grow-x 430ms ease-out 300ms both; }
+:root[data-to="convert-ticket"]::view-transition-new(ticket-single):only-child { animation: story-ticket-in 510ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+/* Same domain: the ticket comes in around the three cards as they gather */
+:root[data-to="domain-done"]::view-transition-new(ticket-domain):only-child { animation: story-ticket-in 510ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+::view-transition-group(dom-card-1), ::view-transition-group(dom-card-2), ::view-transition-group(dom-card-3) { z-index: 2; }
 
 /* "With this story –" fades out quickly as the point slides to the centre */
 ::view-transition-old(title-lead):only-child { animation: story-ticket-out 260ms ease-in both; }
