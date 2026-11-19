@@ -310,4 +310,4 @@
 }
 
 /* The FRT chip under the preview, on conversations past their first response time */
-.card-sla { display: flex; margin-top: 6px; }
+.card-sla { display: flex; gap: 8px; margin-top: 6px; }

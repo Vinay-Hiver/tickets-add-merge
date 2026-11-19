@@ -207,7 +207,7 @@ export function LinkedConversationCard({ conversation: c, onUnlink: unlinkHandle
       )}
       <div className="hot-rp-linked-card__chips">
         <span className={`hot-rp-status-chip hot-rp-status-chip--${c.status}`}>{STATUS_LABEL[c.status]}</span>
-        {c.assignee && <span className="hot-rp-chip"><Icon name="user" size={14} /><span>{c.assignee}</span></span>}
+        {c.assignee && <span className="hot-rp-chip"><Icon name="assigned" size={14} /><span>{c.assignee}</span></span>}
         <span className="hot-rp-chip hot-rp-chip--shrink" title={c.restricted ? undefined : c.inbox}><Icon name={c.icon} size={14} /><span>{c.inbox}</span></span>
       </div>
     </div>

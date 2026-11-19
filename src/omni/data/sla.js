@@ -7,6 +7,7 @@ import { conversationsData } from './emailConversations';
 // that isn't a ticket and has no reply yet.
 
 const FRT_TARGET_HOURS = 2;
+const RT_TARGET_HOURS = 24;
 
 const OVERDUE_IDS = new Set();
 const seen = new Map();
@@ -39,4 +40,18 @@ export const frtOf = (c) => {
   const day = due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const clock = due.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   return { status: 'overdue', time: `${day}, ${clock}` };
+};
+
+/**
+ * A merged ticket's resolution time (RT), shown at the top of its right panel ({ status, time }), otherwise null.
+ * RT is ticket-level and starts at its earliest conversation's first email (PRD). Shown for tickets with two or more
+ * conversations past their FRT (the Stripe merge), so the demo has a ticket with both FRT and RT.
+ */
+export const rtOf = (c) => {
+  if (!c?.emails || frtCountOf(c) < 2) return null;
+  const start = Math.min(...c.emails.map((e) => timestampOf(e.messages?.[0]?.time ?? e.time)));
+  const due = new Date(start + RT_TARGET_HOURS * 3600 * 1000);
+  const day = due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const clock = due.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  return { status: 'upcoming', time: `${day}, ${clock}` };
 };

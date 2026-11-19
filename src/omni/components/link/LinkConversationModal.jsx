@@ -66,7 +66,7 @@ function ResultRow({ item, words, selected, onToggle, assigneeName }) {
           <span className="lc-result__name">{item.name}</span>
         </div>
         <div className="lc-result__chips">
-          {assigneeName && <Chip icon="user">{assigneeName}</Chip>}
+          {assigneeName && <Chip icon="assigned">{assigneeName}</Chip>}
           <Chip icon={CHANNEL_ICON[item.channel]}>{item.inbox}</Chip>
         </div>
         <span className="lc-result__date">{item.date}</span>

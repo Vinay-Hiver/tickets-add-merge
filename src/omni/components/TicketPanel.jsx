@@ -7,7 +7,7 @@ import { conversationsData } from '../data/emailConversations';
 import { CUSTOM_FIELDS } from '../data/customFields';
 import { TAGS } from '../data/tags';
 import { companyOf, domainOf } from '../data/companies';
-import { frtOf } from '../data/sla';
+import { frtOf, rtOf } from '../data/sla';
 
 // The right panel of a merged ticket. The ticket's values are its own (set at merge, editable here); in an email's tab
 // that email's contact and old assignee/status follow (its notes and activity are in the thread). Everything comes from the prototype's data.
@@ -30,6 +30,7 @@ export default function TicketPanel({ ticket, emailTab, inboxName }) {
       inboxName={inboxName}
       ticketId={ticket.ticketId}
       ticketKey={id}
+      sla={rtOf(ticket)}
       assignee={fields.assigneeOf(id)}
       onAssigneeChange={changeAssignee}
       status={fields.statusOf(id)}

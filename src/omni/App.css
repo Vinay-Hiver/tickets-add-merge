@@ -10,3 +10,14 @@
   flex: 1;
   overflow-y: auto;
 }
+
+/* The right panel and the button that hides it, at the end of the panel's top row (Figma: Tickets Add/Merge › 4118:13817) */
+/* Hiding slides the panel out: the wrapper's width eases to 0 while the panel keeps its own width inside */
+.right-panel-wrap {
+  flex: none; display: flex; align-items: stretch; min-height: 0; width: 320px; overflow: hidden;
+  transition: width 360ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.right-panel-wrap.is-collapsed { width: 0; }
+.right-panel-wrap__inner { position: relative; display: flex; flex: none; width: 320px; }
+.right-panel-collapse { position: absolute; top: 12px; right: 12px; z-index: 1; color: var(--slateTextBody); }
+@media (prefers-reduced-motion: reduce) { .right-panel-wrap { transition: none; } }

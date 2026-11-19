@@ -297,6 +297,8 @@
 
 /* The date (and what sits beside it) lines up with the top of the card's row, open or folded, not its middle */
 .convo-card-collapsed .convo-time { align-self: flex-start; line-height: 20px; }
+/* Lets the one-line preview shrink and end in "…" at the card's edge */
+.convo-card-collapsed .convo-info { min-width: 0; }
 .convo-card-header .header-actions-right { align-self: flex-start; }
 .convo-card-header .header-actions-right .convo-time { line-height: 20px; }
 
@@ -319,7 +321,39 @@
 .detail-email-chip[aria-selected='true'] { background: transparent; border-color: var(--primarySurfaceLighter); color: var(--primarySurfaceDefault); font-weight: var(--fontWeightMedium); }
 .detail-email-chip svg { flex: none; color: currentColor; }
 /* A merged ticket's tabs: each conversation tab is 220px at most, its label ending in "…" (Figma 4089:1970) */
-.detail-ticket-tabs.hot-tabs--outlined { overflow-x: auto; }
+/* The tabs row: as many tabs as fit, then "More ▾" for the rest (no scrolling) */
+.detail-ticket-tabs-row {
+  position: relative; display: flex; align-items: stretch; flex: none; min-width: 0;
+  background: var(--slateSurfaceWhite); box-shadow: inset 0 -1px 0 var(--slateBorderMild);
+}
+.detail-ticket-tabs-row > .detail-ticket-tabs.hot-tabs--outlined { flex: 0 1 auto; min-width: 0; overflow: hidden; padding-right: 0; }
+.detail-ticket-tabs-measure { position: absolute; left: 0; top: 0; visibility: hidden; pointer-events: none; white-space: nowrap; }
+.detail-ticket-tabs-measure .hot-tabs { width: max-content; }
+.detail-tabs-more {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 12px; margin-left: 4px;
+  border: 0; background: transparent; cursor: pointer;
+  font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextSubtle);
+}
+.detail-tabs-more:hover, .detail-tabs-more.is-open { color: var(--slateTextBody); }
+.detail-tabs-more svg { flex: none; }
+/* The list under "More" */
+.detail-tabs-more__menu {
+  display: flex; flex-direction: column; min-width: 240px; max-width: 320px; padding: 4px;
+  background: var(--slateSurfaceWhite); border: 1px solid var(--slateBorderLight); border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(7, 26, 46, 0.12);
+}
+.detail-tabs-more__item {
+  display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 8px; border: 0; border-radius: 6px;
+  background: transparent; cursor: pointer; text-align: left;
+  font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextBody);
+}
+.detail-tabs-more__item:hover { background: var(--slateSurfaceSubtle100Hover); }
+.detail-tabs-more__item > svg { flex: none; width: 14px; height: 14px; }
+.detail-tabs-more__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.detail-tabs-more__item .detail-email-chip__frt svg { width: 12px; height: 12px; color: var(--errorSurfaceDisabled); }
+/* The button that brings the right panel back, after the subject's actions */
+.subject-actions__divider { width: 1px; height: 16px; margin: 0 4px; background: var(--slateBorderLight); }
+.detail-panel-toggle { color: var(--slateTextBody); }
 .detail-ticket-tabs.hot-tabs--outlined .hot-tab { flex: none; max-width: 220px; }
 .detail-ticket-tab__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .detail-ticket-tabs .detail-email-chip__frt svg { width: 12px; height: 12px; color: var(--errorSurfaceDisabled); }

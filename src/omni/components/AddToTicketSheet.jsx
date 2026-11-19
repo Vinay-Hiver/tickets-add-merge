@@ -45,7 +45,7 @@ function TicketCard({ ticket, selected, onSelect }) {
       </div>
       <div className="mc-pick-card__chips">
         <span className="mc-chip"><Icon name={status.icon} size={12} />{status.label}</span>
-        <span className="mc-chip"><Icon name="user" size={12} />{assigneeNameOf(ticket.id) ?? 'Unassigned'}</span>
+        <span className="mc-chip"><Icon name="assigned" size={12} />{assigneeNameOf(ticket.id) ?? 'Unassigned'}</span>
         <span className="mc-ticket-card__count">{count} {count === 1 ? 'conversation' : 'conversations'}</span>
       </div>
     </div>
@@ -147,9 +147,10 @@ export function AddConversationsSheet({ ticket, candidates, others = [], onClose
         <h3 className="mc-pick-label">Search for a conversation to add it to {ticket.ticketId}</h3>
         <div className="mc-card mc-pick">
           <Input search size="md" fullWidth placeholder="Search conversation" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search conversation" />
+          {/* Finding a conversation to add: by who has it and where it stands (each card shows both) */}
           <div className="mc-filters">
+            <FilterChip icon="assigned">Assignee</FilterChip>
             <FilterChip icon="flag">Status</FilterChip>
-            <FilterChip icon="tag">Tag</FilterChip>
           </div>
           <div className="mc-pick__results">
             <p className="mc-pick__caption">{q ? 'Results' : 'Recent conversations'}</p>

@@ -39,7 +39,7 @@ export default function TicketOverview({ ticketId, emails, onOpen }) {
             </span>
             <span className="ticket-overview__chips">
               <span className="ticket-overview__chip"><Icon name={status.icon} size={12} />{status.label}</span>
-              <span className="ticket-overview__chip"><Icon name="user" size={12} />{assigneeNameOf(c.id) ?? 'Unassigned'}</span>
+              <span className="ticket-overview__chip"><Icon name="assigned" size={12} />{assigneeNameOf(c.id) ?? 'Unassigned'}</span>
             </span>
           </button>
         );

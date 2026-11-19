@@ -6,6 +6,8 @@ import ConversationList from './components/ConversationList';
 import ConversationDetail from './components/ConversationDetail';
 import LinkedRightPanel from './components/link/LinkedRightPanel';
 import TicketPanel from './components/TicketPanel';
+import { Tooltip } from '../components/Tooltip';
+import { LayoutSidebarRight } from '../icons/TablerPanelIcons';
 import BulkActionsPanel from './components/BulkActionsPanel';
 import MergeConversationsSheet from './components/MergeConversationsSheet';
 import AddToTicketSheet, { AddConversationsSheet } from './components/AddToTicketSheet';
@@ -122,6 +124,8 @@ function App() {
   const [selectedId, setSelectedId] = useState(null);
   // Conversations ticked in the list for bulk actions.
   const [checkedIds, setCheckedIds] = useState([]);
+  // The right panel can be hidden from its top row, and brought back from the conversation's header.
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
   const toggleChecked = (id) =>
     setCheckedIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
 
@@ -305,12 +309,25 @@ function App() {
                       signatures={signatures}
                       setSignatures={setSignatures}
                       defaultSignatureId={defaultSignatureId}
+                      panelCollapsed={panelCollapsed}
+                      onExpandPanel={() => setPanelCollapsed(false)}
                     />
-                    {selectedConversation?.emails ? (
-                      <TicketPanel ticket={selectedConversation} emailTab={emailTab} inboxName={activeFilter.inbox} />
-                    ) : (
-                      <LinkedRightPanel channel="email" ticketId={selectedConversation?.ticketId} sla={frtOf(selectedConversation)} inboxName={activeFilter.inbox} unassigned={activeFilter.type === 'Unassigned'} conversationId={String(selectedId)} />
-                    )}
+                    {/* The panel, with a button at the end of its top row that hides it (Figma: Tickets Add/Merge › 4118:13817).
+                        It slides closed (its width eases to 0) and back open. */}
+                    <div className={`right-panel-wrap${panelCollapsed ? ' is-collapsed' : ''}`} aria-hidden={panelCollapsed} inert={panelCollapsed}>
+                      <div className="right-panel-wrap__inner">
+                        {selectedConversation?.emails ? (
+                          <TicketPanel ticket={selectedConversation} emailTab={emailTab} inboxName={activeFilter.inbox} />
+                        ) : (
+                          <LinkedRightPanel channel="email" ticketId={selectedConversation?.ticketId} sla={frtOf(selectedConversation)} inboxName={activeFilter.inbox} unassigned={activeFilter.type === 'Unassigned'} conversationId={String(selectedId)} />
+                        )}
+                        <Tooltip content="Hide right panel" placement="bottom">
+                          <button type="button" className="icon-btn right-panel-collapse" aria-label="Hide right panel" onClick={() => setPanelCollapsed(true)}>
+                            <LayoutSidebarRight size={16} />
+                          </button>
+                        </Tooltip>
+                      </div>
+                    </div>
                   </>
                 )}
               </>

@@ -15,6 +15,8 @@ import slackLogo from '../assets/icons/slack-logo.svg';
 import { timestampOf } from '../data/merge';
 import { emailTabLabel } from './TicketOverview';
 import { frtOf } from '../data/sla';
+import { Badge } from '../../components/Badge';
+import { ArrowBarToLeft } from '../../icons/TablerPanelIcons';
 import ConversationMenu, { VIEW_ONLY_NOTES } from './ConversationMenu';
 // The Note icon from Figma (Activity - Notes › 12:24260), used as it is.
 import noteIcon from '../assets/icons/note.svg';
@@ -96,7 +98,83 @@ const peopleOf = (thread) => {
   };
 };
 
-const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSignatureId, emailTab: emailTabProp, onEmailTabChange, onAddToTicketClick, onAddConversationClick }) => {
+// A merged ticket's tabs. When they don't all fit, the ones that don't go into "More ▾" at the end of the row: its red
+// badge counts how many of them are unread (conversations, not emails), and its list shows each with the tabs'
+// blue unread dot and overdue FRT ⚡.
+// The selected tab always stays in the row.
+const MORE_WIDTH = 104; // room kept for "More (n) ▾"
+function TicketTabs({ tabs, value, onChange }) {
+  const rowRef = React.useRef(null);
+  const measureRef = React.useRef(null);
+  const moreRef = React.useRef(null);
+  const [fit, setFit] = useState(tabs.length);
+  const [open, setOpen] = useState(false);
+
+  React.useLayoutEffect(() => {
+    const row = rowRef.current;
+    if (!row) return undefined;
+    const measure = () => {
+      const widths = [...(measureRef.current?.querySelectorAll('.hot-tab') ?? [])].map((el) => el.getBoundingClientRect().width);
+      const gap = 4;
+      const room = row.clientWidth;
+      const total = widths.reduce((sum, w) => sum + w, 0) + gap * Math.max(widths.length - 1, 0);
+      if (total <= room) { setFit(widths.length); return; }
+      let used = 0;
+      let n = 0;
+      while (n < widths.length && used + widths[n] + (n ? gap : 0) <= room - MORE_WIDTH) { used += widths[n] + (n ? gap : 0); n += 1; }
+      setFit(Math.max(n, 1));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(row);
+    return () => ro.disconnect();
+  }, [tabs.length]);
+
+  // The first `fit` tabs, but with the selected one swapped in for the last if it would be hidden
+  const at = tabs.findIndex((t) => t.value === value);
+  let shown = tabs.slice(0, fit);
+  if (at >= fit) shown = [...tabs.slice(0, Math.max(fit - 1, 1)), tabs[at]];
+  const hidden = tabs.filter((t) => !shown.includes(t));
+  const hiddenUnread = hidden.filter((t) => t.unread).length;
+  const strip = (t) => ({ value: t.value, label: t.label, icon: t.icon });
+
+  return (
+    <div className="detail-ticket-tabs-row" ref={rowRef}>
+      <Tabs className="detail-tabs detail-ticket-tabs" aria-label="Merged conversations" value={value} onChange={onChange} tabs={shown.map(strip)} />
+      {hidden.length > 0 && (
+        <>
+          <button ref={moreRef} type="button" className={`detail-tabs-more${open ? ' is-open' : ''}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+            More
+            {hiddenUnread > 0 && <Badge type="important">{hiddenUnread}</Badge>}
+            <Icon name="chevrondown" size={14} />
+          </button>
+          <Popover open={open} onClose={() => setOpen(false)} anchorRef={moreRef} placement="bottom-end">
+            <div className="detail-tabs-more__menu" role="menu" aria-label="More conversations">
+              {hidden.map((t) => (
+                <button key={t.value} type="button" role="menuitem" className="detail-tabs-more__item" onClick={() => { setOpen(false); onChange(t.value); }}>
+                  {t.icon}
+                  <span className="detail-tabs-more__label">{t.menuLabel ?? t.label}</span>
+                  {t.unread && <span className="detail-email-chip__unread" role="img" aria-label="Unread" />}
+                  {t.frt && (
+                    <Tooltip content="First response time overdue" placement="top" portal>
+                      <span className="detail-email-chip__frt" role="img" aria-label="First response time overdue"><Icon name="boltfilled" size={12} /></span>
+                    </Tooltip>
+                  )}
+                </button>
+              ))}
+            </div>
+          </Popover>
+        </>
+      )}
+      {/* Every tab at full width, off screen, to measure what fits */}
+      <div className="detail-ticket-tabs-measure" ref={measureRef} aria-hidden="true">
+        <Tabs className="detail-tabs detail-ticket-tabs" value={value} onChange={() => {}} tabs={tabs.map(strip)} />
+      </div>
+    </div>
+  );
+}
+
+const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSignatureId, emailTab: emailTabProp, onEmailTabChange, onAddToTicketClick, onAddConversationClick, panelCollapsed, onExpandPanel }) => {
   const [expandedIds, setExpandedIds] = useState([]);
   const [activeReplyId, setActiveReplyId] = useState(null);
   const [tab, setTab] = useState('conversation');
@@ -444,7 +522,8 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
           </div>
           <div className="convo-info">
             <h3 className="convo-email">{people.senderOf(msg)}</h3>
-            <p className="collapsed-text">{msg.body.substring(0, 80)}...</p>
+            {/* The whole email on one line, cut with "…" where the card ends (so a wider card shows more) */}
+            <p className="collapsed-text">{msg.body.replace(/\s+/g, ' ').trim()}</p>
           </div>
           {openInTab}
           <span className="convo-time">{msg.time}</span>
@@ -602,17 +681,22 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
                  }}
                />
              )}
+             {/* The right panel is hidden: bring it back (Figma: Tickets Add/Merge › 4118:14580) */}
+             {panelCollapsed && (
+               <>
+                 <span className="subject-actions__divider" />
+                 <Tooltip content="Show right panel" placement="bottom">
+                   <button type="button" className="icon-btn detail-panel-toggle" aria-label="Show right panel" onClick={onExpandPanel}><ArrowBarToLeft size={16} /></button>
+                 </Tooltip>
+               </>
+             )}
           </div>
         </div>
 
         {/* A merged ticket: a tab for its Overview (every email on one page, no Slack) and one per merged conversation,
             with a blue dot while it's unread and a red ⚡ past its first response time (Figma: Tickets Add/Merge › 4089:1970) */}
         {emails && (
-          <Tabs
-            className="detail-tabs detail-ticket-tabs"
-            aria-label="Merged conversations"
-            value={emailTab}
-            onChange={selectEmail}
+          <TicketTabs
             tabs={[{ value: 'overview', label: 'Overview' }, ...emails.map((e) => ({
               value: String(e.id),
               icon: <Icon name="mailbox" size={14} />,
@@ -631,7 +715,13 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
                   )}
                 </>
               ),
+              // For the More list
+              menuLabel: emailTabLabel(e),
+              unread: isUnread(e),
+              frt: !!frtOf(e),
             }))]}
+            value={emailTab}
+            onChange={selectEmail}
           />
         )}
         {/* A conversation: "Conversation", the Slack channels it's shared to (Figma 4089:1970), then a pill to add a

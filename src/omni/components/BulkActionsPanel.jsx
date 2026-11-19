@@ -43,7 +43,7 @@ export default function BulkActionsPanel({ selected, onCancel, onMerge, onAddToT
       </p>
       <div className="bulk-actions-list">
         <Action icon="markasunread" label="Mark as unread" />
-        <Action icon="user" label="Assign to" />
+        <Action icon="assigned" label="Assign to" />
         <Action icon="flag" label="Change status" />
         <Action icon="tag" label="Manage tags" />
         {allEmails && (mergeBlocked ? (

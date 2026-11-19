@@ -60,7 +60,7 @@ function TicketTitleSelect({ conversations, value, onChange }) {
                 </div>
                 <div className="mc-title-option__chips">
                   <span className="mc-chip"><Icon name={status.icon} size={12} />{status.label}</span>
-                  <span className="mc-chip"><Icon name="user" size={12} />{assigneeNameOf(c.id) ?? 'Unassigned'}</span>
+                  <span className="mc-chip"><Icon name="assigned" size={12} />{assigneeNameOf(c.id) ?? 'Unassigned'}</span>
                 </div>
               </div>
             );
@@ -122,7 +122,7 @@ export function PickCard({ conversation: c, fixed, selected, onToggle }) {
       </div>
       <div className="mc-pick-card__chips">
         <span className="mc-chip"><Icon name={status.icon} size={12} />{status.label}</span>
-        <span className="mc-chip"><Icon name="user" size={12} />{assigneeNameOf(c.id) ?? 'Unassigned'}</span>
+        <span className="mc-chip"><Icon name="assigned" size={12} />{assigneeNameOf(c.id) ?? 'Unassigned'}</span>
       </div>
     </div>
   );

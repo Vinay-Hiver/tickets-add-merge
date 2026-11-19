@@ -3,7 +3,7 @@ import './ConversationList.css';
 import InboxIcon from './InboxIcon';
 import { Checkbox } from '../../components/Checkbox';
 import { companyOf } from '../data/companies';
-import { frtCountOf } from '../data/sla';
+import { frtCountOf, rtOf } from '../data/sla';
 import { SlaPill } from '../../components/Sla';
 
 // Icons
@@ -74,7 +74,13 @@ const ConversationList = ({ conversations, selectedId, onSelect, activeFilter, c
               <p className="preview-text">{convo.preview}</p>
               {/* Past its first response time: the FRT chip. A merged ticket shows it when any of its conversations is
                   overdue, with "• N" when more than one is */}
-              {frtCountOf(convo) > 0 && <div className="card-sla"><SlaPill kind="frt" status="overdue" count={frtCountOf(convo) > 1 ? frtCountOf(convo) : undefined} /></div>}
+              {/* ...and a merged ticket with a resolution time shows its RT chip after it */}
+              {(frtCountOf(convo) > 0 || rtOf(convo)) && (
+                <div className="card-sla">
+                  {frtCountOf(convo) > 0 && <SlaPill kind="frt" status="overdue" count={frtCountOf(convo) > 1 ? frtCountOf(convo) : undefined} />}
+                  {rtOf(convo) && <SlaPill kind="rt" status={rtOf(convo).status} />}
+                </div>
+              )}
             </div>
           </div>
           </div>
