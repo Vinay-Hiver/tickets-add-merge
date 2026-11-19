@@ -44,6 +44,11 @@ html, body { background: var(--slateSurfaceSubtle); overflow: hidden; }
 .story-ways { display: flex; flex-direction: column; align-items: center; gap: 24px; margin-top: 40px; }
 .story-ways__via { margin: 0; font: var(--fontWeightRegular) 24px/32px var(--storyFont); color: var(--slateTextSubtle); }
 .story-ways__item { margin: 0; font: var(--fontWeightMedium) 36px/44px var(--storyFont); color: var(--slateTextBody); }
+.story-ways__box {
+  display: flex; justify-content: center; min-width: 920px; padding: 24px 40px; box-sizing: border-box;
+  background: var(--slateSurfaceWhite); border: 1px solid var(--slateBorderLight); border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(7, 26, 46, 0.06);
+}
 
 /* Card and ticket sizes: a ticket is its card plus the list's 8px strip and a 1px border on each side */
 .story-stage { --card-w: 352px; --ticket-w: 370px; }
@@ -54,6 +59,9 @@ html, body { background: var(--slateSurfaceSubtle); overflow: hidden; }
 .story-card { width: var(--card-w); box-sizing: border-box; cursor: default; }
 /* Same size on every slide (on its own or in a ticket), so a card never jumps while it moves */
 .story-card { padding: 16px; gap: 12px; }
+/* The list card animates "all" properties; here visibility must switch at once (a card that's just been revealed is
+   captured by the morph straight away, and would otherwise still be hidden) */
+.story-card { transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease; }
 .story-card:hover { background: var(--slateSurfaceWhite); }
 /* Stacked cards: hovering one lifts it (1.05×) and turns its email address blue */
 .story-stack .story-card { transition: transform 200ms ease, box-shadow 200ms ease; }
@@ -333,8 +341,23 @@ html, body { background: var(--slateSurfaceSubtle); overflow: hidden; }
 @keyframes story-grow-x { from { opacity: 0; transform: scaleX(0); } }
 
 /* Single conversation → ticket: the arrow draws out from the card, then the ticket comes in */
-:root[data-to="convert-arrow"]::view-transition-new(convert-arrow):only-child { transform-origin: left center; animation: story-grow-x 430ms ease-out 300ms both; }
-:root[data-to="convert-ticket"]::view-transition-new(ticket-single):only-child { animation: story-ticket-in 510ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+:root[data-to="convert-empty"]::view-transition-new(convert-arrow):only-child { transform-origin: left center; animation: story-grow-x 430ms ease-out 300ms both; }
+:root[data-to="convert-empty"]::view-transition-new(ticket-single):only-child { animation: story-ticket-in 510ms cubic-bezier(0.2, 0.8, 0.2, 1) 500ms both; }
+/* ...then a copy of each attribute row flies from the card into the ticket: 0.8s each, 0.25s apart (the card keeps its own) */
+::view-transition-group(attr-title), ::view-transition-group(attr-status), ::view-transition-group(attr-assignee),
+::view-transition-group(attr-fields), ::view-transition-group(attr-tags) { z-index: 3; }
+:root[data-to="convert-rows"]::view-transition-group(attr-title) { animation-duration: 800ms; animation-delay: 0ms; animation-fill-mode: both; }
+:root[data-to="convert-rows"]::view-transition-group(attr-status) { animation-duration: 800ms; animation-delay: 250ms; animation-fill-mode: both; }
+:root[data-to="convert-rows"]::view-transition-group(attr-assignee) { animation-duration: 800ms; animation-delay: 500ms; animation-fill-mode: both; }
+:root[data-to="convert-rows"]::view-transition-group(attr-fields) { animation-duration: 800ms; animation-delay: 750ms; animation-fill-mode: both; }
+:root[data-to="convert-rows"]::view-transition-group(attr-tags) { animation-duration: 800ms; animation-delay: 1000ms; animation-fill-mode: both; }
+:root[data-to="convert-rows"]::view-transition-old(attr-title), :root[data-to="convert-rows"]::view-transition-new(attr-title) { animation-duration: 800ms; animation-delay: 0ms; animation-fill-mode: both; }
+:root[data-to="convert-rows"]::view-transition-old(attr-status), :root[data-to="convert-rows"]::view-transition-new(attr-status) { animation-duration: 800ms; animation-delay: 250ms; animation-fill-mode: both; }
+:root[data-to="convert-rows"]::view-transition-old(attr-assignee), :root[data-to="convert-rows"]::view-transition-new(attr-assignee) { animation-duration: 800ms; animation-delay: 500ms; animation-fill-mode: both; }
+:root[data-to="convert-rows"]::view-transition-old(attr-fields), :root[data-to="convert-rows"]::view-transition-new(attr-fields) { animation-duration: 800ms; animation-delay: 750ms; animation-fill-mode: both; }
+:root[data-to="convert-rows"]::view-transition-old(attr-tags), :root[data-to="convert-rows"]::view-transition-new(attr-tags) { animation-duration: 800ms; animation-delay: 1000ms; animation-fill-mode: both; }
+/* The card's own rows (and the ticket's email line) appear in place at once, so the card never looks emptied */
+:root[data-to="convert-rows"]::view-transition-old(root), :root[data-to="convert-rows"]::view-transition-new(root) { animation-duration: 1ms; }
 
 /* Same domain: the ticket comes in around the three cards as they gather */
 :root[data-to="domain-done"]::view-transition-new(ticket-domain):only-child { animation: story-ticket-in 510ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }

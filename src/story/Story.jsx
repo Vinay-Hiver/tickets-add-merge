@@ -63,8 +63,8 @@ const TICKET_NAME = (n) => `TKT#${600 + n}`;
 const MERGED_TICKET = 'NEW TKT#605';
 const EXISTING_TICKET = 'EXISTING TKT#598';
 
-const SINGLE = 'Single conversation → Ticket';
-const MULTIPLE = 'Multiple conversations → Ticket';
+const SINGLE = 'Single conversation → Converted to Ticket';
+const MULTIPLE = 'Multiple conversations → Merged into Ticket';
 const CONVO_ATTRS = 'Conversation level attributes';
 const SINGLE_TICKET = 'TKT#610';
 const BASE_SETS = 'The BASE conversation sets Title, Status, Assignee and custom fields';
@@ -96,17 +96,20 @@ const SLIDES = [
   { title: STORY, layout: 'stack' }, // the story's line comes in as the cards come back together
   { title: STORY, layout: 'single' },
   { title: STORY_POINT, layout: 'ways' }, // the point turns blue, the ticket leaves, and the two ways in come up
-  { title: WAYS[0], titleName: 'way-1', layout: 'add', step: true, hold: 510 },
+  { title: WAYS[0], titleName: 'way-1', layout: 'add', step: true, hold: 200 },
   { title: WAYS[0], titleName: 'way-1', layout: 'add', added: true, vt: 'added' },
-  { title: WAYS[1], titleName: 'way-2', layout: 'merge', phase: 'cards', step: true, hold: 1000 }, // 1s after the cards are in, they stack on their own
+  { title: WAYS[1], titleName: 'way-2', layout: 'merge', phase: 'cards', step: true, hold: 400 }, // 0.4s after the cards are in, they stack on their own
   { title: WAYS[1], titleName: 'way-2', layout: 'merge', phase: 'pile', step: true, hold: 260, vt: 'merge-pile' },
   { title: WAYS[1], titleName: 'way-2', layout: 'merge', phase: 'done', vt: 'merge-done' },
-  // One conversation becomes a ticket: first the card alone, its attributes lit 0.5s later (one stop); then → slides it
-  // left as "Converted to Ticket" comes in, the ticket follows, and 1s later both sets of attributes light up.
+  // One conversation becomes a ticket: first the card alone, its attributes lit 0.5s later (one stop). Then → slides it
+  // left (its highlight and caption off) as "Converted to Ticket" and an empty ticket come in; a copy of each attribute
+  // row flies into the ticket (1s each, 0.5s apart); then both cards light up, then both captions show.
   { title: SINGLE, layout: 'convert', stage: 'card', step: true, hold: 500, vt: 'convert-card' },
   { title: SINGLE, layout: 'convert', stage: 'card-lit', vt: 'convert-card-lit' },
-  { title: SINGLE, layout: 'convert', stage: 'arrow', step: true, hold: 200, vt: 'convert-arrow' },
-  { title: SINGLE, layout: 'convert', stage: 'ticket', step: true, hold: 1000, vt: 'convert-ticket' },
+  { title: SINGLE, layout: 'convert', stage: 'card-off', step: true, hold: 100, vt: 'convert-card-off' }, // highlight off first, in place
+  { title: SINGLE, layout: 'convert', stage: 'empty', step: true, hold: 300, vt: 'convert-empty' },
+  { title: SINGLE, layout: 'convert', stage: 'rows', step: true, hold: 300, vt: 'convert-rows' },
+  { title: SINGLE, layout: 'convert', stage: 'lit-bg', step: true, hold: 400, vt: 'convert-lit-bg' },
   { title: SINGLE, layout: 'convert', stage: 'lit', vt: 'convert-lit' },
   { title: MULTIPLE, layout: 'attrs', step: true, hold: 1000 }, // with several conversations, each has its own; 1s later their attributes light up on their own
   { title: CONVO_ATTRS, layout: 'attrs', dim: true },
@@ -133,7 +136,8 @@ const SLIDES = [
 // `dim` points at its fields: a band behind them, or (with `marks`) the marked rows.
 // `marks` highlights some of its fields (see Fields); `badge` puts a label on its top edge (BASE).
 // `domain` lights up the sender's domain ('no': in red, it can't join).
-function ConvoCard({ convo, named = true, ghost, prefix = 'card', details, dim, selected, onClick, marks, badge, domain, badgeTone }) {
+// `rows` names its attribute rows (`rows`-title, -status, ...) so they can morph on their own (fly to a ticket).
+function ConvoCard({ convo, named = true, ghost, prefix = 'card', details, dim, selected, onClick, marks, badge, domain, badgeTone, rows }) {
   return (
     <div
       className={`email-card story-card${ghost ? ' is-ghost' : ''}${selected ? ' active' : ''}${onClick ? ' is-pickable' : ''}${dim ? ' is-dim' : ''}${badge === 'BASE' ? ' is-base' : ''}`}
@@ -158,12 +162,12 @@ function ConvoCard({ convo, named = true, ghost, prefix = 'card', details, dim, 
         <div className="card-body">
           {/* The subject is what a ticket's Title comes from, so it takes the Title's mark (detailed cards always keep
               the mark's padding, so the card doesn't shift when the mark comes or goes) */}
-          <div className={`subject-line${details ? ' story-subject' : ''}${marks?.title ? ` is-${marks.title}` : ''}`}><h3 className="subject-text">{convo.subject}</h3></div>
+          <div className={`subject-line${details ? ' story-subject' : ''}${marks?.title ? ` is-${marks.title}` : ''}`} style={rows ? { viewTransitionName: `${rows}-title` } : undefined}><h3 className="subject-text">{convo.subject}</h3></div>
           {/* Detailed cards drop the preview to leave room for their fields */}
           {!details && <p className="preview-text">{convo.preview}</p>}
         </div>
       )}
-      {details && <Fields values={convo} marks={marks} lit={dim && !marks} />}
+      {details && <Fields values={convo} marks={marks} lit={dim && !marks} rows={rows} />}
     </div>
   );
 }
@@ -180,12 +184,12 @@ function FieldValue({ k, v }) {
   return v;
 }
 // `lit` puts a band behind all of them (pointing at the attributes).
-function Fields({ values, marks = {}, lit }) {
+function Fields({ values, marks = {}, lit, rows }) {
   return (
     <div className={`story-fields${lit ? ' is-lit' : ''}`}>
       {/* Title only when there is one (a ticket's; conversations don't have their own) */}
       {FIELD_ROWS.filter(([k]) => k !== 'title' || values.title).map(([k, label]) => (
-        <div key={k} className={`story-field${marks[k] ? ` is-${marks[k]}` : ''}`}>
+        <div key={k} className={`story-field${marks[k] ? ` is-${marks[k]}` : ''}`} style={rows ? { viewTransitionName: `${rows}-${k}` } : undefined}>
           <span className="story-field__key">{label}</span>
           <span className="story-field__value"><FieldValue k={k} v={values[k]} /></span>
         </div>
@@ -254,7 +258,7 @@ function SelectSlide() {
 // `copies` draws its cards as copies of the cards beside it; `ghosts` keeps their space but draws them later
 // (true for all, or a list of the ones still to come); `prefix` is their morph name's start (see ConvoCard).
 // `details` / `dim` pass on to its cards (and `dim` fades the ticket itself too).
-function Ticket({ name, label, convos, hidden, compact, copies, ghosts, prefix, details, dim, domain }) {
+function Ticket({ name, label, convos, hidden, compact, copies, ghosts, prefix, details, dim, domain, rows }) {
   const isGhost = (c) => (Array.isArray(ghosts) ? ghosts.includes(c) : !!ghosts);
   return (
     <section className={`story-ticket${hidden ? ' is-hidden' : ''}${compact ? ' story-ticket--compact' : ''}${dim ? ' is-dim' : ''}`} style={hidden ? undefined : { viewTransitionName: name }}>
@@ -265,7 +269,7 @@ function Ticket({ name, label, convos, hidden, compact, copies, ghosts, prefix, 
       <div className="story-ticket__list">
         {convos.map((c) => (
           <div key={c.id} className={`email-card-wrap${isGhost(c) ? ' is-empty' : ''}`}>
-            <ConvoCard convo={c} named={!copies && c !== EXISTING} ghost={isGhost(c)} prefix={prefix} details={details} dim={dim} domain={domain} />
+            <ConvoCard convo={c} named={!copies && c !== EXISTING} ghost={isGhost(c)} prefix={prefix} details={details} dim={dim} domain={domain} rows={rows} />
           </div>
         ))}
       </div>
@@ -285,7 +289,13 @@ function Slide({ slide, baseId, setBase }) {
     return (
       <div className="story-ways">
         <p className="story-ways__via" style={{ viewTransitionName: 'way-via' }}>via</p>
-        {WAYS.map((w, i) => <p key={w} className="story-ways__item" style={{ viewTransitionName: `way-${i + 1}` }}>{wayText(w)}</p>)}
+        {/* Each way in its own box; only the words carry the morph name, so they fly up to the next slide's title
+            while the box fades */}
+        {WAYS.map((w, i) => (
+          <div key={w} className="story-ways__box">
+            <p className="story-ways__item" style={{ viewTransitionName: `way-${i + 1}` }}>{wayText(w)}</p>
+          </div>
+        ))}
       </div>
     );
   }
@@ -326,19 +336,22 @@ function Slide({ slide, baseId, setBase }) {
     );
   }
   if (slide.layout === 'convert') {
-    // [conversation]  — Converted to Ticket →  [ticket holding it], built up step by step (see SLIDES)
+    // [conversation]  — Converted to Ticket →  [ticket], built up step by step (see SLIDES)
     const st = slide.stage;
-    const withArrow = ['arrow', 'ticket', 'lit'].includes(st);
-    const withTicket = st === 'ticket' || st === 'lit';
-    const convoLit = st === 'card-lit' || st === 'lit';
+    const withTicket = !['card', 'card-lit', 'card-off'].includes(st);
+    const filled = ['rows', 'lit-bg', 'lit'].includes(st);
+    const ticketLit = st === 'lit-bg' || st === 'lit';
     return (
       <div className="story-convert">
         {/* Each side's caption shows with its highlight (kept in place, hidden, otherwise) */}
         <div className="story-convert__side">
-          <ConvoCard convo={DETAILED[0]} prefix="pick-card" details dim={convoLit} />
-          <p className={`story-convert__caption${convoLit ? '' : ' is-hidden'}`}>CONVERSATION LEVEL ATTRIBUTES</p>
+          {/* While the ticket is empty the card's rows carry the names, so the next step flies a copy of each across */}
+          {/* Its green band and caption go as → is pressed, stay off while the rows fly out, and come back with the
+              ticket's once they've all landed */}
+          <ConvoCard convo={DETAILED[0]} prefix="pick-card" details dim={['card-lit', 'lit-bg', 'lit'].includes(st)} rows={st === 'empty' ? 'attr' : undefined} />
+          <p className={`story-convert__caption${st === 'card-lit' || st === 'lit' ? '' : ' is-hidden'}`}>CONVERSATION LEVEL ATTRIBUTES</p>
         </div>
-        {withArrow && (
+        {withTicket && (
           <>
             <div className="story-convert__arrow" style={{ viewTransitionName: 'convert-arrow' }}>
               <span className="story-convert__line" />
@@ -346,9 +359,12 @@ function Slide({ slide, baseId, setBase }) {
               <span className="story-convert__line" />
               <Icon name="chevronright" size={24} className="story-convert__head" />
             </div>
-            {/* The ticket's place is kept (hidden) while the arrow comes in, so the card slides left only once */}
-            <div className={`story-convert__side${withTicket ? '' : ' is-waiting'}`}>
-              <Ticket name={withTicket ? 'ticket-single' : undefined} label={SINGLE_TICKET} convos={[{ ...DETAILED[0], title: DETAILED[0].subject }]} compact copies details dim={st === 'lit'} />
+            <div className="story-convert__side">
+              {/* Empty at first (same size: its content kept, hidden), then filled by the rows flying in */}
+              <Ticket
+                name="ticket-single" label={SINGLE_TICKET} convos={[{ ...DETAILED[0], title: DETAILED[0].subject }]}
+                compact copies details dim={ticketLit} ghosts={!filled} rows={filled ? 'attr' : undefined}
+              />
               <p className={`story-convert__caption${st === 'lit' ? '' : ' is-hidden'}`}>TICKET LEVEL ATTRIBUTES</p>
             </div>
           </>
@@ -522,7 +538,7 @@ export default function Story() {
           {/* The lead and the point morph on their own: on the "via" slide the lead fades away and the point
               slides over to the centre */}
           {slide.title === STORY && <><span className="story-title__lead" style={{ viewTransitionName: 'title-lead' }}>{STORY_LEAD.trim()}</span>{' '}<span className="story-title__point" style={{ viewTransitionName: 'title-point' }}>{STORY_POINT}</span></>}
-          {slide.title === STORY_POINT && <span className="story-title__point is-on" style={{ viewTransitionName: 'title-point' }}>{STORY_POINT}</span>}
+          {slide.title === STORY_POINT && <span className="story-title__point is-on" style={{ viewTransitionName: 'title-point' }}>{STORY_POINT[0].toUpperCase() + STORY_POINT.slice(1)}</span>}
           {WAYS.includes(slide.title) && wayText(slide.title)}
           {slide.title !== STORY && slide.title !== STORY_POINT && !WAYS.includes(slide.title) && slide.title}
         </h1>}
