@@ -330,7 +330,7 @@
 .detail-ticket-tabs-measure { position: absolute; left: 0; top: 0; visibility: hidden; pointer-events: none; white-space: nowrap; }
 .detail-ticket-tabs-measure .hot-tabs { width: max-content; }
 .detail-tabs-more {
-  flex: none; display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 12px; margin-left: 4px;
+  flex: none; display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 12px; margin-left: auto; /* always at the right end of the row */
   border: 0; background: transparent; cursor: pointer;
   font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextSubtle);
 }
