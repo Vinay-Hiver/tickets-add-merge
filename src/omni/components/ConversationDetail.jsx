@@ -174,6 +174,15 @@ function TicketTabs({ tabs, value, onChange }) {
   );
 }
 
+// The Slack logo on a tab: in the tab's text colour (so it follows inactive and hover) and in full colour when the
+// tab is active. Both are drawn; the CSS shows one by the tab's state.
+const SlackTabIcon = () => (
+  <span className="detail-slack-logo detail-slack-logo--tab">
+    <img className="detail-slack-logo__color" src={slackLogo} alt="" />
+    <span className="detail-slack-logo__mono" style={{ WebkitMaskImage: `url(${slackLogo})`, maskImage: `url(${slackLogo})` }} />
+  </span>
+);
+
 const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSignatureId, emailTab: emailTabProp, onEmailTabChange, onAddToTicketClick, onAddConversationClick, panelCollapsed, onExpandPanel }) => {
   const [expandedIds, setExpandedIds] = useState([]);
   const [activeReplyId, setActiveReplyId] = useState(null);
@@ -258,6 +267,8 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
   const source = openEmail ?? conversation;
   // The Slack channels the open conversation is shared to (none on a ticket's Overview).
   const channels = openEmail ? slackChannelsFor(openEmail.id) : [];
+  // A merged ticket's Slack channels: every channel any of its conversations is shared to, each once (new-ui tabs)
+  const ticketChannels = emails ? [...new Set(emails.flatMap((e) => slackChannelsFor(e.id)))] : [];
   const convoId = source ? String(source.id) : null;
   const notesThread = (convoId && threads[convoId]) || (source ? { notes: seedNotes(source), pin: null } : null);
   const updateThreadOf = (id, seedFrom, fn) => setThreads((all) => ({ ...all, [id]: fn(all[id] || { notes: seedNotes(seedFrom), pin: null }) }));
@@ -695,62 +706,22 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
 
         {/* A merged ticket: a tab for its Overview (every email on one page, no Slack) and one per merged conversation,
             with a blue dot while it's unread and a red ⚡ past its first response time (Figma: Tickets Add/Merge › 4089:1970) */}
+        {/* A merged ticket (new-ui): the views are tabs on top — "Conversation", then the Slack channels the open
+            conversations are shared to (all of them, each once, whichever conversation is open), then a button to add a Slack channel or ClickUp task — and the ticket's
+            conversations are chips under them: Overview plus one per conversation, with its unread dot and overdue
+            FRT ⚡ (the earlier layout, Figma 4026:14306 / 4068:299, with today's data). */}
         {emails && (
-          <TicketTabs
-            tabs={[{ value: 'overview', label: 'Overview' }, ...emails.map((e) => ({
-              value: String(e.id),
-              icon: <Icon name="mailbox" size={14} />,
-              label: (
-                <>
-                  <span className="detail-ticket-tab__label" title={`${e.messages[0]?.sender ?? e.sender} • ${e.subject}`}>{emailTabLabel(e)}</span>
-                  {(isUnread(e) || frtOf(e)) && (
-                    <span className="detail-email-chip__flags">
-                      {isUnread(e) && <span className="detail-email-chip__unread" role="img" aria-label="Unread" />}
-                      {frtOf(e) && (
-                        <Tooltip content="First response time overdue" placement="top" portal>
-                          <span className="detail-email-chip__frt" role="img" aria-label="First response time overdue"><Icon name="boltfilled" size={12} /></span>
-                        </Tooltip>
-                      )}
-                    </span>
-                  )}
-                </>
-              ),
-              // For the More list
-              menuLabel: emailTabLabel(e),
-              unread: isUnread(e),
-              frt: !!frtOf(e),
-            }))]}
-            value={emailTab}
-            onChange={selectEmail}
-          />
-        )}
-        {/* A conversation: "Conversation", the Slack channels it's shared to (Figma 4089:1970), then a pill to add a
-            Slack channel or ClickUp task (Figma 4089:2893). */}
-        {/* An email or a ticket that was never merged keeps the Conversation / Slack tabs (Figma 4026:14306) */}
-        {!emails && (
-          <Tabs
-            className="detail-tabs"
-            aria-label="Conversation views"
-            value={tab}
-            onChange={setTab}
-            tabs={[
-              { value: 'conversation', label: 'Conversation' },
-              { value: `slack:${slackChannelFor(conversation.id)}`, label: slackChannelFor(conversation.id), icon: <span className="detail-slack-logo"><img src={slackLogo} alt="" /></span> },
-            ]}
-          />
-        )}
-        {openEmail && (
-          <div className="detail-email-chips" role="tablist" aria-label="Conversation views">
-            <button type="button" role="tab" aria-selected={tab === 'conversation'} className="detail-email-chip" onClick={() => setTab('conversation')}>
-              Conversation
-            </button>
-            {channels.map((channel) => (
-              <button key={channel} type="button" role="tab" aria-selected={tab === `slack:${channel}`} className="detail-email-chip detail-email-chip--slack" onClick={() => setTab(`slack:${channel}`)}>
-                <span className="detail-slack-logo"><img src={slackLogo} alt="" /></span>
-                <span className="detail-email-chip__label">{channel}</span>
-              </button>
-            ))}
-            {/* Always last: a pill to add a Slack channel or a ClickUp task */}
+          <div className="detail-tabs-row">
+            <Tabs
+              className="detail-tabs"
+              aria-label="Conversation views"
+              value={tab}
+              onChange={setTab}
+              tabs={[
+                { value: 'conversation', label: 'Conversation' },
+                ...ticketChannels.map((channel) => ({ value: `slack:${channel}`, label: channel, icon: <SlackTabIcon /> })),
+              ]}
+            />
             {(
               <button type="button" className="detail-email-chip detail-email-chip--add" aria-label="Add a Slack channel or ClickUp task">
                 <span className="detail-add-apps">
@@ -761,6 +732,47 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
               </button>
             )}
           </div>
+        )}
+        {emails && tab === 'conversation' && (
+          <div className="detail-email-chips" role="tablist" aria-label="Merged conversations">
+            {[{ value: 'overview', label: 'Overview' }, ...emails.map((e) => ({ value: String(e.id), label: emailTabLabel(e), email: e }))].map((chip) => (
+              <button
+                key={chip.value}
+                type="button"
+                role="tab"
+                aria-selected={emailTab === chip.value}
+                className={`detail-email-chip${chip.email ? ' detail-email-chip--conversation' : ''}`}
+                title={chip.email ? `${chip.email.messages[0]?.sender ?? chip.email.sender} • ${chip.email.subject}` : undefined}
+                onClick={() => selectEmail(chip.value)}
+              >
+                {chip.email && <Icon name="mailbox" size={14} />}
+                <span className="detail-email-chip__label">{chip.label}</span>
+                {chip.email && (isUnread(chip.email) || frtOf(chip.email)) && (
+                  <span className="detail-email-chip__flags">
+                    {isUnread(chip.email) && <span className="detail-email-chip__unread" role="img" aria-label="Unread" />}
+                    {frtOf(chip.email) && (
+                      <Tooltip content="First response time overdue" placement="top" portal>
+                        <span className="detail-email-chip__frt" role="img" aria-label="First response time overdue"><Icon name="boltfilled" size={12} /></span>
+                      </Tooltip>
+                    )}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+        {/* An email or a ticket that was never merged keeps the Conversation / Slack tabs (Figma 4026:14306) */}
+        {!emails && (
+          <Tabs
+            className="detail-tabs"
+            aria-label="Conversation views"
+            value={tab}
+            onChange={setTab}
+            tabs={[
+              { value: 'conversation', label: 'Conversation' },
+              { value: `slack:${slackChannelFor(conversation.id)}`, label: slackChannelFor(conversation.id), icon: <SlackTabIcon /> },
+            ]}
+          />
         )}
         </div>
 
