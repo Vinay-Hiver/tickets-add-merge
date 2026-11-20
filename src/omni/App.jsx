@@ -6,6 +6,7 @@ import ConversationList from './components/ConversationList';
 import ConversationDetail from './components/ConversationDetail';
 import LinkedRightPanel from './components/link/LinkedRightPanel';
 import TicketPanel from './components/TicketPanel';
+import { demoTickets } from './data/demoTickets';
 import { Tooltip } from '../components/Tooltip';
 import { LayoutSidebarRight } from '../icons/TablerPanelIcons';
 import BulkActionsPanel from './components/BulkActionsPanel';
@@ -240,7 +241,7 @@ function App() {
     .filter(Boolean);
   const addSource = addSources?.[0] ?? null;
   const inboxTickets = addSource
-    ? [...mergedTickets, ...conversationsData.filter((c) => c.ticketId && !mergedTickets.some((t) => t.id === c.id))]
+    ? [...mergedTickets, ...conversationsData.filter((c) => c.ticketId && !mergedTickets.some((t) => t.id === c.id)), ...demoTickets]
       .filter((t) => t.inbox === addSource.inbox)
       .sort((a, b) => timestampOf(b.time) - timestampOf(a.time))
     : [];

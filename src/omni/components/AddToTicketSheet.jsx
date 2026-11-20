@@ -10,6 +10,7 @@ import { statusOptions } from '../../patterns/RightPanel/data/options';
 import { useConversationFields } from '../ConversationFields';
 import { companyOf, domainOf } from '../data/companies';
 import { FilterChip, PickCard } from './MergeConversationsSheet';
+import { aiSuggest } from '../data/aiSuggest';
 import './MergeConversationsSheet.css';
 
 // Adding conversations to tickets, in the merge sheet's look. From a conversation (Figma: Tickets Add/Merge › 4030:19966):
@@ -18,7 +19,8 @@ import './MergeConversationsSheet.css';
 const dateOf = (time) => time.split(',')[0]; // 'Feb 4, 02:45 PM' -> 'Feb 4'
 
 // A ticket to add to. Hovering turns its ticket icon into a radio button; pressing anywhere on the card picks it.
-function TicketCard({ ticket, selected, onSelect }) {
+// `note`: an extra line at the bottom of the card (e.g. why the AI suggests it)
+export function TicketCard({ ticket, selected, onSelect, note }) {
   const { statusOf, assigneeNameOf } = useConversationFields();
   const status = statusOptions.find((o) => o.value === statusOf(ticket.id)) ?? statusOptions[0];
   const count = ticket.emails?.length ?? 1;
@@ -48,6 +50,48 @@ function TicketCard({ ticket, selected, onSelect }) {
         <span className="mc-chip"><Icon name="assigned" size={12} />{assigneeNameOf(ticket.id) ?? 'Unassigned'}</span>
         <span className="mc-ticket-card__count">{count} {count === 1 ? 'conversation' : 'conversations'}</span>
       </div>
+      {note}
+    </div>
+  );
+}
+
+// AI recommendations, above the rest of the list (hidden while searching): a violet box named "AI recommendations"
+// with a line saying how many were found, an optional action (Select all) and a fold toggle; inside, the usual cards,
+// each with why it's suggested at its bottom (AI icon + reason, in violet). Ticket → Add conversation (option C) and
+// Add to an existing ticket (option A) on /ai-options.
+// Why the AI suggests a card: the AI icon and the reason, in violet, at the card's bottom
+const AiWhy = ({ reason }) => <p className="mc-ai__why"><Icon name="ai" size={14} /><span>{reason}</span></p>;
+// The reason line for an item if the AI suggested it (so it stays on the card in search results too)
+const whyFor = (suggested, item) => {
+  const s = suggested.find((x) => x.item === item);
+  return s ? <AiWhy reason={s.reason} /> : undefined;
+};
+
+function AiSuggestions({ suggestions, summary, action, children }) {
+  const [open, setOpen] = React.useState(true);
+  if (suggestions.length === 0) return null;
+  return (
+    <div className="mc-ai">
+      <div className="mc-ai__head">
+        <Icon name="ai" size={16} />
+        <div className="mc-ai__copy">
+          <p className="mc-ai__label">AI recommendations</p>
+          <p className="mc-ai__summary">{summary}</p>
+        </div>
+        {action}
+        <button type="button" className="mc-ai__toggle" aria-expanded={open} aria-label={open ? 'Hide recommendations' : 'Show recommendations'} onClick={() => setOpen((o) => !o)}>
+          <Icon name={open ? 'chevrontop' : 'chevrondown'} size={16} />
+        </button>
+      </div>
+      {open && (
+        <div className="mc-ai__list">
+          {suggestions.map(({ item, reason }) => (
+            <React.Fragment key={item.id}>
+              {children(item, <AiWhy reason={reason} />)}
+            </React.Fragment>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -114,7 +158,9 @@ export function AddConversationsSheet({ ticket, candidates, others = [], onClose
 
   const q = query.trim().toLowerCase();
   const matches = (c) => !q || `${c.messages?.[0]?.sender ?? c.sender} ${c.messages?.[0]?.email ?? ''} ${c.subject} ${c.preview}`.toLowerCase().includes(q);
-  const shown = candidates.filter(matches);
+  // AI suggestions show until a search starts; the recent list leaves them out
+  const suggested = React.useMemo(() => aiSuggest([ticket], candidates), [ticket, candidates]);
+  const shown = candidates.filter(matches).filter((c) => q || !suggested.some((s) => s.item === c));
   const domain = domainOf(ticket);
   const elsewhere = q && shown.length === 0 && others.some(matches);
   const empty = elsewhere
@@ -144,7 +190,7 @@ export function AddConversationsSheet({ ticket, candidates, others = [], onClose
       )}
     >
       <section className="mc-pick-section mc-pick-section--into">
-        <h3 className="mc-pick-label">Search for a conversation to add it to {ticket.ticketId}</h3>
+        <h3 className="mc-pick-label">Select one or more conversations to add to {ticket.ticketId}</h3>
         <div className="mc-card mc-pick">
           <Input search size="md" fullWidth placeholder="Search conversation" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search conversation" />
           {/* Finding a conversation to add: by who has it and where it stands (each card shows both) */}
@@ -152,13 +198,28 @@ export function AddConversationsSheet({ ticket, candidates, others = [], onClose
             <FilterChip icon="assigned">Assignee</FilterChip>
             <FilterChip icon="flag">Status</FilterChip>
           </div>
+          {!q && (
+            <AiSuggestions
+              suggestions={suggested}
+              summary={<><strong>{suggested.length} {suggested.length === 1 ? 'conversation' : 'conversations'}</strong> {suggested.length === 1 ? 'looks' : 'look'} related to {ticket.ticketId}</>}
+              action={(() => {
+                const ids = suggested.map((x) => x.item.id);
+                const all = ids.every((id) => picked.includes(id));
+                return <Button variant="secondary" size="xs" onClick={() => setPicked((p) => (all ? p.filter((id) => !ids.includes(id)) : [...new Set([...p, ...ids])]))}>{all ? 'Clear' : 'Select all'}</Button>;
+              })()}
+            >
+              {(c, note) => <PickCard conversation={c} selected={picked.includes(c.id)} onToggle={() => toggle(c.id)} note={note} />}
+            </AiSuggestions>
+          )}
           <div className="mc-pick__results">
-            <p className="mc-pick__caption">{q ? 'Results' : 'Recent conversations'}</p>
+            {/* The rest follow without a heading; a search gets "Results" */}
+            {q && <p className="mc-pick__caption">Results</p>}
             {shown.length > 0 ? (
               <div className="mc-pick__list">
-                {shown.map((c) => <PickCard key={c.id} conversation={c} selected={picked.includes(c.id)} onToggle={() => toggle(c.id)} />)}
+                {shown.map((c) => <PickCard key={c.id} conversation={c} selected={picked.includes(c.id)} onToggle={() => toggle(c.id)} note={whyFor(suggested, c)} />)}
               </div>
-            ) : (
+            ) : (q || suggested.length === 0) && (
+              // Only when searching, or when there's nothing at all; not when the AI box holds them all
               <p className={`mc-pick__empty${elsewhere ? ' mc-pick__empty--error' : ''}`}>
                 {elsewhere && <Icon name="alerttriangle" size={14} />}{empty}
               </p>
@@ -179,7 +240,8 @@ export default function AddToTicketSheet({ conversations, tickets, others = [], 
 
   const q = query.trim().toLowerCase();
   const matches = (t) => !q || `${t.ticketId} ${t.subject}`.toLowerCase().includes(q);
-  const shown = tickets.filter(matches);
+  const suggested = React.useMemo(() => aiSuggest(conversations, tickets), [conversations, tickets]);
+  const shown = tickets.filter(matches).filter((t) => q || !suggested.some((s) => s.item === t));
   const domain = domainOf(conversation);
   // Searching for a ticket of another customer explains why it can't be used.
   const elsewhere = q && shown.length === 0 && others.some(matches);
@@ -223,13 +285,22 @@ export default function AddToTicketSheet({ conversations, tickets, others = [], 
             <FilterChip icon="flag">Status</FilterChip>
             <FilterChip icon="tag">Tag</FilterChip>
           </div>
+          {!q && (
+            <AiSuggestions
+              suggestions={suggested}
+              summary={<><strong>{suggested.length} {suggested.length === 1 ? 'ticket' : 'tickets'}</strong> that {suggested.length === 1 ? 'matches' : 'match'} {many ? 'these conversations' : 'this conversation'}</>}
+            >
+              {(t, note) => <TicketCard ticket={t} selected={ticketId === t.id} onSelect={() => setTicketId(t.id)} note={note} />}
+            </AiSuggestions>
+          )}
           <div className="mc-pick__results">
-            <p className="mc-pick__caption">{q ? 'Results' : 'Recent tickets from this customer'}</p>
+            {q && <p className="mc-pick__caption">Results</p>}
             {shown.length > 0 ? (
               <div className="mc-pick__list" role="radiogroup" aria-label="Tickets">
-                {shown.map((t) => <TicketCard key={t.id} ticket={t} selected={ticketId === t.id} onSelect={() => setTicketId(t.id)} />)}
+                {shown.map((t) => <TicketCard key={t.id} ticket={t} selected={ticketId === t.id} onSelect={() => setTicketId(t.id)} note={whyFor(suggested, t)} />)}
               </div>
-            ) : (
+            ) : (q || suggested.length === 0) && (
+              // Only when searching, or when there's nothing at all; not when the AI box holds them all
               <p className={`mc-pick__empty${elsewhere ? ' mc-pick__empty--error' : ''}`}>
                 {elsewhere && <Icon name="alerttriangle" size={14} />}{empty}
               </p>

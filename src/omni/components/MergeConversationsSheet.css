@@ -39,7 +39,7 @@
 /* Header: grey band with the title, subtitle and close (Figma 4023:10700) */
 .mc-header {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  padding: 16px 20px; /* a title only: 24px line + 16px padding top and bottom */
+  padding: 12px 20px; /* a title only: 24px line + 12px padding top and bottom */
   border-bottom: 1px solid var(--slateBorderMild);
   background: var(--slateSurfaceSubtle);
 }
@@ -260,3 +260,23 @@
   content: ''; position: absolute; left: 100%; top: 50%; width: 54px; height: 2px; transform: translateY(-50%);
   background: inherit;
 }
+
+/* AI recommendations in the add sheets: a violet box (no outline) named "AI recommendations", with how many were
+   found, an optional action and a fold toggle; the usual cards inside, each with its reason at the bottom */
+.mc-ai { display: flex; flex-direction: column; border-radius: 8px; background: var(--pastelViolet100); }
+.mc-ai__head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; color: var(--pastelVioletTextTitle); }
+.mc-ai__head > svg { flex: none; }
+.mc-ai__copy { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mc-ai__label { margin: 0; font: var(--fontWeightMedium) 12px/18px var(--fontFamily); color: var(--pastelVioletTextTitle); }
+.mc-ai__summary { margin: 0; font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextBody); }
+.mc-ai__summary strong { font-weight: var(--fontWeightMedium); }
+.mc-ai__toggle { display: inline-flex; padding: 4px; border: 0; border-radius: 6px; background: transparent; color: var(--slateIconsActive); cursor: pointer; }
+.mc-ai__toggle:hover { background: var(--slateSurfaceSubtle100Hover); }
+.mc-ai__list { display: flex; flex-direction: column; gap: 12px; padding: 0 12px 12px; }
+.mc-ai__list .mc-pick-card { background: var(--slateSurfaceWhite); }
+.mc-ai__list .mc-pick-card:hover { background: var(--slateSurfaceSubtle100Hover); }
+.mc-ai__why {
+  display: flex; align-items: center; gap: 6px; margin: 0; padding-top: 4px;
+  font: var(--fontWeightRegular) 12px/18px var(--fontFamily); color: var(--pastelVioletTextTitle);
+}
+.mc-ai__why > svg { flex: none; }

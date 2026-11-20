@@ -84,7 +84,8 @@ function TicketRow({ icon, label, children, top }) {
 // Step 1, when merging from an open conversation (Figma 4029:19413): the conversation being merged, then the
 // conversations it can merge into. Hovering a card turns its mail icon into a checkbox and its date into an
 // open-in-new-tab button. A fixed card (the conversation being merged or added) only gets the open button.
-export function PickCard({ conversation: c, fixed, selected, onToggle }) {
+// `note`: an extra line at the bottom of the card (e.g. why the AI suggests it)
+export function PickCard({ conversation: c, fixed, selected, onToggle, note }) {
   const { statusOf, assigneeNameOf } = useConversationFields();
   const status = statusOptions.find((o) => o.value === statusOf(c.id)) ?? statusOptions[0];
   const classes = ['mc-pick-card', fixed && 'mc-pick-card--fixed', selected && 'is-selected'].filter(Boolean).join(' ');
@@ -125,6 +126,7 @@ export function PickCard({ conversation: c, fixed, selected, onToggle }) {
         <span className="mc-chip"><Icon name={status.icon} size={12} />{status.label}</span>
         <span className="mc-chip"><Icon name="assigned" size={12} />{assigneeNameOf(c.id) ?? 'Unassigned'}</span>
       </div>
+      {note}
     </div>
   );
 }
