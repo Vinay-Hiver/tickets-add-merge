@@ -265,8 +265,13 @@
 /* Merged ticket, in a conversation's tab: the conversation's block after the ticket's sections. Its title is the subject
    on one line, and its old assignee and status are history, so they show at half strength. */
 .hot-rp-top--conversation { border-top: 1px solid var(--slateBorderMild); }
+/* After the ticket's sections, whose last one already has a bottom line: no second line. (`~`, not `+`: the drag
+   library puts its hidden screen-reader text between the two.) */
+.hot-rp-sections ~ .hot-rp-top--conversation { border-top: 0; }
 .hot-rp-top__title--truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hot-rp-history { display: inline-flex; align-items: center; gap: 8px; opacity: 0.5; }
+/* The old assignee's avatar: its letter centred in the 18px circle (one line as tall as the circle) */
+.hot-rp-history .hot-avatar--small { line-height: 18px; }
 
 /* Customize widgets with two groups (a conversation inside a ticket): the group names, a line between the groups, and the
    inner lists without their own panel look */

@@ -414,7 +414,7 @@ export function TicketRightPanel({ inboxName, ticketId, ticketKey, assignee, onA
           <Row icon="assigned" label="Assignee">
             <Tooltip content="Assignee is managed on the ticket now. Change it above." placement="left" portal>
               <span className="hot-rp-history" tabIndex={0}>
-                {person ? <><Avatar initial={person.label.charAt(0)} size="small" color={person.color} showStatus />{person.label.replace(/ \(Me\)$/, '')}</> : 'None'}
+                {person ? <><Avatar initial={person.label.charAt(0)} size="small" color={person.color} />{person.label.replace(/ \(Me\)$/, '')}</> : 'None'}
               </span>
             </Tooltip>
           </Row>

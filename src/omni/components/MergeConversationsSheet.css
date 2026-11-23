@@ -25,6 +25,8 @@
   animation: mc-confirm-in 100ms ease-out 101ms both;
 }
 .mc-confirm.is-leaving { animation: mc-confirm-out 100ms ease-in both; pointer-events: none; }
+/* The confirm modal's white body without its outline */
+.mc-confirm .hot-modal__body { box-shadow: none; }
 @keyframes mc-confirm-in { from { opacity: 0; } }
 @keyframes mc-confirm-out { to { opacity: 0; } }
 .mc-backdrop.is-closing .mc-confirm { animation: mc-confirm-out 200ms ease-in both; }
@@ -280,3 +282,7 @@
   font: var(--fontWeightRegular) 12px/18px var(--fontFamily); color: var(--pastelVioletTextTitle);
 }
 .mc-ai__why > svg { flex: none; }
+
+/* "Learn more" after the ticket title's helper text */
+.mc-learn-more { color: var(--primaryTextLabel); text-decoration: none; }
+.mc-learn-more:hover { text-decoration: underline; }

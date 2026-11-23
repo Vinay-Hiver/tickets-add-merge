@@ -6,6 +6,7 @@ import ConversationList from './components/ConversationList';
 import ConversationDetail from './components/ConversationDetail';
 import LinkedRightPanel from './components/link/LinkedRightPanel';
 import TicketPanel from './components/TicketPanel';
+import PanelHighlights from './components/PanelHighlights';
 import { demoTickets } from './data/demoTickets';
 import { Tooltip } from '../components/Tooltip';
 import { LayoutSidebarRight } from '../icons/TablerPanelIcons';
@@ -127,6 +128,7 @@ function App() {
   const [checkedIds, setCheckedIds] = useState([]);
   // The right panel can be hidden from its top row, and brought back from the conversation's header.
   const [panelCollapsed, setPanelCollapsed] = useState(false);
+  const panelRef = React.useRef(null);
   const toggleChecked = (id) =>
     setCheckedIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
 
@@ -316,7 +318,9 @@ function App() {
                     {/* The panel, with a button at the end of its top row that hides it (Figma: Tickets Add/Merge › 4118:13817).
                         It slides closed (its width eases to 0) and back open. */}
                     <div className={`right-panel-wrap${panelCollapsed ? ' is-collapsed' : ''}`} aria-hidden={panelCollapsed} inert={panelCollapsed}>
-                      <div className="right-panel-wrap__inner">
+                      <div className="right-panel-wrap__inner" ref={panelRef}>
+                        {/* Demo: ⌘ + hover marks "Ticket details" / "Conversation details" in a merged ticket's conversation */}
+                        {selectedConversation?.emails && emailTab !== 'overview' && !panelCollapsed && <PanelHighlights panelRef={panelRef} />}
                         {selectedConversation?.emails ? (
                           <TicketPanel ticket={selectedConversation} emailTab={emailTab} inboxName={activeFilter.inbox} />
                         ) : (

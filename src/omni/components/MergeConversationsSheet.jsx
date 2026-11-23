@@ -37,7 +37,9 @@ function TicketTitleSelect({ conversations, value, onChange }) {
       <div ref={ref} className="mc-select" onClick={() => setOpen((o) => !o)}>
         <Input
           label="Ticket title" size="md" fullWidth readOnly value={current?.subject ?? ''}
-          helperText="Title, status and assignee come from the conversation you pick."
+          helperText={<>Title, status and assignee come from the conversation you pick.{' '}
+            {/* No page to go to yet; it doesn't open the list either */}
+            <a href="#" className="mc-learn-more" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>Learn more</a></>}
           suffix={<Icon name="chevrondown" size={16} />} aria-haspopup="listbox" aria-expanded={open}
         />
       </div>
