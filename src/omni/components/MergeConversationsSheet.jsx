@@ -193,8 +193,8 @@ function PickStep({ source, candidates, others, onCancel, onNext }) {
       <footer className="mc-footer mc-footer--pick">
         <span className="mc-footer__count">{picked.length} {picked.length === 1 ? 'conversation' : 'conversations'} selected</span>
         <div className="mc-footer__actions">
-          <Button variant="secondary" size="md" onClick={onCancel}>Cancel</Button>
-          <Button variant="primary" size="md" disabled={picked.length === 0} onClick={() => onNext([source, ...candidates.filter((c) => picked.includes(c.id))])}>Next</Button>
+          <Button variant="secondary" size="sm" onClick={onCancel}>Cancel</Button>
+          <Button variant="primary" size="sm" disabled={picked.length === 0} onClick={() => onNext([source, ...candidates.filter((c) => picked.includes(c.id))])}>Next</Button>
         </div>
       </footer>
     </>
@@ -319,8 +319,8 @@ export default function MergeConversationsSheet({ conversations: preselected, so
         </div>
 
         <footer className="mc-footer">
-          <Button variant="secondary" size="md" onClick={() => exit(onClose)}>Cancel</Button>
-          <Button variant="primary" size="md" onClick={openConfirm}>Merge</Button>
+          <Button variant="secondary" size="sm" onClick={() => exit(onClose)}>Cancel</Button>
+          <Button variant="primary" size="sm" onClick={openConfirm}>Merge</Button>
         </footer>
         </>
         )}

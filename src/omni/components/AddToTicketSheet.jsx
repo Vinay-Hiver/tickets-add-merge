@@ -183,8 +183,8 @@ export function AddConversationsSheet({ ticket, candidates, others = [], onClose
         <footer className="mc-footer mc-footer--pick">
           <span className="mc-footer__count">{picked.length} {picked.length === 1 ? 'conversation' : 'conversations'} selected</span>
           <div className="mc-footer__actions">
-            <Button variant="secondary" size="md" onClick={() => exit(onClose)}>Cancel</Button>
-            <Button variant="primary" size="md" disabled={picked.length === 0} onClick={ask}>Add to ticket</Button>
+            <Button variant="secondary" size="sm" onClick={() => exit(onClose)}>Cancel</Button>
+            <Button variant="primary" size="sm" disabled={picked.length === 0} onClick={ask}>Add to ticket</Button>
           </div>
         </footer>
       )}
@@ -263,8 +263,8 @@ export default function AddToTicketSheet({ conversations, tickets, others = [], 
       }}
       footer={(exit, ask) => (
         <footer className="mc-footer">
-          <Button variant="secondary" size="md" onClick={() => exit(onClose)}>Cancel</Button>
-          <Button variant="primary" size="md" disabled={ticketId == null} onClick={ask}>Add to ticket</Button>
+          <Button variant="secondary" size="sm" onClick={() => exit(onClose)}>Cancel</Button>
+          <Button variant="primary" size="sm" disabled={ticketId == null} onClick={ask}>Add to ticket</Button>
         </footer>
       )}
     >

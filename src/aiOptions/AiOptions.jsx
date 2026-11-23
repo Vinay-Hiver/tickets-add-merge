@@ -85,7 +85,7 @@ function ConvoSheet({ label, children, picked, toggle }) {
       footer={(
         <footer className="mc-footer mc-footer--pick">
           <span className="mc-footer__count">{picked.length} {picked.length === 1 ? 'conversation' : 'conversations'} selected</span>
-          <div className="mc-footer__actions"><Button variant="secondary" size="md">Cancel</Button><Button variant="primary" size="md" disabled={!picked.length}>Add to ticket</Button></div>
+          <div className="mc-footer__actions"><Button variant="secondary" size="sm">Cancel</Button><Button variant="primary" size="sm" disabled={!picked.length}>Add to ticket</Button></div>
         </footer>
       )}
     >
@@ -122,7 +122,7 @@ function TicketSheet({ children, ticketId, setTicketId }) {
   return (
     <Sheet
       title="Add conversation to a ticket"
-      footer={<footer className="mc-footer"><Button variant="secondary" size="md">Cancel</Button><Button variant="primary" size="md" disabled={ticketId == null}>Add to ticket</Button></footer>}
+      footer={<footer className="mc-footer"><Button variant="secondary" size="sm">Cancel</Button><Button variant="primary" size="sm" disabled={ticketId == null}>Add to ticket</Button></footer>}
     >
       <section className="mc-pick-section">
         <h3 className="mc-pick-label">Adding 1 conversation</h3>
