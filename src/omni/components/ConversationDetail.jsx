@@ -17,6 +17,7 @@ import { emailTabLabel } from './TicketOverview';
 import { frtOf } from '../data/sla';
 import { Badge } from '../../components/Badge';
 import { ArrowBarToLeft } from '../../icons/TablerPanelIcons';
+import HoverHighlight from './HoverHighlight';
 import ConversationMenu, { VIEW_ONLY_NOTES } from './ConversationMenu';
 // The Note icon from Figma (Activity - Notes › 12:24260), used as it is.
 import noteIcon from '../assets/icons/note.svg';
@@ -268,6 +269,9 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
   // The Slack channels the open conversation is shared to (none on a ticket's Overview).
   const channels = openEmail ? slackChannelsFor(openEmail.id) : [];
   // A merged ticket's Slack channels: every channel any of its conversations is shared to, each once (new-ui tabs)
+  // Rows a ⌘ + hover demo highlight attaches to (merged tickets)
+  const tabsRowRef = React.useRef(null);
+  const chipsRowRef = React.useRef(null);
   const ticketChannels = emails ? [...new Set(emails.flatMap((e) => slackChannelsFor(e.id)))] : [];
   const convoId = source ? String(source.id) : null;
   const notesThread = (convoId && threads[convoId]) || (source ? { notes: seedNotes(source), pin: null } : null);
@@ -711,7 +715,9 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
             conversations are chips under them: Overview plus one per conversation, with its unread dot and overdue
             FRT ⚡ (the earlier layout, Figma 4026:14306 / 4068:299, with today's data). */}
         {emails && (
-          <div className="detail-tabs-row">
+          <div className="detail-tabs-row" ref={tabsRowRef}>
+            {/* Demo: ⌘ + hover labels the tabs */}
+            <HoverHighlight targetRef={tabsRowRef} label="Slack internal collaboration" placement="top" />
             <Tabs
               className="detail-tabs"
               aria-label="Conversation views"
@@ -734,7 +740,9 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
           </div>
         )}
         {emails && tab === 'conversation' && (
-          <div className="detail-email-chips" role="tablist" aria-label="Merged conversations">
+          <div className="detail-email-chips" role="tablist" aria-label="Merged conversations" ref={chipsRowRef}>
+            {/* Demo: ⌘ + hover labels the chips */}
+            <HoverHighlight targetRef={chipsRowRef} label="Conversations in this ticket" placement="top" />
             {[{ value: 'overview', label: 'Overview' }, ...emails.map((e) => ({ value: String(e.id), label: emailTabLabel(e), email: e }))].map((chip) => (
               <button
                 key={chip.value}

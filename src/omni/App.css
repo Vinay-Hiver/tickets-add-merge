@@ -40,3 +40,8 @@
 .rp-annot-label::after {
   content: ''; position: absolute; left: 100%; top: 50%; width: 64px; height: 2px; transform: translateY(-50%); background: inherit;
 }
+/* A row's highlight (tabs, chips): smaller rounding for a thin strip */
+.rp-annot.rp-annot--row { border-radius: 8px; }
+/* Label above the tint, centred, with the connector running down to it */
+.rp-annot-label.rp-annot-label--top { transform: translate(-50%, calc(-100% - 32px)); }
+.rp-annot-label--top::after { left: 50%; top: 100%; width: 2px; height: 32px; transform: translateX(-50%); }
