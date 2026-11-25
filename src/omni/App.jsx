@@ -144,8 +144,8 @@ function App() {
   // "Add conversation" from a ticket's header: the ticket conversations are added to.
   const [addTargetId, setAddTargetId] = useState(null);
 
-  // In a merged ticket: 'overview' or the id of the email whose tab is open. The right panel follows it.
-  const [emailTab, setEmailTab] = useState('overview');
+  // In a merged ticket: the id of the conversation whose chip is open. The right panel follows it.
+  const [emailTab, setEmailTab] = useState(null);
 
   // Prototype role — All Views pins Team Favourites as Admin. No toggle UI.
   const activeRole = 'Admin';
@@ -165,7 +165,10 @@ function App() {
     }
     // Tickets made by merging sit at the top, newest first; merged emails are gone.
     // A ticket that had a conversation added is in mergedTickets now, so its original card is left out.
-    return [...mergedTickets.filter(inView), ...base.filter((c) => !mergedAwayIds.includes(c.id) && !mergedTickets.some((t) => t.id === c.id))];
+    const list = [...mergedTickets.filter(inView), ...base.filter((c) => !mergedAwayIds.includes(c.id) && !mergedTickets.some((t) => t.id === c.id))];
+    // Demo: grouped by the customer's domain (A–Z), so conversations that can be merged sit together. Within a domain
+    // the order above holds (merged tickets first, then newest first).
+    return list.sort((a, b) => (domainOf(a) ?? '').localeCompare(domainOf(b) ?? ''));
   }, [activeFilter.inbox, activeFilter.type, mergedTickets, mergedAwayIds]);
 
   // Each conversation's thread records when it joined a ticket, as an activity row by whoever did it.
@@ -234,7 +237,6 @@ function App() {
     setMergedAwayIds((ids) => [...ids, ...conversations.map((c) => c.id)]);
     logJoined(conversations, ticket, 'added this conversation to');
     setSelectedId(ticket.id);
-    setEmailTab('overview');
   };
 
   // Tickets the open conversation can be added to: in the same inbox, newest first. Only the same domain can be picked.
@@ -320,7 +322,7 @@ function App() {
                     <div className={`right-panel-wrap${panelCollapsed ? ' is-collapsed' : ''}`} aria-hidden={panelCollapsed} inert={panelCollapsed}>
                       <div className="right-panel-wrap__inner" ref={panelRef}>
                         {/* Demo: ⌘ + hover marks "Ticket details" / "Conversation details" in a merged ticket's conversation */}
-                        {selectedConversation?.emails && emailTab !== 'overview' && !panelCollapsed && <PanelHighlights panelRef={panelRef} />}
+                        {selectedConversation?.emails && emailTab && !panelCollapsed && <PanelHighlights panelRef={panelRef} />}
                         {selectedConversation?.emails ? (
                           <TicketPanel ticket={selectedConversation} emailTab={emailTab} inboxName={activeFilter.inbox} />
                         ) : (

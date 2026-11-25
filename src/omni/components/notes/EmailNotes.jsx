@@ -1,6 +1,8 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '../../../components/Button';
+import { Dropdown } from '../../../components/Dropdown';
+import { Popover } from '../../../components/Popover';
 import { Modal, ModalText } from '../../../components/Modal';
 import { Tooltip } from '../../../components/Tooltip';
 import { Icon } from '../../../icons/Icon';
@@ -502,14 +504,22 @@ export { NoteQuote };
 
 /**
  * The note composer that replaces the footer. `editing` is the note being edited, `replyTo` the
- * note being replied to (or neither for a new note). Calls onSubmit({ body, attachments }).
+ * note being replied to (or neither for a new note). Calls onSubmit({ body, attachments, onTicket }).
+ * `ticketId` (a new note in a conversation of a ticket with several conversations) adds a scope menu to the header:
+ * "Post in this conversation" (the default) or "Post on the ticket (all conversations)" (the note goes on the ticket and shows in
+ * every conversation of it).
  */
-export function NoteComposer({ editing, replyTo, onSubmit, onCancel, onQuoteClick }) {
+export function NoteComposer({ editing, replyTo, ticketId, closing, onSubmit, onCancel, onQuoteClick }) {
+  // `closing`: the card slides down and fades out (the parent unmounts it after).
+  const wrapRef = React.useRef(null);
   const { user } = useCurrentUser();
   const [draft, setDraft] = React.useState(editing?.body ?? '');
   const [attachments, setAttachments] = React.useState(editing?.attachments ? [...editing.attachments] : []);
   const [dropping, setDropping] = React.useState(false);
   const [dropZone, setDropZone] = React.useState(false);
+  const [onTicket, setOnTicket] = React.useState(false);
+  const [scopeOpen, setScopeOpen] = React.useState(false);
+  const scopeRef = React.useRef(null);
   const mentions = useMentions(draft, setDraft);
   const original = React.useMemo(() => new Set((editing?.attachments ?? []).map((f) => f.id)), [editing]);
 
@@ -534,9 +544,9 @@ export function NoteComposer({ editing, replyTo, onSubmit, onCancel, onQuoteClic
 
   const canSubmit = draft.trim().length > 0 || attachments.length > 0;
   const submit = () => {
-    if (!canSubmit) return;
+    if (!canSubmit || closing) return;
     releaseUnsaved(attachments);
-    onSubmit({ body: draft.trim(), attachments });
+    onSubmit({ body: draft.trim(), attachments, onTicket: !!ticketId && onTicket });
   };
   const cancel = () => { releaseUnsaved(); onCancel(); };
 
@@ -550,7 +560,7 @@ export function NoteComposer({ editing, replyTo, onSubmit, onCancel, onQuoteClic
   const title = editing ? 'Edit note' : replyTo ? `Reply to ${replyName}` : 'Internal note';
 
   return (
-    <div className="en-composer-wrap">
+    <div ref={wrapRef} className={`en-composer-wrap${closing ? ' is-closing' : ''}`}>
       {mentions.menu}
       <form
         className={`en-composer${dropping ? ' is-drop' : ''}`}
@@ -561,7 +571,28 @@ export function NoteComposer({ editing, replyTo, onSubmit, onCancel, onQuoteClic
       >
         {/* Figma: Activity - Notes › 43:7961 Form (Activity and Notes) */}
         <div className="en-composer__head">
-          <span className="en-composer__title">{title}</span>
+          <span className="en-composer__lead">
+            <span className="en-composer__title">{title}</span>
+            {ticketId && (
+              <>
+                <span className="en-composer__dot" aria-hidden="true">•</span>
+                <button ref={scopeRef} type="button" className="en-composer__scope" aria-haspopup="menu" aria-expanded={scopeOpen} onClick={() => setScopeOpen((o) => !o)}>
+                  {onTicket ? 'Posting on the ticket (all conversations)' : 'Posting in this conversation'}
+                  <Icon name="chevrondown" size={14} />
+                </button>
+                <Popover open={scopeOpen} onClose={() => setScopeOpen(false)} anchorRef={scopeRef}>
+                  <Dropdown
+                    options={[
+                      { value: 'conversation', label: 'Post in this conversation' },
+                      { value: 'ticket', label: 'Post on the ticket (all conversations)' },
+                    ]}
+                    value={onTicket ? 'ticket' : 'conversation'}
+                    onChange={(value) => { setOnTicket(value === 'ticket'); setScopeOpen(false); }}
+                  />
+                </Popover>
+              </>
+            )}
+          </span>
           <span className="en-composer__hint">Only your team sees notes</span>
         </div>
         {replyTo && <NoteQuote author={replyTo.author} body={replyTo.body} onClick={onQuoteClick} />}

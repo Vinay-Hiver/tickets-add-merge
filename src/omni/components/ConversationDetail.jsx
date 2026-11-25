@@ -12,8 +12,7 @@ import { slackChannelFor, slackChannelsFor } from '../data/slackChannels';
 import clickupIcon from '../assets/icons/clickup.svg';
 // Slack's colour logo (Figma: Tickets Add/Merge › 4089:2233), as exported
 import slackLogo from '../assets/icons/slack-logo.svg';
-import { timestampOf } from '../data/merge';
-import { emailTabLabel } from './TicketOverview';
+import { emailTabLabel } from './emailTabLabel';
 import { frtOf } from '../data/sla';
 import { Badge } from '../../components/Badge';
 import { ArrowBarToLeft } from '../../icons/TablerPanelIcons';
@@ -188,9 +187,9 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
   const [expandedIds, setExpandedIds] = useState([]);
   const [activeReplyId, setActiveReplyId] = useState(null);
   const [tab, setTab] = useState('conversation');
-  // A merged ticket: 'overview' (every email as a card) or the id of the email whose thread is open.
+  // A merged ticket: the id of the conversation whose thread is open (there's no Overview).
   // App can hold it (the right panel follows it); otherwise it is kept here.
-  const [innerEmailTab, setInnerEmailTab] = useState('overview');
+  const [innerEmailTab, setInnerEmailTab] = useState(null);
   const emailTab = emailTabProp ?? innerEmailTab;
   const setEmailTab = (value) => { setInnerEmailTab(value); onEmailTabChange?.(value); };
 
@@ -215,11 +214,16 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
       setActiveReplyId(null);
     }
     setTab('conversation');
-    setEmailTab('overview');
-    if (conversation?.emails) scrollToBottom(); // a ticket opens on its Overview, at the latest
     setOnlyNotes(false);
     setComposer(null);
     setConfirm(null);
+    // A ticket opens on its first unread conversation, else its first one
+    if (conversation?.emails?.length) {
+      const first = conversation.emails.find((e) => isUnread(e)) ?? conversation.emails[0];
+      selectEmail(String(first.id));
+    } else {
+      setEmailTab(null);
+    }
   }, [conversation]);
 
   const emails = conversation?.emails;
@@ -237,25 +241,10 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
     const latest = [...email.messages, ...(saved?.replies ?? [])].pop();
     return !!latest && latest.email !== 'support@hiver.com' && !saved?.replies?.length && !readIds.includes(String(email.id));
   };
-  // The email just opened from the Overview, outlined for a moment so it's easy to spot.
-  const [targetId, setTargetId] = useState(null);
-  const targetTimer = React.useRef(0);
-  // From the Overview: switch to the email's conversation, open that email there and scroll to it.
-  const openInTab = (email, messageId) => {
-    selectEmail(String(email.id));
-    setExpandedIds([messageId]);
-    setTargetId(messageId);
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      document.getElementById(`email-card-${messageId}`)?.scrollIntoView({ block: 'center' });
-    }));
-    window.clearTimeout(targetTimer.current);
-    targetTimer.current = window.setTimeout(() => setTargetId(null), 1600);
-  };
   const selectEmail = (value) => {
     setTab('conversation');
     setReadIds((ids) => (ids.includes(value) ? ids : [...ids, value]));
     setEmailTab(value);
-    if (value === 'overview') { setExpandedIds([]); scrollToBottom(); }
     const email = emails?.find((e) => String(e.id) === value);
     if (email?.messages.length) setExpandedIds([email.messages[0].id]);
     setActiveReplyId(null);
@@ -278,6 +267,13 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
   const updateThreadOf = (id, seedFrom, fn) => setThreads((all) => ({ ...all, [id]: fn(all[id] || { notes: seedNotes(seedFrom), pin: null }) }));
   const updateThread = (fn) => updateThreadOf(convoId, source, fn);
   const findNote = (id) => notesThread?.notes.find((n) => n.id === id);
+  // A merged ticket's own notes (posted with "Also post on TKT#…"): they show in every conversation of it, with the
+  // same actions as a conversation's notes, which act on the ticket's copy. `scope` 'ticket' picks them.
+  const ticketKey = conversation?.emails ? String(conversation.id) : null;
+  const ticketThread = ticketKey ? (threads[ticketKey] ?? { notes: [], pin: null }) : null;
+  const threadIn = (scope) => (scope === 'ticket' ? ticketThread : notesThread);
+  const updateIn = (scope, fn) => (scope === 'ticket' ? updateThreadOf(ticketKey, conversation, fn) : updateThread(fn));
+  const findNoteIn = (scope, id) => threadIn(scope)?.notes.find((n) => n.id === id);
 
   const scrollToBottom = () => requestAnimationFrame(() => {
     const el = scrollRef.current;
@@ -293,15 +289,26 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
     seenActivity.current = { convoId, count: activityCount };
   }, [convoId, activityCount]);
 
+  // Cancel / Add: the composer shrinks back into the footer first (see .en-composer-wrap.is-closing), then goes.
+  const [composerClosing, setComposerClosing] = useState(false);
+  const closeTimer = React.useRef(0);
+  const closeComposer = () => {
+    setComposerClosing(true);
+    window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => { setComposer(null); setComposerClosing(false); }, 220);
+  };
   const openComposer = (next) => {
+    window.clearTimeout(closeTimer.current);
+    setComposerClosing(false);
     setComposer(next);
     setActiveReplyId(null);
     if (next.mode !== 'edit') scrollToBottom();
   };
 
-  const submitNote = ({ body, attachments }) => {
+  const submitNote = ({ body, attachments, onTicket }) => {
+    const scope = composer.scope;
     if (composer.mode === 'edit') {
-      updateThread((t) => ({
+      updateIn(scope, (t) => ({
         ...t,
         notes: t.notes.map((n) => {
           if (n.id !== composer.noteId) return n;
@@ -311,7 +318,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
         }),
       }));
     } else {
-      const replyTo = composer.mode === 'reply' ? findNote(composer.noteId) : null;
+      const replyTo = composer.mode === 'reply' ? findNoteIn(scope, composer.noteId) : null;
       const note = {
         id: `note-${Date.now()}`,
         authorId: user.id,
@@ -324,10 +331,14 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
         attachments: attachments.length ? attachments : undefined,
         replyTo: replyTo ? { noteId: replyTo.id, authorId: replyTo.authorId, author: replyTo.author, body: replyTo.body } : undefined,
       };
-      updateThread((t) => ({ ...t, notes: [...t.notes, note] }));
+      // "Also post on TKT#…": the note goes on the ticket (it shows in every conversation of it), marked with the
+      // conversation it was written in.
+      // A reply to a ticket note goes on the ticket too.
+      if (onTicket || scope === 'ticket') updateThreadOf(String(conversation.id), conversation, (t) => ({ ...t, notes: [...t.notes, { ...note, fromId: convoId }] }));
+      else updateThread((t) => ({ ...t, notes: [...t.notes, note] }));
       scrollToBottom();
     }
-    setComposer(null);
+    closeComposer();
   };
 
   // A sent reply joins the thread as another email card, from the support inbox to the customer, opened.
@@ -353,32 +364,33 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
     scrollToBottom();
   };
 
-  const deleteNote = (id) => {
+  const deleteNote = (id, scope) => {
     if (composer?.noteId === id) setComposer(null);
-    releaseFiles(findNote(id)?.attachments);
-    updateThread((t) => ({ ...t, notes: t.notes.filter((n) => n.id !== id), pin: t.pin?.id === id ? null : t.pin }));
+    releaseFiles(findNoteIn(scope, id)?.attachments);
+    updateIn(scope, (t) => ({ ...t, notes: t.notes.filter((n) => n.id !== id), pin: t.pin?.id === id ? null : t.pin }));
   };
 
-  const pinNote = (id) => {
-    updateThread((t) => ({ ...t, pin: { id, by: { id: user.id, name: user.name } } }));
+  const pinNote = (id, scope) => {
+    updateIn(scope, (t) => ({ ...t, pin: { id, by: { id: user.id, name: user.name } } }));
     requestAnimationFrame(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; });
   };
 
-  // Only one note can be pinned: pinning another asks first.
-  const togglePin = (id) => {
-    if (notesThread.pin?.id === id) updateThread((t) => ({ ...t, pin: null }));
-    else if (notesThread.pin) setConfirm({ kind: 'pin', id });
-    else pinNote(id);
+  // Only one note can be pinned (one on the conversation, one on the ticket): pinning another asks first.
+  const togglePin = (id, scope) => {
+    const t = threadIn(scope);
+    if (t.pin?.id === id) updateIn(scope, (x) => ({ ...x, pin: null }));
+    else if (t.pin) setConfirm({ kind: 'pin', id, scope });
+    else pinNote(id, scope);
   };
 
-  const scrollToNote = (id) => {
-    if (!findNote(id)) return;
-    setOpenNoteIds((o) => ({ ...o, [`feed-${id}`]: true }));
+  const scrollToNote = (id, scope) => {
+    if (!findNoteIn(scope, id)) return;
+    setOpenNoteIds((o) => ({ ...o, [scope === 'ticket' ? `ticket-${id}` : `feed-${id}`]: true }));
     window.clearTimeout(highlightTimer.current);
     setHighlightId(id);
     highlightTimer.current = window.setTimeout(() => setHighlightId((cur) => (cur === id ? null : cur)), 1400);
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      document.getElementById(`email-note-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById(scope === 'ticket' ? `email-note-ticket-${id}` : `email-note-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }));
   };
 
@@ -452,20 +464,11 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
 
   // An email card: open (header, body, Reply / Forward) or folded to one line. Clicking the header toggles it.
   // `quoted` is the earlier email this one replied to, shown under "..."; `people` names the sender and recipient;
-  // `readOnly` hides the reply and forward actions (Overview cards: replying happens in each conversation's own view). `open` flips the default (the Overview opens its latest email).
-  // `onOpenInTab` (Overview only) shows the open-in-tab button beside the date on hover.
-  const renderMessage = (msg, { quoted, people = { senderOf, recipientOf }, from, readOnly, open = false, onOpenInTab } = {}) => {
-    const isExpanded = expandedIds.includes(msg.id) !== open;
+  const renderMessage = (msg, { quoted, people = { senderOf, recipientOf } } = {}) => {
+    const isExpanded = expandedIds.includes(msg.id);
     const toggle = () => toggleExpand(msg.id);
     const isQuoted = quotedIds.includes(msg.id);
-    const cardProps = { id: `email-card-${msg.id}`, 'data-target': targetId === msg.id ? '' : undefined };
-    const openInTab = onOpenInTab && (
-      <Tooltip content="Open in conversation tab" placement="left" portal>
-        <button type="button" className="detail-open-in-tab" aria-label="Open in conversation tab" onClick={(e) => { e.stopPropagation(); onOpenInTab(); }}>
-          <Icon name="newtab" size={14} />
-        </button>
-      </Tooltip>
-    );
+    const cardProps = { id: `email-card-${msg.id}` };
     return (
       <>
       {isExpanded ? (
@@ -481,17 +484,14 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
               </div>
             </div>
             <div className="header-actions-right">
-              {openInTab}
               <span className="convo-time">{msg.time}</span>
-              {!readOnly && (
-                <button className="icon-btn" onClick={(e) => handleReplyAll(e, msg.id)}>
-                   <img src={replyIcon} alt="Reply" width="16" height="16" />
-                </button>
-              )}
+              <button className="icon-btn" onClick={(e) => handleReplyAll(e, msg.id)}>
+                 <img src={replyIcon} alt="Reply" width="16" height="16" />
+              </button>
               {/* ⋮ on an email: Reply opens the reply box under it; the rest have no action yet */}
               <ConversationMenu
                 className="convo-card-menu"
-                options={readOnly ? EMAIL_CARD_MENU.filter((o) => o.value !== 'reply' && o.value !== 'forward') : EMAIL_CARD_MENU}
+                options={EMAIL_CARD_MENU}
                 onSelect={(value) => { if (value === 'reply') setActiveReplyId(msg.id); }}
               />
             </div>
@@ -519,16 +519,14 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
               {quoted.body.split('\n').map((line, i) => <React.Fragment key={i}>{line}<br /></React.Fragment>)}
             </div>
           )}
-          {!readOnly && (
-            <div className="convo-actions">
-              <button className="convo-btn" onClick={(e) => handleReplyAll(e, msg.id)}>
-                <img src={smallReplyIcon} alt="" width="14" height="14" /> Reply
-              </button>
-              <button className="convo-btn">
-                <img src={smallForwardIcon} alt="" width="14" height="14" /> Forward
-              </button>
-            </div>
-          )}
+          <div className="convo-actions">
+            <button className="convo-btn" onClick={(e) => handleReplyAll(e, msg.id)}>
+              <img src={smallReplyIcon} alt="" width="14" height="14" /> Reply
+            </button>
+            <button className="convo-btn">
+              <img src={smallForwardIcon} alt="" width="14" height="14" /> Forward
+            </button>
+          </div>
         </div>
       ) : (
         <div className="convo-card-collapsed" onClick={toggle} {...cardProps}>
@@ -540,7 +538,6 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
             {/* The whole email on one line, cut with "…" where the card ends (so a wider card shows more) */}
             <p className="collapsed-text">{msg.body.replace(/\s+/g, ' ').trim()}</p>
           </div>
-          {openInTab}
           <span className="convo-time">{msg.time}</span>
         </div>
       )}
@@ -579,53 +576,31 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
   const threadEmails = [...threadMessages, ...(notesThread?.replies ?? [])];
   const previousOf = (list, msg) => list[list.findIndex((m) => m.id === msg.id) - 1];
 
-  // A merged ticket's Overview tab: the ticket's own notes and activity, earliest to latest. No emails: they're in each
-  // conversation's tab. Joining the ticket shows once per merge: "2 conversations merged into TKT#88".
-  const timeline = emails && !openEmail ? (() => {
-    const items = [];
-    const atOf = (x) => x.at ?? timestampOf(x.time ?? '');
-    const joins = new Map();
-    const pushActivity = (row) => {
-      if (row.kind !== 'ticket') { items.push({ kind: 'activity', at: row.at ?? atOf(row), row }); return; }
-      const [action, , , , id] = row.verb.split(' '); // "merged this conversation into TKT#88" / "added this conversation to TKT#88"
-      const key = `${row.at}-${action}`;
-      if (!joins.has(key)) {
-        const item = { kind: 'activity', at: row.at, row: { ...row, id: `join-${key}`, count: 0 } };
-        joins.set(key, item);
-        items.push(item);
-      }
-      const join = joins.get(key).row;
-      join.count += 1;
-      join.text = `${join.count} ${join.count === 1 ? 'conversation' : 'conversations'} ${action === 'merged' ? 'merged into' : 'added to'} ${id}`;
-    };
-    emails.forEach((e) => {
-      // Only the merge itself from each conversation's history: its own activity stays in its view.
-      activityOf(e.id).filter((row) => row.kind === 'ticket').forEach(pushActivity);
-    });
-    activityOf(conversation.id).forEach(pushActivity);
-    notesThread.notes.forEach((note) => items.push({ kind: 'note', at: note.at ?? 0, key: note.id, note }));
-    // A stable sort, so things at the same minute keep their order (an email, then what followed it).
-    return items.sort((a, b) => a.at - b.at);
-  })() : null;
-  const renderTimeline = () => groupActivity(onlyNotes ? timeline.filter((i) => i.kind === 'note') : timeline).map((item) => {
-    if (item.kind === 'activity') return <ActivityGroup key={item.key} rows={item.rows} />;
-    return renderNote(item.note);
-  });
-  // A ticket note inside a conversation's tab: worded "added a note on the ticket" so it isn't mistaken for the conversation's own; read-only, it's edited and pinned on the Overview.
-  const renderTicketNote = (note) => {
-    const id = `ticket-${note.id}`;
+  // A ticket note inside a conversation's tab: worded "added a note on the ticket" so it isn't mistaken for the
+  // conversation's own. Its actions act on the ticket's copy, so a change shows in every conversation.
+  const renderTicketNote = (note, copy = 'ticket') => {
+    const id = `${copy}-${note.id}`;
     return (
       <NoteCard
         key={id}
         note={note}
         onTicket
-        elementId={`email-note-${id}`}
-        expanded={openNoteIds[id] ?? false}
-        onToggle={() => setOpenNoteIds((o) => ({ ...o, [id]: !o[id] }))}
+        elementId={copy === 'ticket' ? `email-note-ticket-${note.id}` : `email-note-ticket-${note.id}-pin`}
+        expanded={openNoteIds[id] ?? !!note.replyTo}
+        pinned={ticketThread?.pin?.id === note.id}
+        highlighted={highlightId === note.id}
+        onToggle={() => setOpenNoteIds((o) => ({ ...o, [id]: !(o[id] ?? !!note.replyTo) }))}
+        onPin={() => togglePin(note.id, 'ticket')}
+        onReply={() => openComposer({ mode: 'reply', noteId: note.id, scope: 'ticket' })}
+        onQuoteClick={note.replyTo ? () => scrollToNote(note.replyTo.noteId, 'ticket') : undefined}
+        onEdit={note.authorId === user.id ? () => openComposer({ mode: 'edit', noteId: note.id, scope: 'ticket' }) : undefined}
+        onDelete={note.authorId === user.id ? () => setConfirm({ kind: 'delete', id: note.id, scope: 'ticket' }) : undefined}
       />
     );
   };
   const pinned = notesThread?.pin ? findNote(notesThread.pin.id) : null;
+  // The ticket's pinned note shows at the top of every conversation of it.
+  const ticketPinned = openEmail && ticketThread?.pin ? findNoteIn('ticket', ticketThread.pin.id) : null;
   // The Reply / Add note footer shows wherever a thread does (not on the Slack tab).
   // The Overview's footer has Add note only (a ticket has no reply of its own).
   const showThread = tab === 'conversation' && !!source;
@@ -712,7 +687,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
             with a blue dot while it's unread and a red ⚡ past its first response time (Figma: Tickets Add/Merge › 4089:1970) */}
         {/* A merged ticket (new-ui): the views are tabs on top — "Conversation", then the Slack channels the open
             conversations are shared to (all of them, each once, whichever conversation is open), then a button to add a Slack channel or ClickUp task — and the ticket's
-            conversations are chips under them: Overview plus one per conversation, with its unread dot and overdue
+            conversations are chips under them: one per conversation (no Overview), with its unread dot and overdue
             FRT ⚡ (the earlier layout, Figma 4026:14306 / 4068:299, with today's data). */}
         {emails && (
           <div className="detail-tabs-row" ref={tabsRowRef}>
@@ -743,7 +718,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
           <div className="detail-email-chips" role="tablist" aria-label="Merged conversations" ref={chipsRowRef}>
             {/* Demo: ⌘ + hover labels the chips */}
             <HoverHighlight targetRef={chipsRowRef} label="Conversations in this ticket" placement="top" />
-            {[{ value: 'overview', label: 'Overview' }, ...emails.map((e) => ({ value: String(e.id), label: emailTabLabel(e), email: e }))].map((chip) => (
+            {[...emails.map((e) => ({ value: String(e.id), label: emailTabLabel(e), email: e }))].map((chip) => (
               <button
                 key={chip.value}
                 type="button"
@@ -789,18 +764,19 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
           <div className="detail-slack-placeholder text-body-small">Slack internal collaboration page</div>
         ) : (
         <>
-        {timeline ? (
-          <div className="messages-container">
-            {pinned && <PinnedNote by={notesThread.pin.by}>{renderNote(pinned, 'pin')}</PinnedNote>}
-            {onlyNotes && !timeline.some((i) => i.kind === 'note') && <p className="en-notes-empty">No notes in this ticket yet.</p>}
-            {renderTimeline()}
-          </div>
-        ) : (
         <div className="messages-container">
+          {ticketPinned && <PinnedNote by={ticketThread.pin.by}>{renderTicketNote(ticketPinned, 'ticket-pin')}</PinnedNote>}
           {pinned && <PinnedNote by={notesThread.pin.by}>{renderNote(pinned, 'pin')}</PinnedNote>}
-          {onlyNotes && (notesThread.notes.length
-            ? notesThread.notes.map((n) => renderNote(n))
-            : <p className="en-notes-empty">No notes in this conversation yet.</p>)}
+          {/* "View only notes": the conversation's notes and the ticket's, in time order */}
+          {onlyNotes && (() => {
+            const all = [
+              ...notesThread.notes.map((n) => ({ n, ticket: false })),
+              ...(openEmail ? ticketThread?.notes ?? [] : []).map((n) => ({ n, ticket: true })),
+            ].sort((a, b) => (a.n.at ?? 0) - (b.n.at ?? 0));
+            return all.length
+              ? all.map(({ n, ticket }) => (ticket ? renderTicketNote(n) : renderNote(n)))
+              : <p className="en-notes-empty">No notes in this conversation yet.</p>;
+          })()}
           {!onlyNotes && threadMessages.map((msg, index) => {
             return (
               <React.Fragment key={msg.id}>
@@ -816,19 +792,20 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
             );
           })}
         </div>
-        )}
         </>
         )}
       </div>
 
       {showThread && (composer ? (
         <NoteComposer
-          key={`${composer.mode}-${composer.noteId ?? 'new'}`}
-          editing={composer.mode === 'edit' ? findNote(composer.noteId) : undefined}
-          replyTo={composer.mode === 'reply' ? findNote(composer.noteId) : undefined}
-          onQuoteClick={() => scrollToNote(composer.noteId)}
+          key={`${composer.scope ?? 'convo'}-${composer.mode}-${composer.noteId ?? 'new'}`}
+          editing={composer.mode === 'edit' ? findNoteIn(composer.scope, composer.noteId) : undefined}
+          replyTo={composer.mode === 'reply' ? findNoteIn(composer.scope, composer.noteId) : undefined}
+          ticketId={composer.mode === 'new' && openEmail && emails.length > 1 ? conversation.ticketId : undefined}
+          onQuoteClick={() => scrollToNote(composer.noteId, composer.scope)}
           onSubmit={submitNote}
-          onCancel={() => setComposer(null)}
+          onCancel={closeComposer}
+          closing={composerClosing}
         />
       ) : !activeReplyId && (
         <div className="en-footer">
@@ -845,7 +822,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
           text="Only one note can be pinned. Replace the note that’s already pinned?"
           confirmLabel="Replace"
           onClose={() => setConfirm(null)}
-          onConfirm={() => { pinNote(confirm.id); setConfirm(null); }}
+          onConfirm={() => { pinNote(confirm.id, confirm.scope); setConfirm(null); }}
         />
       )}
       {confirm?.kind === 'delete' && (
@@ -856,7 +833,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
           icon="delete"
           danger
           onClose={() => setConfirm(null)}
-          onConfirm={() => { deleteNote(confirm.id); setConfirm(null); }}
+          onConfirm={() => { deleteNote(confirm.id, confirm.scope); setConfirm(null); }}
         />
       )}
     </div>

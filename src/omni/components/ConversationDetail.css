@@ -386,24 +386,6 @@
 .detail-email-chip__unread::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--primarySurfaceDefault); }
 .detail-email-chip .detail-email-chip__frt svg { color: var(--errorSurfaceDisabled); }
 
-/* Overview: on hover, the open-in-tab button shows beside the date (the side sheet's button). It opens the email
-   in its conversation, outlined for a moment. */
-/* A folded card shows it on hover; an open card always shows it. */
-.messages-container .convo-card-collapsed .hot-tooltip-wrap:has(.detail-open-in-tab) { display: none; }
-.messages-container .convo-card-collapsed:hover .hot-tooltip-wrap:has(.detail-open-in-tab) { display: inline-flex; }
-.convo-card-collapsed .hot-tooltip-wrap:has(.detail-open-in-tab) { align-self: flex-start; }
-.detail-open-in-tab {
-  display: flex; align-items: center; justify-content: center; flex: none; width: 24px; height: 24px; margin: -2px 0; padding: 0;
-  border: none; border-radius: 6px; background: transparent;
-  color: var(--slateIconsActive); cursor: pointer;
-}
-.detail-open-in-tab:hover { background: var(--slateSurfaceSubtle); }
-:is(.convo-card, .convo-card-collapsed)[data-target] { animation: detail-target 1.6s ease-out; }
-@keyframes detail-target {
-  0%, 60% { box-shadow: 0 0 0 2px var(--primaryBorderDefault); }
-  100% { box-shadow: 0 0 0 2px transparent; }
-}
-
 /* new-ui: a merged ticket's view tabs (Conversation, Slack channels) with the add button at the end of the row */
 .detail-tabs-row {
   display: flex; align-items: center; gap: 8px; flex: none; padding-right: 12px;
@@ -414,7 +396,7 @@
 .detail-tabs-row > .detail-tabs .hot-tab { flex: none; max-width: 250px; }
 /* ...and the ticket's conversations as chips under them: 220px each, label centred (scrolls sideways if many) */
 .detail-email-chip--conversation { width: 220px; }
-.detail-email-chip--conversation .detail-email-chip__label { flex: 1 0 0; text-align: center; }
+.detail-email-chip--conversation .detail-email-chip__label { flex: 1 0 0; text-align: left; } /* next to the icon; the flags stay at the right end */
 
 /* Slack logo on a tab: the tab's text colour when inactive or hovered, full colour when active */
 .detail-slack-logo--tab .detail-slack-logo__mono {
