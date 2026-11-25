@@ -57,8 +57,7 @@ export function TicketCard({ ticket, selected, onSelect, note }) {
 
 // AI recommendations, above the rest of the list (hidden while searching): a violet box named "AI recommendations"
 // with a line saying how many were found, an optional action (Select all) and a fold toggle; inside, the usual cards,
-// each with why it's suggested at its bottom (AI icon + reason, in violet). Ticket → Add conversation (option C) and
-// Add to an existing ticket (option A) on /ai-options.
+// each with why it's suggested at its bottom (AI icon + reason, in violet).
 // Why the AI suggests a card: the AI icon and the reason, in violet, at the card's bottom
 const AiWhy = ({ reason }) => <p className="mc-ai__why"><Icon name="ai" size={14} /><span>{reason}</span></p>;
 // The reason line for an item if the AI suggested it (so it stays on the card in search results too)

@@ -15,17 +15,14 @@ import MergeConversationsSheet from './components/MergeConversationsSheet';
 import AddToTicketSheet, { AddConversationsSheet } from './components/AddToTicketSheet';
 import { CUSTOM_FIELDS } from './data/customFields';
 import { formatNoteTime } from './components/notes/EmailNotes';
-import PostMergePage from './postMerge/PostMergePage';
 import { frtOf } from './data/sla';
 import { recent } from './data/relativeTime';
-import OptionPage from './option/OptionPage';
 import { ArrowMerge } from '../icons/ArrowMerge';
 import { domainOf } from './data/companies';
 import ChannelChatView from './components/ChannelChatView';
 import VoiceCallView from './components/voice/VoiceCallView';
 import { VOICE_INBOXES } from './data/voiceCalls';
 import { CHANNEL_BY_INBOX } from './data/channelChats';
-import MySettingsPage from './pages/MySettingsPage';
 import { useState } from 'react';
 import { conversationsData } from './data/emailConversations';
 import { INITIAL_VIEWS_BY_INBOX } from './data/dummyViews';
@@ -198,8 +195,7 @@ function App() {
 
   const location = useLocation();
   React.useEffect(() => {
-    // Each route/page sets its own title (e.g. MySettingsPage). Only own the
-    // mailbox title here so this always-mounted component doesn't clobber it.
+    // The mailbox's page title.
     if (location.pathname === '/') {
       document.title = 'Omni Tickets - Add/Merge';
     }
@@ -342,11 +338,6 @@ function App() {
             )}
           </>
         } />
-        <Route path="/my-settings" element={<MySettingsPage />} />
-        {/* Explorations for the merged ticket view without tabs (one demo ticket) */}
-        <Route path="/post-merge" element={<PostMergePage />} />
-        {/* Overview (every email on one page) plus a tab per conversation */}
-        <Route path="/option" element={<OptionPage />} />
       </Routes>
       {addSource && (
         <AddToTicketSheet
