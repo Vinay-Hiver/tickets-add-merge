@@ -182,8 +182,9 @@ function App() {
 
   // "Merge and create ticket": a ticket with the chosen title, its assignee and status, the tags of every email and
   // the merged custom fields. The ticket opens; the emails leave the list.
-  const mergeIntoTicket = (selected, titleId) => {
-    const ticket = buildMergedTicket(selected, titleId);
+  const mergeIntoTicket = (selected, titleId, description) => {
+    // The description written in the merge sheet (optional) shows under the ticket's title
+    const ticket = { ...buildMergedTicket(selected, titleId), description: description?.trim() || undefined };
     fields.setAssignee(ticket.id, fields.assigneeOf(titleId));
     fields.setStatus(ticket.id, fields.statusOf(titleId));
     fields.setTags(ticket.id, mergeTags(selected, fields.tagsOf));
@@ -374,7 +375,7 @@ function App() {
           candidates={mergeable.filter((c) => domainOf(c) === domainOf(mergeSource))}
           others={mergeable.filter((c) => domainOf(c) !== domainOf(mergeSource))}
           onClose={() => setMergeSourceId(null)}
-          onMerge={(titleId, conversations) => { mergeIntoTicket(conversations, titleId); setMergeSourceId(null); }}
+          onMerge={(titleId, conversations, description) => { mergeIntoTicket(conversations, titleId, description); setMergeSourceId(null); }}
         />
       )}
     </div>

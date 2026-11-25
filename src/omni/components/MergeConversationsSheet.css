@@ -58,7 +58,6 @@
 /* Ticket card: the title field, Assignee and Status, a line, then what is merged from every conversation */
 .mc-ticket { display: flex; flex-direction: column; gap: 12px; padding: 12px; }
 .mc-ticket__fields { display: flex; flex-direction: column; gap: 4px; }
-.mc-ticket > .mc-ticket__fields { margin-top: -4px; } /* 8px under the helper text, as in Figma */
 .mc-ticket-row { display: flex; align-items: center; min-height: 32px; }
 .mc-ticket-row--top { align-items: flex-start; }
 .mc-ticket-row__label {

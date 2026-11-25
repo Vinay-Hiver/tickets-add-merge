@@ -78,7 +78,7 @@ export default function BulkActionsPanel({ selected, onCancel, onMerge, onAddToT
         <MergeConversationsSheet
           conversations={selected}
           onClose={() => setMerging(false)}
-          onMerge={(titleId) => onMerge(selected, titleId)}
+          onMerge={(titleId, _conversations, description) => onMerge(selected, titleId, description)}
         />
       )}
     </div>

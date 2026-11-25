@@ -60,6 +60,16 @@
   flex-shrink: 0;
 }
 
+.subject-bar-detail.has-description { border-bottom: 0; }
+/* A ticket's description under its title: Body/Small in the subtle text colour, two lines until Show more */
+.detail-description {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px; flex: none;
+  padding: 0 16px 12px; margin-top: -8px; border-bottom: 1px solid var(--slateBorderMild); background: var(--slateSurfaceWhite);
+}
+.detail-description__text { margin: 0; font: var(--fontWeightRegular) 14px/20px var(--fontFamily); color: var(--slateTextSubtle); white-space: pre-wrap; }
+.detail-description__text.is-folded { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.detail-description__more { padding: 0; border: 0; background: none; cursor: pointer; font: var(--fontWeightMedium) 12px/18px var(--fontFamily); color: var(--primarySurfaceDefault); }
+
 .subject-text-large {
   /* Typography: Label/Medium (.text-label-medium, 500 16/24) */
   color: var(--slateTextTitle);

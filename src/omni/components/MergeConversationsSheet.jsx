@@ -6,6 +6,7 @@ import { Checkbox } from '../../components/Checkbox';
 import { Input } from '../../components/Input';
 import { Modal, ModalNote, ModalText } from '../../components/Modal';
 import { Popover } from '../../components/Popover';
+import { Textarea } from '../../components/Textarea';
 import { Tooltip } from '../../components/Tooltip';
 import { Icon } from '../../icons/Icon';
 import { sampleAssignees, statusOptions } from '../../patterns/RightPanel/data/options';
@@ -213,6 +214,8 @@ export default function MergeConversationsSheet({ conversations: preselected, so
   const [picked, setPicked] = React.useState(source ? null : preselected);
   const conversations = picked ?? [];
   const [titleId, setTitleId] = React.useState(preselected?.[0]?.id ?? source?.id);
+  // The new ticket's description (optional), as in Create / Convert to ticket
+  const [description, setDescription] = React.useState('');
   const [closing, setClosing] = React.useState(false);
   // The confirm modal: hidden, showing ('in') or fading out ('out'). The sheet and the modal take turns: one fades
   // out completely before the other fades in (timings in the CSS), so both are never fully visible together.
@@ -293,6 +296,8 @@ export default function MergeConversationsSheet({ conversations: preselected, so
                   <Icon name={status.icon} size={16} />{status.label}
                 </TicketRow>
               </div>
+              <div className="mc-ticket__divider" />
+              <Textarea label="Description" placeholder="Add a description" fullWidth rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
           </section>
 
@@ -340,7 +345,7 @@ export default function MergeConversationsSheet({ conversations: preselected, so
             onClose={cancelConfirm}
             actions={<>
               <Button variant="secondary" size="sm" onClick={cancelConfirm}>Cancel</Button>
-              <Button variant="primary" size="sm" onClick={() => exit(() => onMerge(titleId, conversations))}>Merge and create ticket</Button>
+              <Button variant="primary" size="sm" onClick={() => exit(() => onMerge(titleId, conversations, description))}>Merge and create ticket</Button>
             </>}
           >
             <ModalText>You’re about to merge {conversations.length} conversations into a ticket.</ModalText>

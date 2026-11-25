@@ -183,6 +183,23 @@ const SlackTabIcon = () => (
   </span>
 );
 
+// A ticket's description under its title, folded to two lines; Show more / Show less only when it's longer than that
+function TicketDescription({ text }) {
+  const [open, setOpen] = useState(false);
+  const [long, setLong] = useState(false);
+  const ref = React.useRef(null);
+  React.useLayoutEffect(() => {
+    const el = ref.current;
+    if (el && !open) setLong(el.scrollHeight > el.clientHeight + 1);
+  }, [text, open]);
+  return (
+    <div className="detail-description">
+      <p ref={ref} className={`detail-description__text${open ? '' : ' is-folded'}`}>{text}</p>
+      {long && <button type="button" className="detail-description__more" onClick={() => setOpen((o) => !o)}>{open ? 'Show less' : 'Show more'}</button>}
+    </div>
+  );
+}
+
 const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSignatureId, emailTab: emailTabProp, onEmailTabChange, onAddToTicketClick, onAddConversationClick, panelCollapsed, onExpandPanel }) => {
   const [expandedIds, setExpandedIds] = useState([]);
   const [activeReplyId, setActiveReplyId] = useState(null);
@@ -654,7 +671,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
         {/* The subject bar and the Conversation / Slack tabs stay at the top while the thread scrolls */}
         <div className="detail-sticky">
         {/* Subject Bar */}
-        <div className="subject-bar-detail">
+        <div className={`subject-bar-detail${conversation.description ? ' has-description' : ''}`}>
           <h1 className="subject-text-large text-label-medium">{conversation.subject}</h1>
           <div className="subject-actions">
              {/* A ticket has no reply, reply all or forward of its own: each email in its timeline has them */}
@@ -693,6 +710,9 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
              )}
           </div>
         </div>
+        {/* The ticket's description (from Create / Merge), under the title for every conversation: two lines, then
+            Show more */}
+        {conversation.description && <TicketDescription key={conversation.id} text={conversation.description} />}
 
         {/* A merged ticket: a tab for its Overview (every email on one page, no Slack) and one per merged conversation,
             with a blue dot while it's unread and a red ⚡ past its first response time (Figma: Tickets Add/Merge › 4089:1970) */}
