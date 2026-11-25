@@ -54,11 +54,21 @@ export default function PanelHighlights({ panelRef }) {
     return () => { cancelAnimationFrame(raf); body?.removeEventListener('scroll', measure); window.removeEventListener('resize', measure); };
   }, [cmd, pointerY, panelRef]);
 
+  // Nothing in the panel responds while a part is highlighted (.cmd-locked in App.css)
+  React.useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel || !on) return undefined;
+    panel.classList.add('cmd-locked');
+    return () => panel.classList.remove('cmd-locked');
+  }, [on, panelRef]);
+
   if (!box) return null;
+  // The cutout reaches 8px past the part on every side
+  const cut = { left: box.left - 8, top: box.top - 8, width: box.width + 16, height: box.height + 16 };
   return createPortal(
     <>
-      <div className={`rp-annot${on ? ' is-on' : ''}`} style={{ left: box.left, top: box.top, width: box.width, height: box.height }} />
-      <div className={`rp-annot-label${on ? ' is-on' : ''}`} style={{ left: box.left, top: box.top + box.height / 2 }}>
+      <div className={`rp-annot${on ? ' is-on' : ''}`} style={cut} />
+      <div className={`rp-annot-label${on ? ' is-on' : ''}`} style={{ left: cut.left, top: cut.top + cut.height / 2 }}>
         {box.part === 'ticket' ? 'Ticket details' : 'Conversation details'}
       </div>
     </>,

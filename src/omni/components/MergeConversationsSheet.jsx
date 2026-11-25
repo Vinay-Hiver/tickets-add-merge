@@ -235,6 +235,9 @@ export default function MergeConversationsSheet({ conversations: preselected, so
   const convosRef = React.useRef(null);
   const [hovered, setHovered] = React.useState(null); // 'ticket' | 'convos' | null
   const [label, setLabel] = React.useState(null);
+  // The whole page dims (the modal backdrop's colour) except the highlighted part. Its box stays after ⌘ is let go,
+  // so the dim fades out where it was.
+  const [spot, setSpot] = React.useState(null);
   const shown = cmd ? hovered : null;
   React.useLayoutEffect(() => {
     if (!shown) { setLabel(null); return undefined; }
@@ -243,13 +246,14 @@ export default function MergeConversationsSheet({ conversations: preselected, so
       if (!ref.current) return;
       const b = ref.current.getBoundingClientRect();
       setLabel({ text, left: b.left, top: b.top + b.height / 2 });
+      setSpot({ left: b.left - 18, top: b.top - 18, width: b.width + 36, height: b.height + 36 }); // 8px past the tint's 10px reach
     };
     place();
     window.addEventListener('resize', place);
     return () => window.removeEventListener('resize', place);
   }, [shown, picked]);
   const annot = (key) => ({
-    className: `mc-annot${shown === key ? ' is-on' : ''}`,
+    className: `mc-annot${shown === key ? ' is-on cmd-locked' : ''}`, // nothing inside responds while highlighted
     onMouseEnter: () => setHovered(key),
     onMouseLeave: () => setHovered((h) => (h === key ? null : h)),
   });
@@ -260,6 +264,7 @@ export default function MergeConversationsSheet({ conversations: preselected, so
 
   return createPortal(
     <div className={`mc-backdrop${closing ? ' is-closing' : ''}`} onMouseDown={(e) => { if (e.target === e.currentTarget) dismiss(); }}>
+      {spot && <div className={`mc-spotlight${shown ? ' is-on' : ''}`} style={spot} aria-hidden="true" />}
       {label && <div className="mc-annot-label" style={{ left: label.left, top: label.top }}>{label.text}</div>}
       <aside className={`mc-sheet${confirm !== 'hidden' ? ' is-faded' : ''}`} aria-hidden={confirm !== 'hidden'} role="dialog" aria-modal="true" aria-labelledby="mc-title">
         <header className="mc-header">

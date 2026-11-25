@@ -248,18 +248,26 @@
 .mc-annot { position: relative; }
 .mc-annot::after {
   content: ''; position: absolute; inset: -10px; z-index: 10; border-radius: 14px; pointer-events: none;
-  background: color-mix(in srgb, var(--successSurfaceDefault) 30%, transparent); opacity: 0; transition: opacity 150ms ease;
+  background: transparent; opacity: 0; transition: opacity 150ms ease; /* no tint: the dim around it marks the part */
 }
 .mc-annot.is-on::after { opacity: 1; }
+/* ⌘ + hover: everything but the highlighted part is dimmed, in the modal backdrop's colour. A box over the part with
+   a huge shadow around it does the dimming, so the part shows through clear. Above the sheet; the label sits above it. */
+.mc-spotlight {
+  position: fixed; z-index: 20; border-radius: 14px; pointer-events: none;
+  box-shadow: 0 0 0 200vmax color-mix(in srgb, var(--slateTextTitle) 50%, transparent);
+  opacity: 0; transition: opacity 150ms ease;
+}
+.mc-spotlight.is-on { opacity: 1; }
 .mc-annot-label {
-  position: fixed; z-index: 1; transform: translate(calc(-100% - 64px), -50%); pointer-events: none;
+  position: fixed; z-index: 21; transform: translate(calc(-100% - 64px), -50%); pointer-events: none;
   padding: 8px 20px; border-radius: 999px; white-space: nowrap;
-  background: color-mix(in srgb, var(--successSurfaceDefault) 30%, var(--slateSurfaceWhite));
+  background: var(--slateSurfaceWhite); /* white pill and connector, on the dim */
   font: var(--fontWeightRegular) 16px/24px var(--fontFamily); color: var(--slateTextTitle);
 }
 /* The connector from the pill to the tinted section (the pill sits 64px out; the tint reaches 10px past the section) */
 .mc-annot-label::after {
-  content: ''; position: absolute; left: 100%; top: 50%; width: 54px; height: 2px; transform: translateY(-50%);
+  content: ''; position: absolute; left: 100%; top: 50%; width: 46px; height: 2px; transform: translateY(-50%); /* to the cutout, 18px out */
   background: inherit;
 }
 

@@ -6,6 +6,7 @@ import bulkSelectIllustration from '../assets/bulk-select.png';
 import { domainOf } from '../data/companies';
 import MergeConversationsSheet from './MergeConversationsSheet';
 import useCmdHeld from '../useCmdHeld';
+import HoverHighlight from './HoverHighlight';
 import './BulkActionsPanel.css';
 
 // Why the selection can't be merged, or null when it can.
@@ -35,9 +36,10 @@ export default function BulkActionsPanel({ selected, onCancel, onMerge, onAddToT
   const allEmails = selected.every((c) => !c.ticketId);
   const mergeBlocked = allEmails ? mergeBlockedReason(selected) : null;
   const addBlocked = allEmails ? addBlockedReason(selected) : null;
-  // For demos: holding ⌘ and hovering the new actions (Merge, Add to ticket) tints them, to point them out
-  // (Figma: Tickets Add/Merge › 4122:14703 hover area, 4122:15140 tint).
+  // For demos: holding ⌘ and hovering the new actions (Merge, Add to ticket) dims everything around them, to point
+  // them out (Figma: Tickets Add/Merge › 4122:14703 hover area). The hover area is larger than the group (is-cmd).
   const cmd = useCmdHeld();
+  const newActionsRef = React.useRef(null);
 
   return (
     <div className={`bulk-actions-panel${cmd ? ' is-cmd' : ''}`}>
@@ -51,7 +53,8 @@ export default function BulkActionsPanel({ selected, onCancel, onMerge, onAddToT
         <Action icon="flag" label="Change status" />
         <Action icon="tag" label="Manage tags" />
         {allEmails && (
-          <div className="bulk-actions-new">
+          <div className="bulk-actions-new" ref={newActionsRef}>
+          <HoverHighlight targetRef={newActionsRef} inset={0} />
           {allEmails && (mergeBlocked ? (
             <Tooltip content={mergeBlocked} placement="right">
               <Action icon={<ArrowMerge />} label="Merge conversations" disabled />

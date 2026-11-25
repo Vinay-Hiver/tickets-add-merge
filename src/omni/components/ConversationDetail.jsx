@@ -260,6 +260,17 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
   // A merged ticket's Slack channels: every channel any of its conversations is shared to, each once (new-ui tabs)
   // Rows a ⌘ + hover demo highlight attaches to (merged tickets)
   const tabsRowRef = React.useRef(null);
+  // The ⌘ + hover highlight on the tabs row covers the Slack channel tabs and the add button, not "Conversation"
+  const slackTabsBox = (row) => {
+    const parts = [...row.querySelectorAll('.hot-tab')].slice(1);
+    const add = row.querySelector('.detail-email-chip--add');
+    if (add) parts.push(add);
+    if (!parts.length) return null;
+    const rects = parts.map((p) => p.getBoundingClientRect());
+    const rowRect = row.getBoundingClientRect();
+    // Full row height, so it lines up with the row as before; 4px past the ends
+    return { left: Math.min(...rects.map((r) => r.left)) - 4, right: Math.max(...rects.map((r) => r.right)) + 4, top: rowRect.top, bottom: rowRect.bottom };
+  };
   const chipsRowRef = React.useRef(null);
   const ticketChannels = emails ? [...new Set(emails.flatMap((e) => slackChannelsFor(e.id)))] : [];
   const convoId = source ? String(source.id) : null;
@@ -692,7 +703,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
         {emails && (
           <div className="detail-tabs-row" ref={tabsRowRef}>
             {/* Demo: ⌘ + hover labels the tabs */}
-            <HoverHighlight targetRef={tabsRowRef} label="Slack internal collaboration" placement="top" />
+            <HoverHighlight targetRef={tabsRowRef} label="Slack internal collaboration" placement="top" getBox={slackTabsBox} />
             <Tabs
               className="detail-tabs"
               aria-label="Conversation views"
