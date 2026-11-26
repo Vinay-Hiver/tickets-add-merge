@@ -10,6 +10,7 @@ import { useConversationFields } from '../../ConversationFields';
 import { TAGS } from '../../data/tags';
 import { CUSTOM_FIELDS } from '../../data/customFields';
 import { fieldChangeHandlers } from '../../fieldActivity';
+import { CO_ASSIGNEE_PEOPLE, NORA_ID, setCoAssignee, useCoAssigneeDemo } from '../../coAssigneeDemo';
 
 /**
  * The storybook right panel plus the link flow: "Link" opens the Link
@@ -23,6 +24,7 @@ export default function LinkedRightPanel({ conversationId, canLink = true, ...pa
   const { user } = useCurrentUser();
   const viewer = useConversationViewer();
   const conversationFields = useConversationFields();
+  const demo = useCoAssigneeDemo();
   const { assigneeOf, assigneeNameOf, statusOf, tagsOf, customFieldsOf } = conversationFields;
   const [open, setOpen] = React.useState(false);
   const [viewAll, setViewAll] = React.useState(false);
@@ -67,6 +69,8 @@ export default function LinkedRightPanel({ conversationId, canLink = true, ...pa
           conversationId={id}
           assignee={id ? assigneeOf(id) : undefined}
           onAssigneeChange={id ? changeAssignee : undefined}
+          // Co-assignee demo: only Nora - Shopify has the field (shared with /co-assignee.html)
+          {...(id === String(NORA_ID) ? { coAssignee: demo.coAssigneeOf(id), onCoAssigneeChange: (v) => setCoAssignee(id, v), coAssigneePeople: CO_ASSIGNEE_PEOPLE } : {})}
           status={id ? statusOf(id) : undefined}
           onStatusChange={id ? changeStatus : undefined}
           tagOptions={TAGS}

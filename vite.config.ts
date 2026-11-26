@@ -5,10 +5,10 @@ import { defineConfig } from 'vite'
 // fs.strict false: the parent folder name contains a ':' which breaks Vite's file-access allow check (403).
 export default defineConfig({
   plugins: [react()],
-  // Pages: the prototype (index.html), the demo's intro slideshow (concept.html) and its run sheet (flows.html).
+  // Pages: the prototype (index.html), the demo's intro slideshow (concept.html) and its run sheet (flows.html), and the co-assignee demo's second view (co-assignee.html).
   build: {
     assetsInlineLimit: 0,
-    rollupOptions: { input: { main: 'index.html', concept: 'concept.html', flows: 'flows.html' } },
+    rollupOptions: { input: { main: 'index.html', concept: 'concept.html', flows: 'flows.html', coAssignee: 'co-assignee.html' } },
   },
   server: { fs: { strict: false } },
 })

@@ -14,13 +14,18 @@ export const USERS = [
   },
 ];
 
+// The co-assignee demo's viewer (/co-assignee.html): not a member of Email Support 01, where Nora - Shopify is.
+// Not in USERS, so the prototype can't switch to her.
+export const AMY_USER = { id: 'amy', name: 'Amy', email: 'amy@hiverhq.co.in', color: 'violet', hiddenInboxes: ['Email Support 01'] };
+
 const CurrentUserContext = React.createContext({ user: USERS[0], switchUser: () => {} });
 
 export const useCurrentUser = () => React.useContext(CurrentUserContext);
 
-export function CurrentUserProvider({ children }) {
+// `fixedUser`: always view as this person (the co-assignee demo views as Amy).
+export function CurrentUserProvider({ children, fixedUser = undefined }) {
   const [userId, setUserId] = React.useState(USERS[0].id);
-  const user = USERS.find((u) => u.id === userId) || USERS[0];
+  const user = fixedUser ?? (USERS.find((u) => u.id === userId) || USERS[0]);
   const value = React.useMemo(() => ({ user, switchUser: setUserId }), [user]);
   return (
     <CurrentUserContext.Provider value={value}>

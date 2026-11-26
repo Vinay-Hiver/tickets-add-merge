@@ -150,6 +150,8 @@
 .card-select.is-checked .card-select__box { display: flex; }
 .card-select:hover .card-select__icon,
 .card-select.is-checked .card-select__icon { visibility: hidden; }
+.card-select--static:hover .card-select__box { display: none; }
+.card-select--static:hover .card-select__icon { visibility: visible; }
 
 .card-sender-info {
   display: flex;

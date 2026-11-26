@@ -19,7 +19,7 @@ createRoot(document.getElementById('root')!).render(
       {/* Links are shared by everyone, so they sit outside the per-user view (which resets on switch). */}
       <LinkedConversationsProvider>
         <ConversationFieldsProvider>
-          <EmailNotesProvider>
+          <EmailNotesProvider syncKey="tam-co-assignee-notes" resetOnLoad>
           <CurrentUserProvider>
             <ConversationViewerProvider>
               <App />

@@ -49,7 +49,8 @@ const ConversationList = ({ conversations, selectedId, onSelect, activeFilter, c
             <div className="card-header">
               <div className="card-sender-info">
                 {/* [inbox icon] [name], as in every inbox; tickets use the ticket icon */}
-                <span className={`card-select ${checked ? 'is-checked' : ''}`} onClick={(e) => e.stopPropagation()}>
+                {/* Without `onToggleCheck` (the co-assignee view) the icon stays: no ticking, no bulk actions */}
+                <span className={`card-select ${checked ? 'is-checked' : ''}${onToggleCheck ? '' : ' card-select--static'}`} onClick={(e) => e.stopPropagation()}>
                   <span className="card-select__icon"><InboxIcon channel="email" ticket={!!convo.ticketId} /></span>
                   <span className="card-select__box">
                     <Checkbox checked={checked} onChange={() => onToggleCheck(convo.id)} aria-label={`Select conversation from ${convo.sender}`} />

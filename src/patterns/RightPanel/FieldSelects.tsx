@@ -52,10 +52,13 @@ export type AssigneeFieldProps = {
   defaultValue?: string
   onChange?: (value: string) => void
   people?: Assignee[]
+  /** The row's name and icon: Assignee by default (also used for Co-assignee). */
+  label?: string
+  icon?: IconName
 }
 
 /** The Assignee field: pressing the name opens a searchable list of people (with a "None" row) in a Dropdown. */
-export function AssigneeField({ value, defaultValue, onChange, people = sampleAssignees }: AssigneeFieldProps) {
+export function AssigneeField({ value, defaultValue, onChange, people = sampleAssignees, label = 'Assignee', icon = 'assigned' }: AssigneeFieldProps) {
   const [inner, setInner] = useState(value ?? defaultValue ?? people[0]?.value ?? 'none')
   const [open, setOpen] = useState(false)
   const current = value ?? inner
@@ -63,11 +66,11 @@ export function AssigneeField({ value, defaultValue, onChange, people = sampleAs
   const name = person ? person.label.replace(/ \(Me\)$/, '') : 'None'
   return (
     <SelectValue
-      icon="assigned" label="Assignee" open={open} onOpenChange={setOpen} ariaLabel={`Assignee: ${name}`}
+      icon={icon} label={label} open={open} onOpenChange={setOpen} ariaLabel={`${label}: ${name}`}
       shown={person ? <Avatar initial={name} size="small" color={person.color} /> : <Icon name="user" size={14} />}
     >
       <Dropdown
-        variant="avatar" searchable searchPlaceholder="Search Assignee" value={current}
+        variant="avatar" searchable searchPlaceholder={`Search ${label}`} value={current}
         options={[{ value: 'none', label: 'None', icon: 'user', iconBackground: true }, ...people.map((p) => ({ value: p.value, label: p.label, color: p.color, status: p.status }))]}
         onChange={(v) => { const next = String(v); setInner(next); onChange?.(next); setOpen(false) }}
       />

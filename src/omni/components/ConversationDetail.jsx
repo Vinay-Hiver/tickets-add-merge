@@ -200,7 +200,11 @@ function TicketDescription({ text }) {
   );
 }
 
-const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSignatureId, emailTab: emailTabProp, onEmailTabChange, onAddToTicketClick, onAddConversationClick, panelCollapsed, onExpandPanel }) => {
+// `limitedTo` (the co-assignee view, /co-assignee.html): the ids of the conversations the viewer is co-assignee on. In
+// a ticket only their chips show; they can read and add notes, but not reply, forward, change the ticket or see its
+// Slack tabs and ticket notes (as a co-assignee outside the inbox can't today).
+const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSignatureId, emailTab: emailTabProp, onEmailTabChange, onAddToTicketClick, onAddConversationClick, panelCollapsed, onExpandPanel, limitedTo }) => {
+  const limited = !!limitedTo;
   const [expandedIds, setExpandedIds] = useState([]);
   const [activeReplyId, setActiveReplyId] = useState(null);
   const [tab, setTab] = useState('conversation');
@@ -236,7 +240,8 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
     setConfirm(null);
     // A ticket opens on its first unread conversation, else its first one
     if (conversation?.emails?.length) {
-      const first = conversation.emails.find((e) => isUnread(e)) ?? conversation.emails[0];
+      const open = limited ? conversation.emails.filter((e) => limitedTo.includes(String(e.id))) : conversation.emails;
+      const first = open.find((e) => isUnread(e)) ?? open[0] ?? conversation.emails[0];
       selectEmail(String(first.id));
     } else {
       setEmailTab(null);
@@ -513,13 +518,13 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
             </div>
             <div className="header-actions-right">
               <span className="convo-time">{msg.time}</span>
-              <button className="icon-btn" onClick={(e) => handleReplyAll(e, msg.id)}>
+              <button className="icon-btn" disabled={limited} onClick={(e) => handleReplyAll(e, msg.id)}>
                  <img src={replyIcon} alt="Reply" width="16" height="16" />
               </button>
               {/* ⋮ on an email: Reply opens the reply box under it; the rest have no action yet */}
               <ConversationMenu
                 className="convo-card-menu"
-                options={EMAIL_CARD_MENU}
+                options={limited ? EMAIL_CARD_MENU.filter((o) => o.value !== 'reply' && o.value !== 'forward') : EMAIL_CARD_MENU}
                 onSelect={(value) => { if (value === 'reply') setActiveReplyId(msg.id); }}
               />
             </div>
@@ -548,10 +553,10 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
             </div>
           )}
           <div className="convo-actions">
-            <button className="convo-btn" onClick={(e) => handleReplyAll(e, msg.id)}>
+            <button className="convo-btn" disabled={limited} onClick={(e) => handleReplyAll(e, msg.id)}>
               <img src={smallReplyIcon} alt="" width="14" height="14" /> Reply
             </button>
-            <button className="convo-btn">
+            <button className="convo-btn" disabled={limited}>
               <img src={smallForwardIcon} alt="" width="14" height="14" /> Forward
             </button>
           </div>
@@ -589,7 +594,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
     // marked "Ticket". The Overview shows them as they are.
     ...(openEmail ? activityOf(conversation.id).map((row) => ({ kind: 'activity', at: row.at, row: { ...row, id: `ticket-${row.id}`, prefix: 'Ticket' } })) : []),
     // A note added on the Overview belongs to the ticket and shows in every conversation (read-only there).
-    ...(openEmail ? (threads[String(conversation.id)]?.notes ?? []).map((n) => ({ kind: 'note', at: n.at ?? 0, note: n, ticketNote: true })) : []),
+    ...(openEmail && !limited ? (threads[String(conversation.id)]?.notes ?? []).map((n) => ({ kind: 'note', at: n.at ?? 0, note: n, ticketNote: true })) : []),
     ...(notesThread.replies ?? []).map((msg) => ({ kind: 'message', at: msg.at, key: msg.id, msg })),
   ].sort((a, b) => a.at - b.at) : [];
   const asActivity = (rows) => rows.map((row) => ({ kind: 'activity', row }));
@@ -628,7 +633,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
   };
   const pinned = notesThread?.pin ? findNote(notesThread.pin.id) : null;
   // The ticket's pinned note shows at the top of every conversation of it.
-  const ticketPinned = openEmail && ticketThread?.pin ? findNoteIn('ticket', ticketThread.pin.id) : null;
+  const ticketPinned = openEmail && !limited && ticketThread?.pin ? findNoteIn('ticket', ticketThread.pin.id) : null;
   // The Reply / Add note footer shows wherever a thread does (not on the Slack tab).
   // The Overview's footer has Add note only (a ticket has no reply of its own).
   const showThread = tab === 'conversation' && !!source;
@@ -641,8 +646,9 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
           <button className="icon-btn">
              <img src={titlePrint} alt="Print" width="16" height="16" />
           </button>
-          {/* Ticket and conversation actions. Merging is a bulk action only (from the list), not in this header. */}
-          {conversation.ticketId ? (
+          {/* Ticket and conversation actions. Merging is a bulk action only (from the list), not in this header. A
+              co-assignee has neither. */}
+          {limited ? null : conversation.ticketId ? (
             <Tooltip content="Add conversation" placement="bottom">
               <button type="button" className="icon-btn" aria-label="Add conversation" onClick={onAddConversationClick}><MessagePlusSquare size={16} /></button>
             </Tooltip>
@@ -677,20 +683,20 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
              {/* A ticket has no reply, reply all or forward of its own: each email in its timeline has them */}
              {!emails && (
                <>
-                 <button className="icon-btn" onClick={(e) => handleReplyAll(e, expandedIds[0] || (conversation.messages.length > 0 ? conversation.messages[0].id : null))}>
+                 <button className="icon-btn" disabled={limited} onClick={(e) => handleReplyAll(e, expandedIds[0] || (conversation.messages.length > 0 ? conversation.messages[0].id : null))}>
                    <img src={replyIcon} alt="Reply" width="16" height="16" />
                  </button>
-                 <button className="icon-btn" onClick={(e) => handleReplyAll(e, expandedIds[0])}>
+                 <button className="icon-btn" disabled={limited} onClick={(e) => handleReplyAll(e, expandedIds[0])}>
                    <img src={replyAllIcon} alt="Reply All" width="16" height="16" />
                  </button>
-                 <button className="icon-btn">
+                 <button className="icon-btn" disabled={limited}>
                    <img src={forwardIcon} alt="Forward" width="16" height="16" />
                  </button>
                </>
              )}
              {source && (
                <ConversationMenu
-                 options={emails ? EMAIL_MENU.filter((o) => !['reply', 'reply-all', 'forward'].includes(o.value)) : EMAIL_MENU}
+                 options={emails || limited ? EMAIL_MENU.filter((o) => !['reply', 'reply-all', 'forward'].includes(o.value)) : EMAIL_MENU}
                  onlyNotes={onlyNotes}
                  onSelect={(value) => {
                    const last = threadMessages[lastIndex]?.id;
@@ -731,10 +737,10 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
               onChange={setTab}
               tabs={[
                 { value: 'conversation', label: 'Conversation' },
-                ...ticketChannels.map((channel) => ({ value: `slack:${channel}`, label: channel, icon: <SlackTabIcon /> })),
+                ...(limited ? [] : ticketChannels).map((channel) => ({ value: `slack:${channel}`, label: channel, icon: <SlackTabIcon /> })),
               ]}
             />
-            {(
+            {!limited && (
               <button type="button" className="detail-email-chip detail-email-chip--add" aria-label="Add a Slack channel or ClickUp task">
                 <span className="detail-add-apps">
                   <span className="detail-add-apps__item"><Icon name="add" size={14} /></span>
@@ -749,7 +755,8 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
           <div className="detail-email-chips" role="tablist" aria-label="Merged conversations" ref={chipsRowRef}>
             {/* Demo: ⌘ + hover labels the chips */}
             <HoverHighlight targetRef={chipsRowRef} label="Conversations in this ticket" placement="top" />
-            {[...emails.map((e) => ({ value: String(e.id), label: emailTabLabel(e), email: e }))].map((chip) => (
+            {/* A co-assignee only sees the conversations they're co-assignee on */}
+            {[...emails.filter((e) => !limited || limitedTo.includes(String(e.id))).map((e) => ({ value: String(e.id), label: emailTabLabel(e), email: e }))].map((chip) => (
               <button
                 key={chip.value}
                 type="button"
@@ -784,7 +791,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
             onChange={setTab}
             tabs={[
               { value: 'conversation', label: 'Conversation' },
-              { value: `slack:${slackChannelFor(conversation.id)}`, label: slackChannelFor(conversation.id), icon: <SlackTabIcon /> },
+              ...(limited ? [] : [{ value: `slack:${slackChannelFor(conversation.id)}`, label: slackChannelFor(conversation.id), icon: <SlackTabIcon /> }]),
             ]}
           />
         )}
@@ -802,7 +809,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
           {onlyNotes && (() => {
             const all = [
               ...notesThread.notes.map((n) => ({ n, ticket: false })),
-              ...(openEmail ? ticketThread?.notes ?? [] : []).map((n) => ({ n, ticket: true })),
+              ...(openEmail && !limited ? ticketThread?.notes ?? [] : []).map((n) => ({ n, ticket: true })),
             ].sort((a, b) => (a.n.at ?? 0) - (b.n.at ?? 0));
             return all.length
               ? all.map(({ n, ticket }) => (ticket ? renderTicketNote(n) : renderNote(n)))
@@ -832,7 +839,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
           key={`${composer.scope ?? 'convo'}-${composer.mode}-${composer.noteId ?? 'new'}`}
           editing={composer.mode === 'edit' ? findNoteIn(composer.scope, composer.noteId) : undefined}
           replyTo={composer.mode === 'reply' ? findNoteIn(composer.scope, composer.noteId) : undefined}
-          ticketId={composer.mode === 'new' && openEmail && emails.length > 1 ? conversation.ticketId : undefined}
+          ticketId={composer.mode === 'new' && openEmail && emails.length > 1 && !limited ? conversation.ticketId : undefined}
           onQuoteClick={() => scrollToNote(composer.noteId, composer.scope)}
           onSubmit={submitNote}
           onCancel={closeComposer}
@@ -842,7 +849,7 @@ const ConversationDetail = ({ conversation, signatures, setSignatures, defaultSi
         <div className="en-footer">
           {/* A ticket's own view (a merged ticket's Overview, or a ticket that was never merged) has no reply: only Add
               note. A merged conversation's tab has both. */}
-          {(openEmail || !conversation.ticketId) && <button type="button" className="en-footer__btn" onClick={(e) => handleReplyAll(e, threadMessages[lastIndex]?.id)}><Icon name="reply" size={16} />Reply</button>}
+          {(openEmail || !conversation.ticketId) && <button type="button" className="en-footer__btn" disabled={limited} onClick={(e) => handleReplyAll(e, threadMessages[lastIndex]?.id)}><Icon name="reply" size={16} />Reply</button>}
           <button type="button" className="en-footer__btn" onClick={() => openComposer({ mode: 'new' })}><img src={noteIcon} alt="" />Add note</button>
         </div>
       ))}

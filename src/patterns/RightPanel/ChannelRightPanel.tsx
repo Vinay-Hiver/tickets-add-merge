@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { Fragment, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
@@ -14,6 +14,7 @@ import { RightPanel, RightPanelSection, RightPanelTop } from './RightPanel'
 import { ActivityNotes } from './ActivityNotes'
 import { AssigneeField, StatusField, TagsField } from './FieldSelects'
 import type { TagOption } from './FieldSelects'
+import type { Assignee } from './data/options'
 import { customFieldKinds, getChannel, sampleAssignees, samples, statusOptions } from './data'
 import type { ChannelId, ChannelSample, FieldDef, FieldKind, ResolvedSection } from './data'
 
@@ -258,7 +259,7 @@ const EMAIL_HIDDEN_SECTIONS = ['activity']
 const TICKET_SECTIONS = ['customFields', 'emailAccount']
 
 /** The storybook right panel for one channel: its tab, top section, sub-sections in order and "Customize widgets". */
-export function ChannelRightPanel({ channel, inboxName, unassigned, conversationId, ticketId, sla, assignee, onAssigneeChange, status, onStatusChange, tagOptions, tags, onTagsChange, customFields, onCustomFieldChange, onLinkClick, linkedConversations = [], onViewAll, onUnlink, onOpenConversation }: {
+export function ChannelRightPanel({ channel, inboxName, unassigned, conversationId, ticketId, sla, assignee, onAssigneeChange, coAssignee, onCoAssigneeChange, coAssigneePeople, status, onStatusChange, tagOptions, tags, onTagsChange, customFields, onCustomFieldChange, onLinkClick, linkedConversations = [], onViewAll, onUnlink, onOpenConversation }: {
   channel: ChannelId
   /** Email only: the conversation is a ticket with this ID, so the panel uses the ticket layout. */
   ticketId?: string
@@ -267,6 +268,10 @@ export function ChannelRightPanel({ channel, inboxName, unassigned, conversation
   /** The conversation's assignee (`none` when unassigned), when the caller keeps it. Leave out to let the field manage itself. */
   assignee?: string
   onAssigneeChange?: (value: string) => void
+  /** With `coAssigneePeople`: a Co-assignee field under Assignee, the same field with its own list (`none` when empty). */
+  coAssignee?: string
+  onCoAssigneeChange?: (value: string) => void
+  coAssigneePeople?: Assignee[]
   /** The conversation's status, when the caller keeps it (one value per conversation). */
   status?: 'open' | 'pending' | 'closed'
   onStatusChange?: (value: 'open' | 'pending' | 'closed') => void
@@ -313,7 +318,12 @@ export function ChannelRightPanel({ channel, inboxName, unassigned, conversation
     <RightPanel key={isTicket ? 'ticket' : channel} aria-label="Details" tabs={def.tabs} customizeWidgets={def.footer.some((f) => f.id === 'customizeWidgets')}>
       <RightPanelTop title={inboxName ?? sample.inboxName} alert={sla && <SlaAlert kind="frt" status={sla.status} time={sla.time} />}>
         {topFields.map((f) => {
-          if (f.kind === 'assignee') return <AssigneeField key={`${f.id}-${conversationId}-${unassigned}`} value={assignee} onChange={onAssigneeChange} defaultValue={unassigned ? 'none' : undefined} />
+          if (f.kind === 'assignee') return (
+            <Fragment key={f.id}>
+              <AssigneeField key={`${f.id}-${conversationId}-${unassigned}`} value={assignee} onChange={onAssigneeChange} defaultValue={unassigned ? 'none' : undefined} />
+              {coAssigneePeople && <AssigneeField key={`co-${conversationId}`} label="Co-assignee" icon="team" people={coAssigneePeople} value={coAssignee ?? 'none'} onChange={onCoAssigneeChange} />}
+            </Fragment>
+          )
           if (f.kind === 'status') return <StatusField key={`${f.id}-${conversationId}`} value={status} onChange={onStatusChange} />
           if (f.id === 'ticketId') return <Row key={f.id} icon="ticket" label={f.label}><span className="hot-rp-ticket-id">{ticketId}</span></Row>
           if (f.kind === 'tags' && tagOptions && tags && onTagsChange) return <TagsField key={`${f.id}-${conversationId}`} options={tagOptions} value={tags} onChange={onTagsChange} />
@@ -357,6 +367,10 @@ export type TicketConversation = {
   assignee: string
   status: 'open' | 'pending' | 'closed'
   contact: { name: string; email: string; account: string; conversations: number }
+  /** With `coAssigneePeople`: the conversation's co-assignee, which stays on the conversation inside a ticket (editable). */
+  coAssignee?: string
+  onCoAssigneeChange?: (value: string) => void
+  coAssigneePeople?: Assignee[]
 }
 
 /**
@@ -423,6 +437,9 @@ export function TicketRightPanel({ inboxName, ticketId, ticketKey, assignee, onA
               <span className="hot-rp-history" tabIndex={0}>{oldStatus && <Icon name={oldStatus.icon} size={16} />}{oldStatus?.label}</span>
             </Tooltip>
           </Row>
+          {conversation.coAssigneePeople && (
+            <AssigneeField key={`co-${conversation.subject}`} label="Co-assignee" icon="team" people={conversation.coAssigneePeople} value={conversation.coAssignee ?? 'none'} onChange={conversation.onCoAssigneeChange} />
+          )}
         </div>
       </section>
     ),

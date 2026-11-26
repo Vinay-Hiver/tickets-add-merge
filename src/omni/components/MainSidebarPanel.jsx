@@ -152,12 +152,14 @@ const NestedGroup = ({ expanded, children }) => {
 const slugifyInbox = (name) => name.toLowerCase().replace(/\s+/g, '-');
 const ALL_INBOX_NAMES = Object.keys(INITIAL_VIEWS_BY_INBOX);
 
-const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole, onOpenSearch }) => {
+// `myWork` ({ count }): a "My Work" row at the top, selected (the co-assignee view, /co-assignee.html). There the
+// inboxes are only shown: `inboxesInert` keeps them closed and not clickable.
+const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole, onOpenSearch, myWork, inboxesInert }) => {
   // Only the inboxes the current user is a member of.
   const { user } = useCurrentUser();
   const INBOX_NAMES = ALL_INBOX_NAMES.filter((name) => !user.hiddenInboxes?.includes(name));
   const [expandedInboxes, setExpandedInboxes] = React.useState(() =>
-    INBOX_NAMES.reduce((acc, name, i) => ({ ...acc, [slugifyInbox(name)]: i === 0 }), {})
+    INBOX_NAMES.reduce((acc, name, i) => ({ ...acc, [slugifyInbox(name)]: i === 0 && !inboxesInert }), {})
   );
 
   const [allViewsInbox, setAllViewsInbox] = React.useState(null);
@@ -179,6 +181,7 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole, onOpenSear
   const [viewsByInbox, setViewsByInbox] = React.useState(INITIAL_VIEWS_BY_INBOX);
 
   const toggleInbox = (name) => {
+    if (inboxesInert) return;
     const key = slugifyInbox(name);
     const willExpand = !expandedInboxes[key];
     setExpandedInboxes(prev => ({
@@ -347,7 +350,18 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole, onOpenSear
       </div>
 
       <div className="sidebar-content">
-        <div className="section-title">Shared Inbox</div>
+        {myWork && (
+          <div className="nav-group nav-group--my-work">
+            <div className="nav-item active">
+              <div className="nav-content">
+                <span className="item-icon"><HotIcon name="emailinbox" size={16} /></span>
+                <span>My Work</span>
+              </div>
+              <span className="count">{myWork.count}</span>
+            </div>
+          </div>
+        )}
+        <div className={`section-title${myWork ? ' margin-top' : ''}`}>Shared Inbox</div>
         
         <div className="nav-group">
           {INBOX_NAMES.map((name) => {
@@ -355,7 +369,7 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole, onOpenSear
             return (
               <React.Fragment key={key}>
                 <div
-                  className={`nav-item accordion-trigger ${expandedInboxes[key] ? 'expanded' : ''}`}
+                  className={`nav-item accordion-trigger ${expandedInboxes[key] ? 'expanded' : ''}${inboxesInert ? ' is-inert' : ''}`}
                   onClick={() => toggleInbox(name)}
                 >
                   <div className="nav-content">

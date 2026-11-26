@@ -878,3 +878,6 @@
   border-top: 1px solid var(--slateBorderLight);
   margin: 4px 4px;
 }
+
+/* The co-assignee view (/co-assignee.html): inboxes are shown but can't be opened */
+.nav-item.is-inert, .nav-item.is-inert:hover { cursor: default; background: transparent; }

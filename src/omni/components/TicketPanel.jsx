@@ -8,6 +8,7 @@ import { CUSTOM_FIELDS } from '../data/customFields';
 import { TAGS } from '../data/tags';
 import { companyOf, domainOf } from '../data/companies';
 import { frtOf, rtOf } from '../data/sla';
+import { CO_ASSIGNEE_PEOPLE, NORA_ID, setCoAssignee, useCoAssigneeDemo } from '../coAssigneeDemo';
 
 // The right panel of a merged ticket. The ticket's values are its own (set at merge, editable here); in an email's tab
 // that email's contact and old assignee/status follow (its notes and activity are in the thread). Everything comes from the prototype's data.
@@ -15,6 +16,7 @@ import { frtOf, rtOf } from '../data/sla';
 const customerEmailOf = (c) => c.customerEmail ?? c.messages?.[0]?.email;
 export default function TicketPanel({ ticket, emailTab, inboxName }) {
   const fields = useConversationFields();
+  const demo = useCoAssigneeDemo();
   const { user } = useCurrentUser();
   const id = String(ticket.id);
   // After a merge, assignee, status, tags and custom fields belong to the ticket: changes are logged on the ticket
@@ -51,6 +53,8 @@ export default function TicketPanel({ ticket, emailTab, inboxName }) {
         sla: frtOf(email),
         assignee: fields.assigneeOf(email.id),
         status: fields.statusOf(email.id),
+        // Co-assignee demo: Nora's co-assignee stays on her conversation inside the ticket
+        ...(email.id === NORA_ID ? { coAssignee: demo.coAssigneeOf(email.id), onCoAssigneeChange: (v) => setCoAssignee(email.id, v), coAssigneePeople: CO_ASSIGNEE_PEOPLE } : {}),
         contact: {
           name: email.messages[0]?.sender ?? email.sender,
           email: customer,

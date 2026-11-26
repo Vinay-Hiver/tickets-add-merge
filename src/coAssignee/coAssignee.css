@@ -1,0 +1,13 @@
+/* /co-assignee.html: Amy's view. Tokens only. */
+
+/* Nothing selected (My Work is empty): the rest of the page stays blank */
+.coa-empty { flex: 1; min-width: 0; background: var(--slateSurfaceSubtle); }
+
+/* Amy can't change the conversation's or the ticket's fields, only remove herself as co-assignee */
+.coa-panel .hot-rp-field__value :is(button, input, textarea, select):not([aria-label^="Co-assignee"]) { pointer-events: none; }
+.coa-panel .hot-rp-select:not([aria-label^="Co-assignee"]) .hot-rp-select__chevron { display: none; }
+
+/* Actions a co-assignee can't take: shown, but greyed out and inert (as in the product) */
+.conversation-detail :is(.icon-btn, .convo-btn, .en-footer__btn):disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+/* Custom fields: the value is the button itself (click to edit), so it's locked here too */
+.coa-panel .hot-rp-cf-value { pointer-events: none; }

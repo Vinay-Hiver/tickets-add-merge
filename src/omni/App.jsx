@@ -29,6 +29,7 @@ import { INITIAL_VIEWS_BY_INBOX } from './data/dummyViews';
 import { useCurrentUser } from './CurrentUser';
 import { useConversationFields } from './ConversationFields';
 import { addToTicket, buildMergedTicket, mergeCustomFields, mergeTags, timestampOf } from './data/merge';
+import { NORA_ID, resetCoAssigneeDemo, setDemoTicket } from './coAssigneeDemo';
 
 
 // Fallback dummy threads for views (e.g. Team, Tickets, Pending, Closed,
@@ -191,7 +192,16 @@ function App() {
     setMergedAwayIds((ids) => [...ids, ...ticket.mergedFrom]);
     setCheckedIds([]);
     setSelectedId(ticket.id);
+    shareWithCoAssignee(ticket, { primaryId: titleId, assignee: fields.assigneeOf(titleId), status: fields.statusOf(titleId), tags: mergeTags(selected, fields.tagsOf) });
   };
+
+  // Co-assignee demo: when Nora - Shopify joins a ticket, /co-assignee.html (Amy's view, another tab) gets the ticket
+  const shareWithCoAssignee = (ticket, values) => {
+    if (!ticket.mergedFrom.includes(NORA_ID)) return;
+    setDemoTicket({ id: ticket.id, ids: ticket.mergedFrom, ticketId: ticket.ticketId, title: ticket.subject, description: ticket.description, ...values });
+  };
+  // Loading the prototype starts the co-assignee demo over
+  React.useEffect(() => { resetCoAssigneeDemo(); }, []);
 
   const location = useLocation();
   React.useEffect(() => {
@@ -234,6 +244,7 @@ function App() {
     setMergedAwayIds((ids) => [...ids, ...conversations.map((c) => c.id)]);
     logJoined(conversations, ticket, 'added this conversation to');
     setSelectedId(ticket.id);
+    shareWithCoAssignee(ticket, { primaryId: existing.id, assignee: fields.assigneeOf(ticket.id), status: fields.statusOf(ticket.id), tags: fields.tagsOf(ticket.id) });
   };
 
   // Tickets the open conversation can be added to: in the same inbox, newest first. Only the same domain can be picked.
